@@ -1,7 +1,6 @@
 package com.github.rooneyandshadows.lightbulb.application.service
 
 import android.app.*
-import android.content.Intent
 import android.os.Build
 import android.util.Log
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
@@ -16,7 +15,6 @@ import android.app.NotificationManager
 import android.app.job.JobParameters
 import android.app.job.JobService
 import androidx.work.Configuration
-import java.util.concurrent.TimeUnit
 
 
 /*
@@ -119,7 +117,7 @@ abstract class StompNotificationJobService() : JobService() {
             private fun startListeningForNotifications() {
                 if (!configuration.listenUntil()) return
                 stompClient.subscribe(configuration.stompSubscribeUrl) { stompFrame: StompFrame ->
-                    showNotification(configuration.onNotificationFrameReceived(stompFrame))
+                    showNotification(configuration.onFrameReceived(stompFrame))
                 }
                 val message = configuration.stompStartListeners?.configureMessage() ?: ""
                 val headers: MutableMap<String, String> = HashMap()
@@ -215,7 +213,7 @@ abstract class StompNotificationJobService() : JobService() {
 
         abstract fun listenUntil(): Boolean
 
-        abstract fun onNotificationFrameReceived(receivedFrame: StompFrame): Notification
+        abstract fun onFrameReceived(receivedFrame: StompFrame): Notification
 
         abstract class StompPayloadCallback {
 

@@ -153,7 +153,7 @@ private abstract class StompNotificationForegroundService : Service() {
                         connecting = false
                         configuration.onStartListening();
                         stompClient.subscribe(configuration.stompSubscribeUrl) { stompFrame: StompFrame ->
-                            showNotification(configuration.onNotificationFrameReceived(stompFrame))
+                            showNotification(configuration.onFrameReceived(stompFrame))
                         }
                         val message = configuration.stompStartListeners?.configureMessage() ?: ""
                         val headers: MutableMap<String, String> = HashMap()
@@ -219,7 +219,7 @@ private abstract class StompNotificationForegroundService : Service() {
 
         abstract fun listenUntil(): Boolean
 
-        abstract fun onNotificationFrameReceived(receivedFrame: StompFrame): Notification
+        abstract fun onFrameReceived(receivedFrame: StompFrame): Notification
 
         abstract class StompPayloadCallback {
 
