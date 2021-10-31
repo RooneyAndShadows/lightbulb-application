@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="colorBackground" format="reference|color" />
+    <attr name="colorSurface" format="reference|color" />
+    <attr name="colorPrimaryDark" format="reference|color" />
+    <attr name="colorOnPrimary" format="reference|color" />
+    <attr name="colorPrimary" format="reference|color" />
+    <attr name="colorOnSurface" format="reference|color" />
+    <attr name="colorWarning" format="reference|color" />
+    <attr name="colorError" format="reference|color" />
+    <attr name="colorOnError" format="reference|color" />
+    <attr name="colorOnBackground" format="reference|color" />
+    <attr name="colorSecondary" format="reference|color" />
+    <attr name="colorOnSecondary" format="reference|color" />
+    <attr name="colorControlActivated" format="reference|color" />
+    <attr name="colorAccent" format="reference|color" />
+    <attr name="colorSuccess" format="reference|color" />
+    <attr name="colorBackgroundSelected" format="reference|color" />
+    <attr name="colorActionBarBackground" format="reference|color" />
+</resources>

@@ -1,0 +1,283 @@
+package com.github.rooneyandshadows.lightbulb.application.activity
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
+import android.content.*
+import android.graphics.Rect
+import android.os.Build
+import android.os.Bundle
+import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.app.LocaleChangerAppCompatDelegate
+import androidx.appcompat.widget.Toolbar
+import androidx.drawerlayout.widget.DrawerLayout
+import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
+import com.github.rooneyandshadows.lightbulb.application.activity.helpers.SliderHelper
+import com.github.rooneyandshadows.lightbulb.application.activity.helpers.SliderHelper.*
+import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseApplicationRouter
+import com.github.rooneyandshadows.lightbulb.application.fragment.BaseFragment
+import com.github.rooneyandshadows.lightbulb.commons.utils.KeyboardUtils.Companion.hideKeyboard
+import com.github.rooneyandshadows.lightbulb.textinputview.TextInputView
+import com.github.rooneyandshadows.lightbulb.application.BuildConfig
+import com.github.rooneyandshadows.lightbulb.application.R
+import com.github.rooneyandshadows.lightbulb.application.service.ConnectionCheckerService
+import com.github.rooneyandshadows.lightbulb.application.service.StompNotificationJobService
+
+@Suppress(
+    "MemberVisibilityCanBePrivate",
+    "unused",
+    "UNUSED_PARAMETER",
+    "UNUSED_ANONYMOUS_PARAMETER"
+)
+abstract class BaseActivity : AppCompatActivity() {
+    private val sliderBundleKey = "DRAWER_STATE"
+    private val contentContainerIdentifier = R.id.fragmentContainer
+    private var dragged = false
+    private var appRouter: BaseApplicationRouter? = null
+    private lateinit var sliderUtils: SliderHelper
+    private lateinit var localeChangerAppCompatDelegate: LocaleChangerAppCompatDelegate
+    private var internetConnectionStateBroadcaster = InternetConnectionStateBroadcaster()
+    protected abstract val drawerConfiguration: SliderConfiguration
+
+    protected open fun initializeRouter(fragmentContainerId: Int): BaseApplicationRouter? {
+        return null
+    }
+
+    protected open fun beforeCreate(savedInstanceState: Bundle?) {
+    }
+
+    protected open fun create(savedInstanceState: Bundle?) {
+    }
+
+    protected open fun saveInstanceState(outState: Bundle) {
+    }
+
+    protected open fun destroy() {
+    }
+
+    protected open fun registerStompService(): StompNotificationServiceRegistry? {
+        return null
+    }
+
+    protected open fun onInternetConnectionStatusChanged(hasInternetServiceEnabled: Boolean) {
+    }
+
+    @Override
+    final override fun onCreate(savedInstanceState: Bundle?) {
+        beforeCreate(savedInstanceState)
+        super.onCreate(savedInstanceState)
+        initializeInternetCheckerService();
+        initializeStompNotificationServiceIfPresented();
+        setContentView(R.layout.base_activity_layout)
+        setupActivity(savedInstanceState)
+        setUnhandledGlobalExceptionHandler()
+        create(savedInstanceState)
+    }
+
+    @Override
+    final override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable(sliderBundleKey, sliderUtils.saveState())
+        saveInstanceState(outState)
+    }
+
+    @Override
+    final override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(internetConnectionStateBroadcaster)
+        appRouter?.removeNavigator()
+        destroy()
+    }
+
+    @Override
+    final override fun getDelegate(): AppCompatDelegate {
+        localeChangerAppCompatDelegate = LocaleChangerAppCompatDelegate(super.getDelegate())
+        return localeChangerAppCompatDelegate
+    }
+
+    @Override
+    final override fun onBackPressed() {
+        val fragmentList = supportFragmentManager.fragments
+        var handled = false
+        for (f in fragmentList)
+            if (f is BaseFragment) {
+                handled = f.onBackPressed()
+                if (handled) break
+            }
+        if (!handled)
+            if (supportFragmentManager.backStackEntryCount == 0) moveTaskToBack(true)
+            else appRouter?.navigateBack()
+    }
+
+    @Override
+    final override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_MOVE) dragged = true
+        if (event.action == MotionEvent.ACTION_UP && !dragged) {
+            val touchedView: View? =
+                findViewAtPosition(window.decorView, event.rawX.toInt(), event.rawY.toInt())
+            if (touchedView !is TextInputView && touchedView !is EditText) hideKeyboard(this)
+        }
+        if (event.action == MotionEvent.ACTION_UP) dragged = false
+        return super.dispatchTouchEvent(event)
+    }
+
+    @Override
+    final override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            android.R.id.home -> {
+                if (!sliderUtils.isSliderEnabled) {
+                    onBackPressed()
+                } else {
+                    if (sliderUtils.isDrawerOpen())
+                        sliderUtils.closeSlider();
+                    else
+                        sliderUtils.openSlider();
+                }
+            }
+        }
+        return false
+    }
+
+    /**
+     * Method enables the left drawer
+     */
+    fun enableLeftDrawer() {
+        sliderUtils.disableSlider()
+        sliderUtils.enableSlider()
+    }
+
+    /**
+     * Method disables the left drawer
+     */
+    fun disableLeftDrawer() {
+        sliderUtils.disableSlider()
+    }
+
+    fun reinitializeLeftDrawer() {
+        sliderUtils.reInitialize(drawerConfiguration.configure());
+    }
+
+    /**
+     * Method attaches drawer to toolbar
+     *
+     * @param toolbar target toolbar
+     */
+    fun configureDrawerForToolbar(toolbar: Toolbar?) {
+        //sliderUtils.configForToolbar(toolbar)
+    }
+
+    /**
+     * Method setup up the activity view and main components.
+     *
+     * @param activityState saved state for the activity.
+     */
+    private fun setupActivity(activityState: Bundle?) {
+        val drawerState = activityState?.getBundle(sliderBundleKey)
+        val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout);
+        val sliderView = findViewById<MaterialDrawerSliderView>(R.id.sliderView)
+        sliderUtils = SliderHelper(
+            this,
+            drawerLayout,
+            sliderView,
+            drawerState,
+            drawerConfiguration.configure()
+        )
+        appRouter = initializeRouter(contentContainerIdentifier)
+    }
+
+    /**
+     * Method sets exception handler for uncaught exceptions in the activity context.
+     */
+    private fun setUnhandledGlobalExceptionHandler() {
+        Thread.setDefaultUncaughtExceptionHandler { paramThread: Thread?, exception: Throwable ->
+            exception.printStackTrace()
+            this.runOnUiThread {
+                Toast.makeText(
+                    this@BaseActivity,
+                    "Error occurred.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
+    private fun findViewAtPosition(parent: View, x: Int, y: Int): View? {
+        return if (parent is ViewGroup) {
+            val viewGroup = parent
+            for (i in 0 until viewGroup.childCount) {
+                val child = viewGroup.getChildAt(i)
+                val viewAtPosition = findViewAtPosition(child, x, y)
+                if (viewAtPosition != null) {
+                    return viewAtPosition
+                }
+            }
+            null
+        } else {
+            val rect = Rect()
+            parent.getGlobalVisibleRect(rect)
+            if (rect.contains(x, y)) {
+                parent
+            } else {
+                null
+            }
+        }
+    }
+
+    private fun initializeInternetCheckerService() {
+        startService(Intent(this, ConnectionCheckerService::class.java))
+        internetConnectionStateBroadcaster.contextActivity = this
+        val intentFilters = IntentFilter()
+        intentFilters.addAction(BuildConfig.internetConnectionBroadcasterActionEnabled)
+        intentFilters.addAction(BuildConfig.internetConnectionBroadcasterActionDisabled)
+        registerReceiver(internetConnectionStateBroadcaster, intentFilters)
+    }
+
+    private fun initializeStompNotificationServiceIfPresented() {
+        val stompNotificationServiceRegistry = registerStompService() ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val channel = NotificationChannel(
+                BuildConfig.notificationChannelId,
+                stompNotificationServiceRegistry.notificationChannelName,
+                importance
+            )
+            channel.setShowBadge(true)
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
+        }
+        val name = ComponentName(
+            this,
+            stompNotificationServiceRegistry.notificationServiceClass
+        )
+        val b = JobInfo.Builder(1, name)
+            .setOverrideDeadline(1)
+            .setPersisted(true)
+        val scheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+        scheduler.schedule(b.build())
+    }
+
+    public class InternetConnectionStateBroadcaster : BroadcastReceiver() {
+        var contextActivity: BaseActivity? = null
+        override fun onReceive(context: Context, intent: Intent) {
+            if (contextActivity == null)
+                return
+            val actionEnabled = BuildConfig.internetConnectionBroadcasterActionEnabled;
+            contextActivity?.onInternetConnectionStatusChanged(intent.action.equals(actionEnabled))
+        }
+    }
+
+    protected class StompNotificationServiceRegistry(
+        val notificationServiceClass: Class<out StompNotificationJobService>,
+        val notificationChannelName: String
+    )
+}

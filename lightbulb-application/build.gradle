@@ -1,0 +1,83 @@
+plugins {
+    id 'com.android.library'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+    id 'maven-publish'
+}
+android {
+    compileSdkVersion 30
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 30
+        versionCode 100
+        versionName "1.0.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles 'consumer-rules.pro'
+    }
+    buildFeatures {
+        dataBinding true
+    }
+    buildTypes {
+        debug {
+            //Notification configuration
+            buildConfigField "String", "notificationChannelId", "\"NOTIFICATION_CHANNEL_ID\""
+            buildConfigField "String", "internetConnectionBroadcasterActionEnabled", "\"INTERNET_ENABLED\""
+            buildConfigField "String", "internetConnectionBroadcasterActionDisabled", "\"INTERNET_DISABLED\""
+        }
+        release {
+            //Notification configuration
+            buildConfigField "String", "notificationChannelId", "\"NOTIFICATION_CHANNEL_ID\""
+            buildConfigField "String", "internetConnectionBroadcasterActionEnabled", "\"INTERNET_ENABLED\""
+            buildConfigField "String", "internetConnectionBroadcasterActionDisabled", "\"INTERNET_DISABLED\""
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked"
+    options.deprecation = true
+}
+
+afterEvaluate {
+    task sourceJar(type: Jar) {
+        from android.sourceSets.main.java.srcDirs
+        classifier "sources"
+    }
+    publishing {
+        repositories {
+            mavenLocal()
+        }
+        publications {
+            release(MavenPublication) {
+                from components.release
+                groupId "$environment.group_id"
+                version android.defaultConfig.versionName
+                artifactId project.name
+                artifact sourceJar {
+                    classifier "sources"
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "androidx.core:core-ktx:$versions.ktx.core"
+    implementation "androidx.appcompat:appcompat:$versions.android_appcompat"
+    implementation "androidx.annotation:annotation:$versions.android_annotation"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$versions.android_lifecycle"
+    implementation "androidx.work:work-runtime:$versions.android_work"
+    implementation "androidx.preference:preference-ktx:$versions.android_preference"
+    implementation "com.google.android.material:material:$versions.material"
+    implementation "com.github.rooneyandshadows:java-commons:$versions.java.commons"
+    implementation "com.github.rooneyandshadows:lightbulb-commons:$versions.lightbulb.commons"
+    implementation "com.github.rooneyandshadows:lightbulb-textinputview:$versions.lightbulb.textinputview"
+    implementation 'com.github.franmontiel:LocaleChanger:1.1'
+    implementation "com.mikepenz:materialdrawer:8.4.2"
+    implementation "com.github.terrakok:cicerone:7.1"
+}

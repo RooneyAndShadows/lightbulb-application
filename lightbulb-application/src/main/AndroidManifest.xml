@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.github.rooneyandshadows.lightbulb.application">
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application>
+        <service
+            android:name=".service.ConnectionCheckerService"
+            android:exported="true"
+            android:label="ConnectionCheckerService"
+            android:stopWithTask="false">
+            <!--android:process=":NotificationServiceProcess"-->
+            <intent-filter>
+                <action android:name="com.github.rooneyandshadows.lightbulb.components.service.ConnectionCheckerService" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+        <receiver
+            android:name=".activity.BaseActivity$InternetConnectionStateBroadcaster"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="InternetConnectionStateBroadcaster" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

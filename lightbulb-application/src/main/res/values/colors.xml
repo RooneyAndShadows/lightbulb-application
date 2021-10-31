@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="icon_outer_color">#31bafd</color>
+    <color name="colorTransparent">@android:color/transparent</color>
+    <!-- dark theme colors -->
+    <color name="dark_color_on_primary">#ffffff</color>
+    <color name="dark_color_on_surface">#ffffff</color>
+    <color name="dark_color_on_error">#ffffff</color>
+    <color name="dark_color_on_background">#ffffff</color>
+    <color name="dark_color_on_secondary">#ffffff</color>
+    <color name="dark_surface">#41474e</color>
+    <color name="dark_background">#353941</color>
+    <color name="dark_background_selected">#585d64</color>
+    <color name="dark_primary">#6e87df</color>
+    <color name="dark_primary_dark">#202225</color>
+    <color name="dark_primary_alpha">#666e87df</color>
+    <color name="dark_secondary">#fff</color>
+    <color name="dark_secondary_variant">#ffffff</color>
+    <color name="dark_accent">#6e87df</color>
+    <color name="dark_success">#6db33f</color>
+    <color name="dark_error">#cf6679</color>
+    <color name="dark_warning">#e67e22</color>
+    <color name="dark_tab_selected">#41474e</color>
+    <color name="dark_tab_background">#303136</color>
+    <color name="dark_action_bar_background">#303136</color>
+    <!-- light theme colors -->
+    <color name="light_color_on_primary">#ffffff</color>
+    <color name="light_color_on_surface">#060607</color>
+    <color name="light_color_on_error">#060607</color>
+    <color name="light_color_on_background">#060607</color>
+    <color name="light_color_on_secondary">#060607</color>
+    <color name="light_surface">#ebedef</color>
+    <color name="light_background">#ffffff</color>
+    <color name="light_background_selected">#d4d7dc</color>
+    <color name="light_primary">#6e87df</color>
+    <color name="light_primary_alpha">#666e87df</color>
+    <color name="light_primary_dark">#e3e5e8</color>
+    <color name="light_secondary">#060607</color>
+    <color name="light_secondary_variant">#060607</color>
+    <color name="light_accent">#6e87df</color>
+    <color name="light_success">#6db33f</color>
+    <color name="light_error">#cf6679</color>
+    <color name="light_warning">#e67e22</color>
+    <color name="light_tab_selected">#e3e5e8</color>
+    <color name="light_tab_background">#f2f3f5</color>
+    <color name="light_action_bar_background">#ffffff</color>
+</resources>

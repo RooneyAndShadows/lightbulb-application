@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Components.Dark" parent="Theme.MaterialComponents">
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorBackground">@color/dark_background</item>
+        <item name="colorPrimary">@color/dark_primary</item>
+        <item name="colorPrimaryDark">@color/dark_primary_dark</item>
+        <item name="colorSecondary">@color/dark_secondary</item>
+        <item name="colorSecondaryVariant">@color/dark_secondary_variant</item>
+        <item name="colorSurface">@color/dark_surface</item>
+        <item name="colorBackground">@color/dark_background</item>
+        <item name="colorBackgroundSelected">@color/dark_background_selected</item>
+        <item name="colorOnPrimary">@color/dark_color_on_primary</item>
+        <item name="colorOnSurface">@color/dark_color_on_surface</item>
+        <item name="colorWarning">@color/dark_warning</item>
+        <item name="colorError">@color/dark_error</item>
+        <item name="colorOnError">@color/dark_color_on_error</item>
+        <item name="colorOnBackground">@color/dark_color_on_background</item>
+        <item name="colorOnSecondary">@color/dark_color_on_secondary</item>
+        <item name="colorControlActivated">@color/dark_primary</item>
+        <item name="colorAccent">@color/dark_accent</item>
+        <item name="colorSuccess">@color/dark_success</item>
+        <item name="colorActionBarBackground">@color/dark_action_bar_background</item>
+        <!--<item name="materialDrawerStyle">@style/Widget.MaterialDrawerStyle</item>-->
+    </style>
+
+    <style name="Theme.Components.Light" parent="Theme.MaterialComponents.Light">
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:colorBackground">@color/light_background</item>
+        <item name="colorPrimary">@color/light_primary</item>
+        <item name="colorPrimaryDark">@color/light_primary_dark</item>
+        <item name="colorSecondary">@color/light_secondary</item>
+        <item name="colorSecondaryVariant">@color/light_secondary_variant</item>
+        <item name="colorSurface">@color/light_surface</item>
+        <item name="colorBackground">@color/light_background</item>
+        <item name="colorBackgroundSelected">@color/light_background_selected</item>
+        <item name="colorOnPrimary">@color/light_color_on_primary</item>
+        <item name="colorOnSurface">@color/light_color_on_surface</item>
+        <item name="colorWarning">@color/light_warning</item>
+        <item name="colorError">@color/light_error</item>
+        <item name="colorOnError">@color/light_color_on_error</item>
+        <item name="colorOnBackground">@color/light_color_on_background</item>
+        <item name="colorOnSecondary">@color/light_color_on_secondary</item>
+        <item name="colorControlActivated">@color/light_primary</item>
+        <item name="colorAccent">@color/light_accent</item>
+        <item name="colorSuccess">@color/light_success</item>
+        <item name="colorActionBarBackground">@color/light_action_bar_background</item>
+        <!--<item name="materialDrawerStyle">@style/Widget.MaterialDrawerStyle</item>-->
+    </style>
+</resources>
