@@ -36,14 +36,14 @@ abstract class StompNotificationJobService() : JobService() {
     private val maxExecutionTime = 15 * 60 * 1000
     private var startTime: Long = 0
     private var params: JobParameters? = null
-    private lateinit var configuration: StompNotificationServiceConfiguration
+    private lateinit var configuration: StompNotificationJobServiceConfiguration
 
     init {
         val builder = Configuration.Builder()
         builder.setJobSchedulerJobIdRange(0, 1000)
     }
 
-    abstract fun configure(): StompNotificationServiceConfiguration
+    abstract fun configure(): StompNotificationJobServiceConfiguration
 
     override fun onStartJob(jobParameters: JobParameters): Boolean {
         params = jobParameters
@@ -84,11 +84,11 @@ abstract class StompNotificationJobService() : JobService() {
                         stopListenForNotifications()
                         break
                     }
-                    if (!configuration.listenUntil()) {
+                    if (!configuration.listenUntilCondition()) {
                         stopListenForNotifications()
                         cancelAllNotifications()
                     }
-                    sleep(1000)
+                    sleep(5000)
                 }
             }
 
@@ -106,22 +106,22 @@ abstract class StompNotificationJobService() : JobService() {
             }
 
             private fun stopListenForNotifications() {
-                val message = configuration.stompStopListeners?.configureMessage() ?: ""
+                val message = configuration.stompStopPayload?.configureMessage() ?: ""
                 val headers: MutableMap<String, String> = HashMap()
-                configuration.stompStopListeners?.configureHeaders(headers);
+                configuration.stompStopPayload?.configureHeaders(headers);
                 stompClient.send(configuration.stompStopListenUrl, message, headers)
+                configuration.onStopListenCallback();
                 stompClient.closeConnection(0, "")
-                configuration.onStopListening();
             }
 
             private fun startListeningForNotifications() {
-                if (!configuration.listenUntil()) return
+                if (!configuration.listenUntilCondition()) return
                 stompClient.subscribe(configuration.stompSubscribeUrl) { stompFrame: StompFrame ->
                     showNotification(configuration.onFrameReceived(stompFrame))
                 }
-                val message = configuration.stompStartListeners?.configureMessage() ?: ""
+                val message = configuration.stompStartPayload?.configureMessage() ?: ""
                 val headers: MutableMap<String, String> = HashMap()
-                configuration.stompStartListeners?.configureHeaders(headers)
+                configuration.stompStartPayload?.configureHeaders(headers)
                 stompClient.send(configuration.stompStartListenUrl, message, headers)
             }
 
@@ -145,7 +145,7 @@ abstract class StompNotificationJobService() : JobService() {
                         super.onConnected()
                         if (BuildConfig.DEBUG)
                             Log.d(this.javaClass.simpleName, "Notification service connected")
-                        configuration.onStartListening();
+                        configuration.onStartListenCallback();
 
                     }
 
@@ -185,40 +185,54 @@ abstract class StompNotificationJobService() : JobService() {
         }
     }
 
-    abstract class StompNotificationServiceConfiguration constructor(
+    abstract class StompNotificationJobServiceConfiguration constructor(
         val notificationChannelName: String,
         val stompApiUrl: String,
         val stompStartListenUrl: String,
         val stompStopListenUrl: String,
         val stompSubscribeUrl: String
     ) {
-        var stompStartListeners: StompPayloadCallback? = null
-        var stompStopListeners: StompPayloadCallback? = null
-
-        fun withStartPayload(startListener: StompPayloadCallback): StompNotificationServiceConfiguration {
-            return apply {
-                this.stompStartListeners = startListener
-            }
-        }
-
-        fun withStopPayload(stopListener: StompPayloadCallback): StompNotificationServiceConfiguration {
-            return apply {
-                this.stompStopListeners = stopListener
-            }
-        }
-
-        abstract fun onStartListening()
-
-        abstract fun onStopListening()
-
-        abstract fun listenUntil(): Boolean
+        var stompStartPayload: StompPayload? = null
+        var stompStopPayload: StompPayload? = null
+        var onStartListenCallback: (() -> Unit) = {}
+        var onStopListenCallback: (() -> Unit) = {}
+        var listenUntilCondition: (() -> Boolean) = { true }
 
         abstract fun onFrameReceived(receivedFrame: StompFrame): Notification
 
-        abstract class StompPayloadCallback {
+        fun withOnStartListeningCallback(onStartListeningCallback: (() -> Unit)): StompNotificationJobServiceConfiguration {
+            return apply {
+                this.onStartListenCallback = onStartListeningCallback
+            }
+        }
+
+        fun withOnStopListeningCallback(onStopListeningCallback: (() -> Unit)): StompNotificationJobServiceConfiguration {
+            return apply {
+                this.onStopListenCallback = onStopListeningCallback
+            }
+        }
+
+        fun withStartPayload(startPayload: StompPayload): StompNotificationJobServiceConfiguration {
+            return apply {
+                this.stompStartPayload = startPayload
+            }
+        }
+
+        fun withStopPayload(stopPayload: StompPayload): StompNotificationJobServiceConfiguration {
+            return apply {
+                this.stompStopPayload = stopPayload
+            }
+        }
+
+        fun withListenUntilCondition(condition: (() -> Boolean)): StompNotificationJobServiceConfiguration {
+            return apply {
+                this.listenUntilCondition = condition
+            }
+        }
+
+        abstract class StompPayload {
 
             open fun configureHeaders(stompHeaders: Map<String, String>) {
-
             }
 
             open fun configureMessage(): String {

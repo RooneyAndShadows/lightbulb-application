@@ -35,12 +35,11 @@ Add below code in manifest
  */
 
 private abstract class StompNotificationForegroundService : Service() {
-    private var currentAuthCode: String? = null
     private var isRunning = false;
     private lateinit var notification: Notification
-    private lateinit var configuration: StompNotificationServiceConfiguration
+    private lateinit var configuration: StompNotificationForegroundServiceConfiguration
 
-    abstract fun configure(): StompNotificationServiceConfiguration
+    abstract fun configure(): StompNotificationForegroundServiceConfiguration
 
     override fun onBind(arg0: Intent): IBinder? {
         return null
@@ -52,16 +51,12 @@ private abstract class StompNotificationForegroundService : Service() {
         createForegroundNotification()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
-
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         if (isRunning)
             return START_NOT_STICKY
         startForeground(1, notification)
-        StartStompThread()
+        startStompThread()
         isRunning = true;
         return START_STICKY
     }
@@ -87,7 +82,7 @@ private abstract class StompNotificationForegroundService : Service() {
     }
 
 
-    private fun StartStompThread() {
+    private fun startStompThread() {
         val stompThread: Thread = object : Thread() {
             private lateinit var stompClient: StompClient
             private var connected = false
@@ -98,11 +93,11 @@ private abstract class StompNotificationForegroundService : Service() {
                     stompClient.connectBlocking()
                     while (true) {
                         sleep(5000)
-                        if (connected && !configuration.listenUntil()) {
+                        if (connected && !configuration.listenUntilCondition()) {
                             stopListenForNotifications()
                             continue
                         }
-                        if (connected || !configuration.listenUntil())
+                        if (connected || !configuration.listenUntilCondition())
                             continue
                         stompClient.reconnectBlocking()
                     }
@@ -112,12 +107,11 @@ private abstract class StompNotificationForegroundService : Service() {
             }
 
             private fun stopListenForNotifications() {
-                configuration.onStopListening();
-                val message = configuration.stompStopListeners?.configureMessage() ?: ""
+                val message = configuration.stompStopPayload?.configureMessage() ?: ""
                 val headers: MutableMap<String, String> = HashMap()
-                configuration.stompStopListeners?.configureHeaders(headers);
+                configuration.stompStopPayload?.configureHeaders(headers);
                 stompClient.send(configuration.stompStopListenUrl, message, headers)
-                currentAuthCode = null
+                configuration.onStopListenCallback()
                 connected = false
                 connecting = false
                 Log.i(this.javaClass.simpleName, "Notification service disconnected")
@@ -151,13 +145,13 @@ private abstract class StompNotificationForegroundService : Service() {
                         Log.w(this.javaClass.simpleName, "Notification service connected")
                         connected = true
                         connecting = false
-                        configuration.onStartListening();
+                        configuration.onStartListenCallback()
                         stompClient.subscribe(configuration.stompSubscribeUrl) { stompFrame: StompFrame ->
                             showNotification(configuration.onFrameReceived(stompFrame))
                         }
-                        val message = configuration.stompStartListeners?.configureMessage() ?: ""
+                        val message = configuration.stompStartPayload?.configureMessage() ?: ""
                         val headers: MutableMap<String, String> = HashMap()
-                        configuration.stompStartListeners?.configureHeaders(headers)
+                        configuration.stompStartPayload?.configureHeaders(headers)
                         stompClient.send(configuration.stompStartListenUrl, message, headers)
                     }
 
@@ -191,40 +185,54 @@ private abstract class StompNotificationForegroundService : Service() {
         }
     }
 
-    abstract class StompNotificationServiceConfiguration constructor(
+    abstract class StompNotificationForegroundServiceConfiguration constructor(
         val notificationChannelName: String,
         val stompApiUrl: String,
         val stompStartListenUrl: String,
         val stompStopListenUrl: String,
         val stompSubscribeUrl: String
     ) {
-        var stompStartListeners: StompPayloadCallback? = null
-        var stompStopListeners: StompPayloadCallback? = null
-
-        fun withStartPayload(startListener: StompPayloadCallback): StompNotificationServiceConfiguration {
-            return apply {
-                this.stompStartListeners = startListener
-            }
-        }
-
-        fun withStopPayload(stopListener: StompPayloadCallback): StompNotificationServiceConfiguration {
-            return apply {
-                this.stompStopListeners = stopListener
-            }
-        }
-
-        abstract fun onStartListening()
-
-        abstract fun onStopListening()
-
-        abstract fun listenUntil(): Boolean
+        var stompStartPayload: StompPayload? = null
+        var stompStopPayload: StompPayload? = null
+        var onStartListenCallback: (() -> Unit) = {}
+        var onStopListenCallback: (() -> Unit) = {}
+        var listenUntilCondition: (() -> Boolean) = { true }
 
         abstract fun onFrameReceived(receivedFrame: StompFrame): Notification
 
-        abstract class StompPayloadCallback {
+        fun withOnStartListeningCallback(onStartListeningCallback: (() -> Unit)): StompNotificationForegroundServiceConfiguration {
+            return apply {
+                this.onStartListenCallback = onStartListeningCallback
+            }
+        }
+
+        fun withOnStopListeningCallback(onStopListeningCallback: (() -> Unit)): StompNotificationForegroundServiceConfiguration {
+            return apply {
+                this.onStopListenCallback = onStopListeningCallback
+            }
+        }
+
+        fun withStartPayload(startPayload: StompPayload): StompNotificationForegroundServiceConfiguration {
+            return apply {
+                this.stompStartPayload = startPayload
+            }
+        }
+
+        fun withStopPayload(stopPayload: StompPayload): StompNotificationForegroundServiceConfiguration {
+            return apply {
+                this.stompStopPayload = stopPayload
+            }
+        }
+
+        fun withListenUntilCondition(condition: (() -> Boolean)): StompNotificationForegroundServiceConfiguration {
+            return apply {
+                this.listenUntilCondition = condition
+            }
+        }
+
+        abstract class StompPayload {
 
             open fun configureHeaders(stompHeaders: Map<String, String>) {
-
             }
 
             open fun configureMessage(): String {
