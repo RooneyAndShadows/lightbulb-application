@@ -67,9 +67,6 @@ abstract class StompNotificationJobService() : JobService() {
             override fun run() {
                 try {
                     initializeStompClient()
-                    if (!establishConnection())
-                        return
-                    startListeningForNotifications()
                     waitForNotifications()
                 } catch (e: Exception) {
                     //ignored
@@ -81,48 +78,25 @@ abstract class StompNotificationJobService() : JobService() {
             private fun waitForNotifications() {
                 while (true) {
                     if ((System.currentTimeMillis() - startTime) > maxExecutionTime) {
-                        stopListenForNotifications()
+                        stopListenForNotifications(false)
                         break
                     }
-                    if (!configuration.listenUntilCondition()) {
-                        stopListenForNotifications()
-                        cancelAllNotifications()
-                    }
+                    if (!configuration.listenUntilCondition()) stopListenForNotifications(true)
+                    if (!stompClient.isStompConnected)
+                        stompClient.reconnectBlocking()
                     sleep(5000)
                 }
             }
 
-            private fun establishConnection(): Boolean {
-                stompClient.connectBlocking()
-                sleep(1000)
-                if (!stompClient.isStompConnected)
-                    for (attempt in 1..10) {
-                        stompClient.reconnectBlocking()
-                        sleep(1000)
-                        if (stompClient.isStompConnected)
-                            break
-                    }
-                return stompClient.isStompConnected
-            }
-
-            private fun stopListenForNotifications() {
+            private fun stopListenForNotifications(clearShownNotifications: Boolean) {
                 val message = configuration.stompStopPayload?.configureMessage() ?: ""
                 val headers: MutableMap<String, String> = HashMap()
                 configuration.stompStopPayload?.configureHeaders(headers);
                 stompClient.send(configuration.stompStopListenUrl, message, headers)
                 configuration.onStopListenCallback();
                 stompClient.closeConnection(0, "")
-            }
-
-            private fun startListeningForNotifications() {
-                if (!configuration.listenUntilCondition()) return
-                stompClient.subscribe(configuration.stompSubscribeUrl) { stompFrame: StompFrame ->
-                    showNotification(configuration.onFrameReceived(stompFrame))
-                }
-                val message = configuration.stompStartPayload?.configureMessage() ?: ""
-                val headers: MutableMap<String, String> = HashMap()
-                configuration.stompStartPayload?.configureHeaders(headers)
-                stompClient.send(configuration.stompStartListenUrl, message, headers)
+                if (clearShownNotifications)
+                    cancelAllNotifications()
             }
 
             private fun initializeStompClient() {
@@ -137,14 +111,18 @@ abstract class StompNotificationJobService() : JobService() {
                     }
                 }
                 stompClient.setStompConnectionListener(object : StompConnectionListener() {
-                    override fun onConnecting() {
-                        super.onConnecting()
-                    }
-
                     override fun onConnected() {
                         super.onConnected()
                         if (BuildConfig.DEBUG)
                             Log.d(this.javaClass.simpleName, "Notification service connected")
+                        if (!configuration.listenUntilCondition()) return
+                        stompClient.subscribe(configuration.stompSubscribeUrl) { stompFrame: StompFrame ->
+                            showNotification(configuration.onFrameReceived(stompFrame))
+                        }
+                        val message = configuration.stompStartPayload?.configureMessage() ?: ""
+                        val headers: MutableMap<String, String> = HashMap()
+                        configuration.stompStartPayload?.configureHeaders(headers)
+                        stompClient.send(configuration.stompStartListenUrl, message, headers)
                         configuration.onStartListenCallback();
 
                     }
@@ -155,6 +133,7 @@ abstract class StompNotificationJobService() : JobService() {
                             Log.d(this.javaClass.simpleName, "Notification service disconnected")
                     }
                 })
+                stompClient.connectBlocking()
             }
         }
         stompThread.start()
