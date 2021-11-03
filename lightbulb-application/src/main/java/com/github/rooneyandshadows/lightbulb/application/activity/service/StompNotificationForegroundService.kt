@@ -1,4 +1,4 @@
-package com.github.rooneyandshadows.lightbulb.application.service
+package com.github.rooneyandshadows.lightbulb.application.activity.service
 
 import android.app.*
 import android.content.Intent

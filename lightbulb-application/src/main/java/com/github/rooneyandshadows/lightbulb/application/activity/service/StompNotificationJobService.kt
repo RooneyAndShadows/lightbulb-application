@@ -1,4 +1,4 @@
-package com.github.rooneyandshadows.lightbulb.application.service
+package com.github.rooneyandshadows.lightbulb.application.activity.service
 
 import android.app.*
 import android.os.Build
@@ -37,7 +37,6 @@ abstract class StompNotificationJobService() : JobService() {
     private var startTime: Long = 0
     private var params: JobParameters? = null
     private var isConnected = false
-    private var initialConnection = true
     private lateinit var configuration: StompNotificationJobServiceConfiguration
     private var stompClient: StompClient? = null
 
@@ -57,7 +56,7 @@ abstract class StompNotificationJobService() : JobService() {
     }
 
     override fun onStopJob(jobParameters: JobParameters?): Boolean {
-        return false
+        return true
     }
 
     override fun onCreate() {
@@ -67,6 +66,7 @@ abstract class StompNotificationJobService() : JobService() {
 
     private fun startStompThread() {
         val stompThread: Thread = object : Thread() {
+            private var initialConnection = true
 
             override fun run() {
                 try {
@@ -75,7 +75,9 @@ abstract class StompNotificationJobService() : JobService() {
                             if (initialConnection) {
                                 stompClient!!.connectBlocking()
                                 initialConnection = false
-                            } else stompClient!!.reconnectBlocking()
+                            } else {
+                                stompClient!!.reconnectBlocking()
+                            }
                             if (!isConnected) {
                                 sleep(5000)
                                 continue

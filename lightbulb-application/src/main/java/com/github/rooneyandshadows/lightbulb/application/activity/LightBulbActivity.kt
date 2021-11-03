@@ -22,32 +22,33 @@ import androidx.drawerlayout.widget.DrawerLayout
 import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
 import com.github.rooneyandshadows.lightbulb.application.activity.helpers.SliderHelper
 import com.github.rooneyandshadows.lightbulb.application.activity.helpers.SliderHelper.*
-import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseApplicationRouter
-import com.github.rooneyandshadows.lightbulb.application.fragment.BaseFragment
+import com.github.rooneyandshadows.lightbulb.application.activity.routing.LightBulbApplicationRouter
+import com.github.rooneyandshadows.lightbulb.application.fragment.LightBulbFragment
 import com.github.rooneyandshadows.lightbulb.commons.utils.KeyboardUtils.Companion.hideKeyboard
 import com.github.rooneyandshadows.lightbulb.textinputview.TextInputView
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.R
-import com.github.rooneyandshadows.lightbulb.application.service.ConnectionCheckerService
-import com.github.rooneyandshadows.lightbulb.application.service.StompNotificationJobService
+import com.github.rooneyandshadows.lightbulb.application.activity.broadcasters.InternetConnectionStateBroadcaster
+import com.github.rooneyandshadows.lightbulb.application.activity.configuration.StompNotificationServiceRegistry
+import com.github.rooneyandshadows.lightbulb.application.activity.service.ConnectionCheckerService
 
 @Suppress(
-    "MemberVisibilityCanBePrivate",
     "unused",
     "UNUSED_PARAMETER",
     "UNUSED_ANONYMOUS_PARAMETER"
 )
-abstract class BaseActivity : AppCompatActivity() {
+abstract class LightBulbActivity : AppCompatActivity() {
     private val sliderBundleKey = "DRAWER_STATE"
+    private val stompNotificationJobId = 1
     private val contentContainerIdentifier = R.id.fragmentContainer
     private var dragged = false
-    private var appRouter: BaseApplicationRouter? = null
+    private var appRouter: LightBulbApplicationRouter? = null
     private lateinit var sliderUtils: SliderHelper
     private lateinit var localeChangerAppCompatDelegate: LocaleChangerAppCompatDelegate
     private var internetConnectionStateBroadcaster = InternetConnectionStateBroadcaster()
     protected abstract val drawerConfiguration: SliderConfiguration
 
-    protected open fun initializeRouter(fragmentContainerId: Int): BaseApplicationRouter? {
+    protected open fun initializeRouter(fragmentContainerId: Int): LightBulbApplicationRouter? {
         return null
     }
 
@@ -55,6 +56,9 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     protected open fun create(savedInstanceState: Bundle?) {
+    }
+
+    protected open fun newIntent(intent: Intent) {
     }
 
     protected open fun saveInstanceState(outState: Bundle) {
@@ -67,16 +71,16 @@ abstract class BaseActivity : AppCompatActivity() {
         return null
     }
 
-    protected open fun onInternetConnectionStatusChanged(hasInternetServiceEnabled: Boolean) {
+    open fun onInternetConnectionStatusChanged(hasInternetServiceEnabled: Boolean) {
     }
 
     @Override
     final override fun onCreate(savedInstanceState: Bundle?) {
         beforeCreate(savedInstanceState)
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.base_activity_layout)
         initializeInternetCheckerService();
         initializeStompNotificationServiceIfPresented();
-        setContentView(R.layout.base_activity_layout)
         setupActivity(savedInstanceState)
         setUnhandledGlobalExceptionHandler()
         create(savedInstanceState)
@@ -98,6 +102,13 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     @Override
+    final override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        newIntent(getIntent())
+    }
+
+    @Override
     final override fun getDelegate(): AppCompatDelegate {
         localeChangerAppCompatDelegate = LocaleChangerAppCompatDelegate(super.getDelegate())
         return localeChangerAppCompatDelegate
@@ -108,7 +119,7 @@ abstract class BaseActivity : AppCompatActivity() {
         val fragmentList = supportFragmentManager.fragments
         var handled = false
         for (f in fragmentList)
-            if (f is BaseFragment) {
+            if (f is LightBulbFragment) {
                 handled = f.onBackPressed()
                 if (handled) break
             }
@@ -166,15 +177,6 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     /**
-     * Method attaches drawer to toolbar
-     *
-     * @param toolbar target toolbar
-     */
-    fun configureDrawerForToolbar(toolbar: Toolbar?) {
-        //sliderUtils.configForToolbar(toolbar)
-    }
-
-    /**
      * Method setup up the activity view and main components.
      *
      * @param activityState saved state for the activity.
@@ -201,7 +203,7 @@ abstract class BaseActivity : AppCompatActivity() {
             exception.printStackTrace()
             this.runOnUiThread {
                 Toast.makeText(
-                    this@BaseActivity,
+                    this@LightBulbActivity,
                     "Error occurred.",
                     Toast.LENGTH_LONG
                 ).show()
@@ -211,9 +213,8 @@ abstract class BaseActivity : AppCompatActivity() {
 
     private fun findViewAtPosition(parent: View, x: Int, y: Int): View? {
         return if (parent is ViewGroup) {
-            val viewGroup = parent
-            for (i in 0 until viewGroup.childCount) {
-                val child = viewGroup.getChildAt(i)
+            for (i in 0 until parent.childCount) {
+                val child = parent.getChildAt(i)
                 val viewAtPosition = findViewAtPosition(child, x, y)
                 if (viewAtPosition != null) {
                     return viewAtPosition
@@ -259,25 +260,25 @@ abstract class BaseActivity : AppCompatActivity() {
             this,
             stompNotificationServiceRegistry.notificationServiceClass
         )
-        val b = JobInfo.Builder(1, name)
-            .setOverrideDeadline(1)
-            .setPersisted(true)
-        val scheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        scheduler.schedule(b.build())
-    }
 
-    public class InternetConnectionStateBroadcaster : BroadcastReceiver() {
-        var contextActivity: BaseActivity? = null
-        override fun onReceive(context: Context, intent: Intent) {
-            if (contextActivity == null)
-                return
-            val actionEnabled = BuildConfig.internetConnectionBroadcasterActionEnabled;
-            contextActivity?.onInternetConnectionStatusChanged(intent.action.equals(actionEnabled))
+        val scheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+        if (!checkIfJobServiceScheduled(stompNotificationJobId)) {
+            val b = JobInfo.Builder(stompNotificationJobId, name)
+                .setOverrideDeadline(1)
+                .setPersisted(true)
+            scheduler.schedule(b.build())
         }
     }
 
-    protected class StompNotificationServiceRegistry(
-        val notificationServiceClass: Class<out StompNotificationJobService>,
-        val notificationChannelName: String
-    )
+    private fun checkIfJobServiceScheduled(jobServiceId: Int): Boolean {
+        val scheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+        var hasBeenScheduled = false
+        for (jobInfo in scheduler.allPendingJobs) {
+            if (jobInfo.id == stompNotificationJobId) {
+                hasBeenScheduled = true
+                break
+            }
+        }
+        return hasBeenScheduled
+    }
 }

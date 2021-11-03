@@ -7,19 +7,19 @@
 
     <application>
         <service
-            android:name=".service.ConnectionCheckerService"
+            android:name=".activity.service.ConnectionCheckerService"
             android:exported="true"
             android:label="ConnectionCheckerService"
             android:stopWithTask="false">
             <!--android:process=":NotificationServiceProcess"-->
             <intent-filter>
-                <action android:name="com.github.rooneyandshadows.lightbulb.components.service.ConnectionCheckerService" />
+                <action android:name="ConnectionCheckerService" />
 
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
         <receiver
-            android:name=".activity.BaseActivity$InternetConnectionStateBroadcaster"
+            android:name=".activity.broadcasters.InternetConnectionStateBroadcaster"
             android:exported="true">
             <intent-filter>
                 <action android:name="InternetConnectionStateBroadcaster" />

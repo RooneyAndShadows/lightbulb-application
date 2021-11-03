@@ -8,11 +8,11 @@ import com.github.terrakok.cicerone.*
 import com.github.terrakok.cicerone.androidx.AppNavigator
 import com.github.terrakok.cicerone.androidx.FragmentScreen
 import com.github.rooneyandshadows.lightbulb.application.R
-import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
+import com.github.rooneyandshadows.lightbulb.application.activity.LightBulbActivity
 
 @Suppress("CanBePrimaryConstructorProperty")
-open class BaseApplicationRouter(contextActivity: BaseActivity, fragmentContainerId: Int) {
-    protected val contextActivity: BaseActivity = contextActivity
+open class LightBulbApplicationRouter(contextActivity: LightBulbActivity, fragmentContainerId: Int) {
+    protected val contextActivity: LightBulbActivity = contextActivity
     private val fragmentContainerId: Int = fragmentContainerId
     private var cicerone: Cicerone<Router> = Cicerone.create()
     private val router: Router
@@ -74,7 +74,7 @@ open class BaseApplicationRouter(contextActivity: BaseActivity, fragmentContaine
         return converted
     }
 
-    private fun setupNavigator(contextActivity: BaseActivity): Navigator {
+    private fun setupNavigator(contextActivity: LightBulbActivity): Navigator {
         return object : AppNavigator(contextActivity, fragmentContainerId) {
             override fun forward(command: Forward) {
                 val fragmentManager = contextActivity.supportFragmentManager

@@ -12,14 +12,14 @@ import android.view.animation.AnimationUtils
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
-import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.BaseFragmentConfiguration
+import com.github.rooneyandshadows.lightbulb.application.activity.LightBulbActivity
+import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.LightBulbFragmentConfiguration
 
 @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER", "unused")
-abstract class BaseFragment : Fragment() {
-    lateinit var fragmentConfiguration: BaseFragmentConfiguration
+abstract class LightBulbFragment : Fragment() {
+    lateinit var fragmentConfiguration: LightBulbFragmentConfiguration
         private set
-    lateinit var contextActivity: BaseActivity
+    lateinit var contextActivity: LightBulbActivity
         private set
     private var actionBarUtils: ActionBarHelper? = null
     private val isReusedKey = "IS_FRAGMENT_PREVIOUSLY_CREATED"
@@ -32,7 +32,7 @@ abstract class BaseFragment : Fragment() {
     protected var isReused: Boolean = false
         private set
 
-    protected abstract fun configureFragment(): BaseFragmentConfiguration
+    protected abstract fun configureFragment(): LightBulbFragmentConfiguration
 
 
     /**
@@ -134,7 +134,7 @@ abstract class BaseFragment : Fragment() {
 
     final override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is BaseActivity)
+        if (context is LightBulbActivity)
             contextActivity = context
         attach()
     }
@@ -190,8 +190,8 @@ abstract class BaseFragment : Fragment() {
     }
 
     class ActionBarHelper(
-        private val contextFragment: BaseFragment,
-        private val configuration: BaseFragmentConfiguration.ActionBarConfiguration?
+        private val contextFragment: LightBulbFragment,
+        private val configuration: LightBulbFragmentConfiguration.ActionBarConfiguration?
     ) {
 
         init {
@@ -199,7 +199,7 @@ abstract class BaseFragment : Fragment() {
                 initializeActionBarForConfiguration(configuration)
         }
 
-        private fun initializeActionBarForConfiguration(configuration: BaseFragmentConfiguration.ActionBarConfiguration?) {
+        private fun initializeActionBarForConfiguration(configuration: LightBulbFragmentConfiguration.ActionBarConfiguration?) {
             if (configuration == null)
                 return
             val toolbar: Toolbar = contextFragment.requireView().findViewById(configuration.actionBarId)
@@ -208,8 +208,6 @@ abstract class BaseFragment : Fragment() {
             contextFragment.contextActivity.supportActionBar!!.title = configuration.title
             contextFragment.contextActivity.supportActionBar!!.subtitle = configuration.subtitle
             if (configuration.isEnableActions) {
-                if (configuration.isAttachToDrawer)
-                    contextFragment.contextActivity.configureDrawerForToolbar(toolbar)
                 setupHomeIcon(configuration.homeIcon)
             }
         }

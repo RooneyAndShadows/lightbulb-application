@@ -1,22 +1,15 @@
 package com.github.rooneyandshadows.lightbulb.application.application
 
 import android.app.Application
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
-import android.os.Build
 import android.util.Log
 import com.franmontiel.localechanger.LocaleChanger
-import com.github.rooneyandshadows.lightbulb.application.BuildConfig
-import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
-import com.github.rooneyandshadows.lightbulb.application.service.ConnectionCheckerService
-import com.github.rooneyandshadows.lightbulb.application.service.StompNotificationJobService
+import com.github.rooneyandshadows.lightbulb.application.activity.LightBulbActivity
 import java.util.*
 import java.util.function.Predicate
 
-abstract class BaseApplication : Application() {
+abstract class LightBulbApplication : Application() {
     protected abstract val supportedLocales: List<Locale>
 
     protected open fun create() {
@@ -27,7 +20,7 @@ abstract class BaseApplication : Application() {
 
     companion object {
         @JvmStatic
-        lateinit var application: BaseApplication
+        lateinit var application: LightBulbApplication
             private set
 
         @JvmStatic
@@ -62,7 +55,7 @@ abstract class BaseApplication : Application() {
             Log.w(null, "Locale \"$locale\"  is not supported");
     }
 
-    fun changeLocaleAndRecreateActivity(locale: String, context: BaseActivity) {
+    fun changeLocaleAndRecreateActivity(locale: String, context: LightBulbActivity) {
         val localeToSet = supportedLocales.stream()
             .filter(Predicate {
                 it.language == locale
