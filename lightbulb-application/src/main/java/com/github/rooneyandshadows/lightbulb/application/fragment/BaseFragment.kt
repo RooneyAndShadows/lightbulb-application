@@ -207,9 +207,7 @@ abstract class BaseFragment : Fragment() {
             contextFragment.contextActivity.setSupportActionBar(toolbar)
             contextFragment.contextActivity.supportActionBar!!.title = configuration.title
             contextFragment.contextActivity.supportActionBar!!.subtitle = configuration.subtitle
-            if (configuration.isEnableActions) {
-                setupHomeIcon(configuration.homeIcon)
-            }
+            if (configuration.isEnableActions) setupHomeIcon(configuration.homeIcon)
         }
 
         private fun setupHomeIcon(icon: Drawable?) {

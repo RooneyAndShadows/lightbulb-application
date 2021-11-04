@@ -156,19 +156,16 @@ abstract class BaseActivity : AppCompatActivity() {
         return false
     }
 
-    /**
-     * Method enables the left drawer
-     */
-    fun enableLeftDrawer() {
-        sliderUtils.disableSlider()
-        sliderUtils.enableSlider()
+    fun isDrawerEnabled(): Boolean {
+        return sliderUtils.isSliderEnabled
     }
 
     /**
-     * Method disables the left drawer
+     * Method enables or disables drawer
      */
-    fun disableLeftDrawer() {
-        sliderUtils.disableSlider()
+    fun enableLeftDrawer(enabled: Boolean) {
+        if (enabled) sliderUtils.enableSlider()
+        else sliderUtils.disableSlider()
     }
 
     fun reinitializeLeftDrawer() {
