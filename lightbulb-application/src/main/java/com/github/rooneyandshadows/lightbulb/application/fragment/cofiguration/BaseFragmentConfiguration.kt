@@ -2,7 +2,7 @@ package com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration
 
 import android.graphics.drawable.Drawable
 
-class LightBulbFragmentConfiguration {
+class BaseFragmentConfiguration {
     val isContentFragment: Boolean
     var hasLeftDrawer: Boolean = false
         private set
@@ -19,15 +19,15 @@ class LightBulbFragmentConfiguration {
         this.isContentFragment = isContentFragment
     }
 
-    fun withLeftDrawer(hasLeftDrawer: Boolean): LightBulbFragmentConfiguration {
+    fun withLeftDrawer(hasLeftDrawer: Boolean): BaseFragmentConfiguration {
         return apply { this.hasLeftDrawer = hasLeftDrawer }
     }
 
-    fun withOptionsMenu(hasOptionsMenu: Boolean): LightBulbFragmentConfiguration {
+    fun withOptionsMenu(hasOptionsMenu: Boolean): BaseFragmentConfiguration {
         return apply { this.hasOptionsMenu = hasOptionsMenu }
     }
 
-    fun withActionBarConfiguration(actionBarConfiguration: ActionBarConfiguration): LightBulbFragmentConfiguration {
+    fun withActionBarConfiguration(actionBarConfiguration: ActionBarConfiguration): BaseFragmentConfiguration {
         return apply { this.actionBarConfiguration = actionBarConfiguration; }
     }
 

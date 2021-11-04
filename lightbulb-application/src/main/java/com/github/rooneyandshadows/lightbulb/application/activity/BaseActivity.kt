@@ -17,13 +17,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.LocaleChangerAppCompatDelegate
-import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
 import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
 import com.github.rooneyandshadows.lightbulb.application.activity.helpers.SliderHelper
 import com.github.rooneyandshadows.lightbulb.application.activity.helpers.SliderHelper.*
-import com.github.rooneyandshadows.lightbulb.application.activity.routing.LightBulbApplicationRouter
-import com.github.rooneyandshadows.lightbulb.application.fragment.LightBulbFragment
+import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseApplicationRouter
+import com.github.rooneyandshadows.lightbulb.application.fragment.BaseFragment
 import com.github.rooneyandshadows.lightbulb.commons.utils.KeyboardUtils.Companion.hideKeyboard
 import com.github.rooneyandshadows.lightbulb.textinputview.TextInputView
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
@@ -37,18 +36,18 @@ import com.github.rooneyandshadows.lightbulb.application.activity.service.Connec
     "UNUSED_PARAMETER",
     "UNUSED_ANONYMOUS_PARAMETER"
 )
-abstract class LightBulbActivity : AppCompatActivity() {
+abstract class BaseActivity : AppCompatActivity() {
     private val sliderBundleKey = "DRAWER_STATE"
     private val stompNotificationJobId = 1
     private val contentContainerIdentifier = R.id.fragmentContainer
     private var dragged = false
-    private var appRouter: LightBulbApplicationRouter? = null
+    private var appRouter: BaseApplicationRouter? = null
     private lateinit var sliderUtils: SliderHelper
     private lateinit var localeChangerAppCompatDelegate: LocaleChangerAppCompatDelegate
     private var internetConnectionStateBroadcaster = InternetConnectionStateBroadcaster()
     protected abstract val drawerConfiguration: SliderConfiguration
 
-    protected open fun initializeRouter(fragmentContainerId: Int): LightBulbApplicationRouter? {
+    protected open fun initializeRouter(fragmentContainerId: Int): BaseApplicationRouter? {
         return null
     }
 
@@ -119,7 +118,7 @@ abstract class LightBulbActivity : AppCompatActivity() {
         val fragmentList = supportFragmentManager.fragments
         var handled = false
         for (f in fragmentList)
-            if (f is LightBulbFragment) {
+            if (f is BaseFragment) {
                 handled = f.onBackPressed()
                 if (handled) break
             }
@@ -203,7 +202,7 @@ abstract class LightBulbActivity : AppCompatActivity() {
             exception.printStackTrace()
             this.runOnUiThread {
                 Toast.makeText(
-                    this@LightBulbActivity,
+                    this@BaseActivity,
                     "Error occurred.",
                     Toast.LENGTH_LONG
                 ).show()

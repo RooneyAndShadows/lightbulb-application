@@ -5,11 +5,11 @@ import android.content.Context
 import android.content.res.Configuration
 import android.util.Log
 import com.franmontiel.localechanger.LocaleChanger
-import com.github.rooneyandshadows.lightbulb.application.activity.LightBulbActivity
+import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import java.util.*
 import java.util.function.Predicate
 
-abstract class LightBulbApplication : Application() {
+abstract class BaseApplication : Application() {
     protected abstract val supportedLocales: List<Locale>
 
     protected open fun create() {
@@ -20,7 +20,7 @@ abstract class LightBulbApplication : Application() {
 
     companion object {
         @JvmStatic
-        lateinit var application: LightBulbApplication
+        lateinit var application: BaseApplication
             private set
 
         @JvmStatic
@@ -55,7 +55,7 @@ abstract class LightBulbApplication : Application() {
             Log.w(null, "Locale \"$locale\"  is not supported");
     }
 
-    fun changeLocaleAndRecreateActivity(locale: String, context: LightBulbActivity) {
+    fun changeLocaleAndRecreateActivity(locale: String, context: BaseActivity) {
         val localeToSet = supportedLocales.stream()
             .filter(Predicate {
                 it.language == locale

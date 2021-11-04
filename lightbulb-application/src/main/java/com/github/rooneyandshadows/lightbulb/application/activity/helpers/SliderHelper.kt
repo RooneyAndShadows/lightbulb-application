@@ -15,12 +15,12 @@ import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem
 import com.mikepenz.materialdrawer.util.addItems
 import com.mikepenz.materialdrawer.util.removeAllItems
 import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
-import com.github.rooneyandshadows.lightbulb.application.activity.LightBulbActivity
+import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import com.github.rooneyandshadows.lightbulb.commons.utils.KeyboardUtils
 
 @Suppress("UNUSED_ANONYMOUS_PARAMETER")
 class SliderHelper(
-    private val contextActivity: LightBulbActivity,
+    private val contextActivity: BaseActivity,
     private val drawerLayout: DrawerLayout,
     private val sliderLayout: MaterialDrawerSliderView,
     private val sliderSavedState: Bundle?,
