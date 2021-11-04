@@ -50,7 +50,11 @@ abstract class BaseFragment : Fragment() {
     protected open fun selectViews() {
     }
 
-    protected open fun createView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    protected open fun createView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return null
     }
 
@@ -108,7 +112,11 @@ abstract class BaseFragment : Fragment() {
         saveInstanceState(outState)
     }
 
-    final override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    final override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         setHasOptionsMenu(fragmentConfiguration.hasOptionsMenu)
         return createView(inflater, container, savedInstanceState);
     }
@@ -122,10 +130,7 @@ abstract class BaseFragment : Fragment() {
     final override fun onViewCreated(fragmentView: View, savedInstanceState: Bundle?) {
         super.onViewCreated(fragmentView, savedInstanceState)
         if (fragmentConfiguration.isContentFragment) {
-            if (fragmentConfiguration.hasLeftDrawer)
-                contextActivity.enableLeftDrawer()
-            else
-                contextActivity.disableLeftDrawer()
+            contextActivity.enableLeftDrawer(fragmentConfiguration.hasLeftDrawer)
             actionBarUtils = ActionBarHelper(this, fragmentConfiguration.actionBarConfiguration)
         }
         selectViews()
@@ -139,7 +144,11 @@ abstract class BaseFragment : Fragment() {
         attach()
     }
 
-    final override fun onCreateAnimation(transit: Int, isEnterTransition: Boolean, nextAnim: Int): Animation? {
+    final override fun onCreateAnimation(
+        transit: Int,
+        isEnterTransition: Boolean,
+        nextAnim: Int
+    ): Animation? {
         enableTouch(false)
         return if (fragmentConfiguration.isContentFragment && nextAnim != 0) {
             val anim = AnimationUtils.loadAnimation(contextActivity, nextAnim)
@@ -202,7 +211,8 @@ abstract class BaseFragment : Fragment() {
         private fun initializeActionBarForConfiguration(configuration: BaseFragmentConfiguration.ActionBarConfiguration?) {
             if (configuration == null)
                 return
-            val toolbar: Toolbar = contextFragment.requireView().findViewById(configuration.actionBarId)
+            val toolbar: Toolbar =
+                contextFragment.requireView().findViewById(configuration.actionBarId)
             toolbar.contentInsetStartWithNavigation = 0
             contextFragment.contextActivity.setSupportActionBar(toolbar)
             contextFragment.contextActivity.supportActionBar!!.title = configuration.title
