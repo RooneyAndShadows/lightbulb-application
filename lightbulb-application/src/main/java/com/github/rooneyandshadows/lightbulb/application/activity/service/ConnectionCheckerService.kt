@@ -23,7 +23,7 @@ class ConnectionCheckerService : Service() {
         if (isRunning) return START_NOT_STICKY
         startConnectionCheckerThread()
         isRunning = true
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {

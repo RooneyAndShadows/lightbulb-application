@@ -9,8 +9,8 @@
         <service
             android:name=".activity.service.ConnectionCheckerService"
             android:exported="true"
-            android:label="ConnectionCheckerService"
-            android:stopWithTask="false">
+            android:label="ConnectionCheckerService">
+            <!--android:stopWithTask="false"-->
             <!--android:process=":NotificationServiceProcess"-->
             <intent-filter>
                 <action android:name="ConnectionCheckerService" />
