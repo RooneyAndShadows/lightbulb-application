@@ -57,13 +57,17 @@ abstract class BaseActivity : AppCompatActivity() {
     protected open fun create(savedInstanceState: Bundle?) {
     }
 
+    protected open fun resume() {
+
+    }
+
     protected open fun newIntent(intent: Intent) {
     }
 
     protected open fun saveInstanceState(outState: Bundle) {
     }
 
-    protected open fun pause(){
+    protected open fun pause() {
     }
 
     protected open fun destroy() {
@@ -81,27 +85,30 @@ abstract class BaseActivity : AppCompatActivity() {
         beforeCreate(savedInstanceState)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.base_activity_layout)
-        initializeInternetCheckerService();
         initializeStompNotificationServiceIfPresented();
         setupActivity(savedInstanceState)
         setUnhandledGlobalExceptionHandler()
         create(savedInstanceState)
     }
 
+    override fun onResume() {
+        super.onResume()
+        startInternetCheckerService();
+        resume()
+    }
 
+    @Override
+    final override fun onPause() {
+        super.onPause()
+        stopInternetCheckerService()
+        pause()
+    }
 
     @Override
     final override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putParcelable(sliderBundleKey, sliderUtils.saveState())
         saveInstanceState(outState)
-    }
-
-    @Override
-    final override fun onPause() {
-        super.onPause()
-        unregisterReceiver(internetConnectionStateBroadcaster)
-        pause()
     }
 
     @Override
@@ -239,13 +246,17 @@ abstract class BaseActivity : AppCompatActivity() {
         }
     }
 
-    private fun initializeInternetCheckerService() {
+    private fun startInternetCheckerService() {
         startService(Intent(this, ConnectionCheckerService::class.java))
         internetConnectionStateBroadcaster.contextActivity = this
         val intentFilters = IntentFilter()
         intentFilters.addAction(BuildConfig.internetConnectionBroadcasterActionEnabled)
         intentFilters.addAction(BuildConfig.internetConnectionBroadcasterActionDisabled)
         registerReceiver(internetConnectionStateBroadcaster, intentFilters)
+    }
+
+    private fun stopInternetCheckerService() {
+        unregisterReceiver(internetConnectionStateBroadcaster)
     }
 
     private fun initializeStompNotificationServiceIfPresented() {
