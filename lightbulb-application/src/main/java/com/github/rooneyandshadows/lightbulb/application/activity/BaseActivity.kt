@@ -63,6 +63,9 @@ abstract class BaseActivity : AppCompatActivity() {
     protected open fun saveInstanceState(outState: Bundle) {
     }
 
+    protected open fun pause(){
+    }
+
     protected open fun destroy() {
     }
 
@@ -85,6 +88,8 @@ abstract class BaseActivity : AppCompatActivity() {
         create(savedInstanceState)
     }
 
+
+
     @Override
     final override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
@@ -93,9 +98,15 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     @Override
+    final override fun onPause() {
+        super.onPause()
+        unregisterReceiver(internetConnectionStateBroadcaster)
+        pause()
+    }
+
+    @Override
     final override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(internetConnectionStateBroadcaster)
         appRouter?.removeNavigator()
         destroy()
     }
