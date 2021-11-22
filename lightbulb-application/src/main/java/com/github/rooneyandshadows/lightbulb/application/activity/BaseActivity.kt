@@ -8,6 +8,7 @@ import android.content.*
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
@@ -27,7 +28,6 @@ import com.github.rooneyandshadows.lightbulb.commons.utils.KeyboardUtils.Compani
 import com.github.rooneyandshadows.lightbulb.textinputview.TextInputView
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.R
-import com.github.rooneyandshadows.lightbulb.application.activity.broadcasters.InternetConnectionStateBroadcaster
 import com.github.rooneyandshadows.lightbulb.application.activity.configuration.StompNotificationServiceRegistry
 import com.github.rooneyandshadows.lightbulb.application.activity.service.ConnectionCheckerService
 
@@ -44,8 +44,19 @@ abstract class BaseActivity : AppCompatActivity() {
     private var appRouter: BaseApplicationRouter? = null
     private lateinit var sliderUtils: SliderHelper
     private lateinit var localeChangerAppCompatDelegate: LocaleChangerAppCompatDelegate
-    private var internetConnectionStateBroadcaster = InternetConnectionStateBroadcaster()
     protected abstract val drawerConfiguration: SliderConfiguration
+    private val internetAccessServiceConnection = object : ServiceConnection {
+
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            val binder = service as ConnectionCheckerService.LocalBinder
+            binder.getService().activity = this@BaseActivity
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+        }
+    }
+
 
     protected open fun initializeRouter(fragmentContainerId: Int): BaseApplicationRouter? {
         return null
@@ -247,16 +258,14 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     private fun startInternetCheckerService() {
+        Intent(this, ConnectionCheckerService::class.java).also { intent ->
+            bindService(intent, internetAccessServiceConnection, Context.BIND_AUTO_CREATE)
+        }
         startService(Intent(this, ConnectionCheckerService::class.java))
-        internetConnectionStateBroadcaster.contextActivity = this
-        val intentFilters = IntentFilter()
-        intentFilters.addAction(BuildConfig.internetConnectionBroadcasterActionEnabled)
-        intentFilters.addAction(BuildConfig.internetConnectionBroadcasterActionDisabled)
-        registerReceiver(internetConnectionStateBroadcaster, intentFilters)
     }
 
     private fun stopInternetCheckerService() {
-        unregisterReceiver(internetConnectionStateBroadcaster)
+        unbindService(internetAccessServiceConnection)
     }
 
     private fun initializeStompNotificationServiceIfPresented() {

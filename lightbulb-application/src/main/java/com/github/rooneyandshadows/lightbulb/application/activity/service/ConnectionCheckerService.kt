@@ -8,10 +8,19 @@ import android.net.NetworkCapabilities
 import android.os.IBinder
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import java.lang.Exception
+import android.os.Binder
+import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 
 class ConnectionCheckerService : Service() {
     private var isRunning = false
     private var connectionManager: ConnectivityManager? = null
+    var activity: BaseActivity? = null
+    private val binder: IBinder = LocalBinder()
+
+    inner class LocalBinder : Binder() {
+        // Return this instance of LocalService so clients can call public methods
+        fun getService(): ConnectionCheckerService = this@ConnectionCheckerService
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -30,8 +39,8 @@ class ConnectionCheckerService : Service() {
         super.onDestroy()
     }
 
-    override fun onBind(arg0: Intent): IBinder? {
-        return null
+    override fun onBind(arg0: Intent): IBinder {
+        return binder
     }
 
     private fun startConnectionCheckerThread() {
@@ -42,10 +51,7 @@ class ConnectionCheckerService : Service() {
                     synchronized(this) {
                         while (true) {
                             sleep(2000)
-                            when {
-                                !isInternetAvailable() -> sendBroadcast(Intent(BuildConfig.internetConnectionBroadcasterActionDisabled))
-                                else -> sendBroadcast(Intent(BuildConfig.internetConnectionBroadcasterActionEnabled))
-                            }
+                            activity?.onInternetConnectionStatusChanged(isInternetAvailable())
                         }
                     }
                 } catch (e: Exception) {
@@ -70,4 +76,5 @@ class ConnectionCheckerService : Service() {
         }
         return result
     }
+
 }

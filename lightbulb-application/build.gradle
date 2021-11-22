@@ -9,8 +9,8 @@ android {
     defaultConfig {
         minSdkVersion 24
         targetSdkVersion 30
-        versionCode 1010
-        versionName "1.0.10"
+        versionCode 1011
+        versionName "1.0.11"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
     }
@@ -21,14 +21,10 @@ android {
         debug {
             //Notification configuration
             buildConfigField "String", "notificationChannelId", "\"NOTIFICATION_CHANNEL_ID\""
-            buildConfigField "String", "internetConnectionBroadcasterActionEnabled", "\"INTERNET_ENABLED\""
-            buildConfigField "String", "internetConnectionBroadcasterActionDisabled", "\"INTERNET_DISABLED\""
         }
         release {
             //Notification configuration
             buildConfigField "String", "notificationChannelId", "\"NOTIFICATION_CHANNEL_ID\""
-            buildConfigField "String", "internetConnectionBroadcasterActionEnabled", "\"INTERNET_ENABLED\""
-            buildConfigField "String", "internetConnectionBroadcasterActionDisabled", "\"INTERNET_DISABLED\""
         }
     }
     compileOptions {

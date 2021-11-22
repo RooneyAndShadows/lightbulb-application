@@ -8,22 +8,10 @@
     <application>
         <service
             android:name=".activity.service.ConnectionCheckerService"
-            android:exported="true"
+            android:exported="false"
             android:label="ConnectionCheckerService">
             <!--android:stopWithTask="false"-->
             <!--android:process=":NotificationServiceProcess"-->
-            <intent-filter>
-                <action android:name="ConnectionCheckerService" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
         </service>
-        <receiver
-            android:name=".activity.broadcasters.InternetConnectionStateBroadcaster"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="InternetConnectionStateBroadcaster" />
-            </intent-filter>
-        </receiver>
     </application>
 </manifest>
