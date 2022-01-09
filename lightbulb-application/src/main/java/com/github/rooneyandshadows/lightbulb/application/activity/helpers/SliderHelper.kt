@@ -49,21 +49,21 @@ class SliderHelper(
 
     fun disableSlider() {
         isSliderEnabled = false
-        sliderLayout.drawerLayout?.close()
-        sliderLayout.drawerLayout?.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+        drawerLayout.close()
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
     }
 
     fun enableSlider() {
         isSliderEnabled = true
-        sliderLayout.drawerLayout?.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
     }
 
     fun closeSlider() {
-        sliderLayout.drawerLayout?.close()
+        drawerLayout.close()
     }
 
     fun openSlider() {
-        sliderLayout.drawerLayout?.open()
+        drawerLayout.open()
     }
 
     private fun setupDrawer() {
