@@ -6,6 +6,7 @@ import android.app.job.JobInfo
 import android.app.job.JobScheduler
 import android.content.*
 import android.graphics.Rect
+import android.net.NetworkRequest
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -283,15 +284,11 @@ abstract class BaseActivity : AppCompatActivity() {
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
         }
-        val name = ComponentName(
-            this,
-            stompNotificationServiceRegistry.notificationServiceClass
-        )
-
+        val name = ComponentName(this, stompNotificationServiceRegistry.notificationServiceClass)
         val scheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
         if (!checkIfJobServiceScheduled(stompNotificationJobId)) {
             val b = JobInfo.Builder(stompNotificationJobId, name)
-                .setOverrideDeadline(1)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setPersisted(true)
             scheduler.schedule(b.build())
         }

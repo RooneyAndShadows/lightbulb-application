@@ -39,7 +39,7 @@ class SliderHelper(
     }
 
     fun isDrawerOpen(): Boolean {
-        return sliderLayout.drawerLayout!!.isDrawerOpen(GravityCompat.START)
+        return drawerLayout.isDrawerOpen(GravityCompat.START)
     }
 
     fun reInitialize(settings: SliderSetup?) {

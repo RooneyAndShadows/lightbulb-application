@@ -15,6 +15,7 @@ import android.app.NotificationManager
 import android.app.job.JobParameters
 import android.app.job.JobService
 import androidx.work.Configuration
+import com.github.rooneyandshadows.java.commons.stomp.StompSubscription
 
 
 /*
@@ -33,12 +34,14 @@ Add below code in manifest
  */
 
 abstract class StompNotificationJobService() : JobService() {
-    private val maxExecutionTime = 15 * 60 * 1000
-    private var startTime: Long = 0
-    private var params: JobParameters? = null
+    private val maxExecutionTime = 15 * 20 * 1000
+    private var jobStartTime: Long = 0
+    private var jobParameters: JobParameters? = null
     private var isConnected = false
+    private var jobStompSubscription: StompSubscription? = null
     private lateinit var configuration: StompNotificationJobServiceConfiguration
-    private var stompClient: StompClient? = null
+    private lateinit var jobStompThread: StompThread
+    private lateinit var jobStompClient: StompClient
 
     init {
         val builder = Configuration.Builder()
@@ -47,63 +50,29 @@ abstract class StompNotificationJobService() : JobService() {
 
     abstract fun configure(): StompNotificationJobServiceConfiguration
 
-    override fun onStartJob(jobParameters: JobParameters): Boolean {
-        params = jobParameters
-        startTime = System.currentTimeMillis()
-        stompClient = initializeStompClient()
-        startStompThread()
-        return true
-    }
-
-    override fun onStopJob(jobParameters: JobParameters?): Boolean {
-        return true
-    }
-
     override fun onCreate() {
         super.onCreate()
         configuration = configure()
     }
 
-    private fun startStompThread() {
-        val stompThread: Thread = object : Thread() {
-            private var initialConnection = true
+    override fun onStartJob(jobParameters: JobParameters): Boolean {
+        System.out.println("START")
+        this.jobParameters = jobParameters
+        this.jobStartTime = System.currentTimeMillis()
+        this.jobStompClient = initializeStompClient()
+        this.jobStompThread = StompThread()
+        this.jobStompThread.start()
+        return true
+    }
 
-            override fun run() {
-                try {
-                    while (true) {
-                        if (!isConnected && configuration.listenUntilCondition()) {
-                            if (initialConnection) {
-                                stompClient!!.connectBlocking()
-                                initialConnection = false
-                            } else {
-                                stompClient!!.reconnectBlocking()
-                            }
-                            if (!isConnected) {
-                                sleep(5000)
-                                continue
-                            }
-                        }
-                        if ((System.currentTimeMillis() - startTime) > maxExecutionTime) {
-                            if (isConnected)
-                                stopListenForNotifications(false)
-                            break
-                        }
-                        if (isConnected && !configuration.listenUntilCondition())
-                            stopListenForNotifications(true)
-                        sleep(5000)
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    jobFinished(params, true)
-                }
-            }
-        }
-        stompThread.start()
+    override fun onStopJob(jobParameters: JobParameters?): Boolean {
+        System.out.println("STOP")
+        jobStompThread.stopThread()
+        return true
     }
 
     private fun initializeStompClient(): StompClient {
-        val stompClient = object :
+        return object :
             StompClient(URI.create(configuration.stompApiUrl), Draft_6455(), null, 3000) {
             override fun onError(ex: Exception) {
                 Log.d(
@@ -111,44 +80,49 @@ abstract class StompNotificationJobService() : JobService() {
                     "Failed to connect notification service. Retrying..."
                 )
             }
-        }
-        stompClient.setStompConnectionListener(object : StompConnectionListener() {
-            override fun onConnecting() {
-                super.onConnecting()
-                isConnected = false
-            }
-
-            override fun onConnected() {
-                super.onConnected()
-                Log.d(this.javaClass.simpleName, "Notification service connected")
-                isConnected = true
-                if (!configuration.listenUntilCondition()) return
-                stompClient.subscribe(configuration.stompSubscribeUrl) { stompFrame: StompFrame ->
-                    showNotification(configuration.onFrameReceived(stompFrame))
+        }.apply {
+            setStompConnectionListener(object : StompConnectionListener() {
+                override fun onConnecting() {
+                    super.onConnecting()
+                    isConnected = false
                 }
-                val message = configuration.stompStartPayload?.configureMessage() ?: ""
-                val headers: MutableMap<String, String> = HashMap()
-                configuration.stompStartPayload?.configureHeaders(headers)
-                stompClient.send(configuration.stompStartListenUrl, message, headers)
-                configuration.onStartListenCallback()
-            }
 
-            override fun onDisconnected() {
-                super.onDisconnected()
-                isConnected = false
-                Log.d(this.javaClass.simpleName, "Notification service disconnected")
-            }
-        })
-        return stompClient
+                override fun onConnected() {
+                    super.onConnected()
+                    Log.d(this.javaClass.simpleName, "Notification service connected")
+                    isConnected = true
+                    if (!configuration.listenUntilCondition()) return
+                    if (jobStompSubscription != null)
+                        jobStompClient.removeSubscription(jobStompSubscription)
+                    jobStompSubscription =
+                        subscribe(configuration.stompSubscribeUrl) { stompFrame: StompFrame ->
+                            showNotification(configuration.onFrameReceived(stompFrame))
+                        }
+                    val message = configuration.stompStartPayload?.configureMessage() ?: ""
+                    val headers: MutableMap<String, String> = HashMap()
+                    configuration.stompStartPayload?.configureHeaders(headers)
+                    send(configuration.stompStartListenUrl, message, headers)
+                    configuration.onStartListenCallback()
+                }
+
+                override fun onDisconnected() {
+                    super.onDisconnected()
+                    isConnected = false
+                    Log.d(this.javaClass.simpleName, "Notification service disconnected")
+                }
+            })
+        }
     }
 
     private fun stopListenForNotifications(clearShownNotifications: Boolean) {
         val message = configuration.stompStopPayload?.configureMessage() ?: ""
         val headers: MutableMap<String, String> = HashMap()
-        configuration.stompStopPayload?.configureHeaders(headers);
-        stompClient!!.send(configuration.stompStopListenUrl, message, headers)
+        configuration.stompStopPayload?.configureHeaders(headers)
+        jobStompClient.send(configuration.stompStopListenUrl, message, headers)
         configuration.onStopListenCallback()
-        stompClient!!.closeConnection(0, "")
+        if (jobStompSubscription != null)
+            jobStompClient.removeSubscription(jobStompSubscription)
+        jobStompClient.closeConnection(0, "")
         if (clearShownNotifications)
             cancelAllNotifications()
     }
@@ -175,6 +149,48 @@ abstract class StompNotificationJobService() : JobService() {
             ) // 0 is the request code, it should be unique id
         } else {
             notificationManager.notify(notificationToShow.hashCode(), notificationToShow)
+        }
+    }
+
+    inner class StompThread : Thread() {
+        private var initialConnection = true
+        private var interrupt = false
+
+        fun stopThread() {
+            interrupt = true
+        }
+
+        override fun run() {
+            try {
+                while (!interrupt) {
+                    if (!isConnected && configuration.listenUntilCondition()) {
+                        if (initialConnection) {
+                            jobStompClient.connectBlocking()
+                            initialConnection = false
+                        } else {
+                            jobStompClient.reconnectBlocking()
+                        }
+                        if (!isConnected) {
+                            sleep(5000)
+                            continue
+                        }
+                    }
+                    if ((System.currentTimeMillis() - jobStartTime) > maxExecutionTime) {
+                        if (isConnected)
+                            stopListenForNotifications(false)
+                        break
+                    }
+                    if (isConnected && !configuration.listenUntilCondition())
+                        stopListenForNotifications(true)
+                    sleep(5000)
+                }
+                if (interrupt && isConnected)
+                    stopListenForNotifications(false)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                jobFinished(jobParameters, true)
+            }
         }
     }
 
