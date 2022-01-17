@@ -34,7 +34,7 @@ Add below code in manifest
  */
 
 abstract class StompNotificationJobService() : JobService() {
-    private val maxExecutionTime = 15 * 20 * 1000
+    private val maxExecutionTime = 15 * 60 * 1000
     private var jobStartTime: Long = 0
     private var jobParameters: JobParameters? = null
     private var isConnected = false
