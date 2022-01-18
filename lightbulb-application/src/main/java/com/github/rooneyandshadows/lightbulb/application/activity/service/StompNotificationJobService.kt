@@ -14,6 +14,9 @@ import java.util.HashMap
 import android.app.NotificationManager
 import android.app.job.JobParameters
 import android.app.job.JobService
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.work.Configuration
 import com.github.rooneyandshadows.java.commons.stomp.StompSubscription
 
@@ -31,7 +34,7 @@ Add below code in manifest
         <category android:name="android.intent.category.DEFAULT" />
     </intent-filter>
 </service>
- */
+*/
 
 abstract class StompNotificationJobService() : JobService() {
     private val maxExecutionTime = 15 * 60 * 1000
@@ -56,7 +59,6 @@ abstract class StompNotificationJobService() : JobService() {
     }
 
     override fun onStartJob(jobParameters: JobParameters): Boolean {
-        System.out.println("START")
         this.jobParameters = jobParameters
         this.jobStartTime = System.currentTimeMillis()
         this.jobStompClient = initializeStompClient()
@@ -66,7 +68,6 @@ abstract class StompNotificationJobService() : JobService() {
     }
 
     override fun onStopJob(jobParameters: JobParameters?): Boolean {
-        System.out.println("STOP")
         jobStompThread.stopThread()
         return true
     }
@@ -80,6 +81,8 @@ abstract class StompNotificationJobService() : JobService() {
                     "Failed to connect notification service. Retrying..."
                 )
             }
+        }.apply {
+            isReuseAddr = true
         }.apply {
             setStompConnectionListener(object : StompConnectionListener() {
                 override fun onConnecting() {
@@ -163,6 +166,8 @@ abstract class StompNotificationJobService() : JobService() {
         override fun run() {
             try {
                 while (!interrupt) {
+                    if (!isInternetAvailable())
+                        jobStompClient.closeConnection(0, "")
                     if (!isConnected && configuration.listenUntilCondition()) {
                         if (initialConnection) {
                             jobStompClient.connectBlocking()
@@ -192,6 +197,21 @@ abstract class StompNotificationJobService() : JobService() {
                 jobFinished(jobParameters, true)
             }
         }
+    }
+
+    private fun isInternetAvailable(): Boolean {
+        val result: Boolean
+        val connectivityManager =
+            getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val networkCapabilities = connectivityManager.activeNetwork ?: return false
+        val actNw = connectivityManager.getNetworkCapabilities(networkCapabilities) ?: return false
+        result = when {
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+            actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+            else -> false
+        }
+        return result
     }
 
     abstract class StompNotificationJobServiceConfiguration constructor(

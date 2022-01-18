@@ -76,5 +76,4 @@ class ConnectionCheckerService : Service() {
         }
         return result
     }
-
 }
