@@ -18,6 +18,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import androidx.work.Configuration
+import com.github.rooneyandshadows.java.commons.date.DateUtils
 import com.github.rooneyandshadows.java.commons.stomp.StompSubscription
 
 
@@ -37,7 +38,7 @@ Add below code in manifest
 */
 
 abstract class StompNotificationJobService() : JobService() {
-    private val maxExecutionTime = 15 * 60 * 1000
+    private val maxExecutionTime = 10 * 60 * 1000
     private var jobStartTime: Long = 0
     private var jobParameters: JobParameters? = null
     private var isConnected = false
@@ -64,12 +65,12 @@ abstract class StompNotificationJobService() : JobService() {
         this.jobStompClient = initializeStompClient()
         this.jobStompThread = StompThread()
         this.jobStompThread.start()
-        return true
+        return false //reschedule
     }
 
     override fun onStopJob(jobParameters: JobParameters?): Boolean {
         jobStompThread.stopThread()
-        return true
+        return false //reschedule
     }
 
     private fun initializeStompClient(): StompClient {
@@ -92,7 +93,10 @@ abstract class StompNotificationJobService() : JobService() {
 
                 override fun onConnected() {
                     super.onConnected()
-                    Log.d(this.javaClass.simpleName, "Notification service connected")
+                    Log.d(
+                        this.javaClass.simpleName,
+                        "Notification service connected"
+                    )
                     isConnected = true
                     if (!configuration.listenUntilCondition()) return
                     if (jobStompSubscription != null)
