@@ -13,7 +13,7 @@ buildscript {
                 material          : "1.4.0",
                 lightbulb         : [
                         commons      : "1.0.1",
-                        textinputview: "1.0.3",
+                        textinputview: "1.0.4",
                 ],
                 java              : [
                         commons: "1.0.0"
