@@ -6,7 +6,6 @@ import android.app.job.JobInfo
 import android.app.job.JobScheduler
 import android.content.*
 import android.graphics.Rect
-import android.net.NetworkRequest
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -17,8 +16,6 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.appcompat.app.LocaleChangerAppCompatDelegate
 import androidx.drawerlayout.widget.DrawerLayout
 import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
 import com.github.rooneyandshadows.lightbulb.application.activity.helpers.SliderHelper
@@ -31,6 +28,7 @@ import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.R
 import com.github.rooneyandshadows.lightbulb.application.activity.configuration.StompNotificationServiceRegistry
 import com.github.rooneyandshadows.lightbulb.application.activity.service.ConnectionCheckerService
+import com.github.rooneyandshadows.lightbulb.commons.utils.LocaleHelper
 
 @Suppress(
     "unused",
@@ -44,7 +42,8 @@ abstract class BaseActivity : AppCompatActivity() {
     private var dragged = false
     private var appRouter: BaseApplicationRouter? = null
     private lateinit var sliderUtils: SliderHelper
-    private lateinit var localeChangerAppCompatDelegate: LocaleChangerAppCompatDelegate
+
+    //private lateinit var localeChangerAppCompatDelegate: LocaleChangerAppCompatDelegate
     protected abstract val drawerConfiguration: SliderConfiguration
     private val internetAccessServiceConnection = object : ServiceConnection {
 
@@ -103,6 +102,10 @@ abstract class BaseActivity : AppCompatActivity() {
         create(savedInstanceState)
     }
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.onAttach(newBase))
+    }
+
     override fun onResume() {
         super.onResume()
         startInternetCheckerService();
@@ -137,11 +140,11 @@ abstract class BaseActivity : AppCompatActivity() {
         newIntent(getIntent())
     }
 
-    @Override
-    final override fun getDelegate(): AppCompatDelegate {
-        localeChangerAppCompatDelegate = LocaleChangerAppCompatDelegate(super.getDelegate())
-        return localeChangerAppCompatDelegate
-    }
+    //@Override
+    //final override fun getDelegate(): AppCompatDelegate {
+    ///    localeChangerAppCompatDelegate = LocaleChangerAppCompatDelegate(super.getDelegate())
+    //    return localeChangerAppCompatDelegate
+    //}
 
     @Override
     final override fun onBackPressed() {
@@ -184,6 +187,14 @@ abstract class BaseActivity : AppCompatActivity() {
             }
         }
         return false
+    }
+
+    fun reload() {
+        val intent: Intent = getIntent()
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+        finish()
+        overridePendingTransition(0, 0)
+        startActivity(intent)
     }
 
     fun isDrawerEnabled(): Boolean {

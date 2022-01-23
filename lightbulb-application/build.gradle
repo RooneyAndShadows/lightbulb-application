@@ -5,12 +5,12 @@ plugins {
     id 'maven-publish'
 }
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 30
-        versionCode 1018
-        versionName "1.0.18"
+        targetSdkVersion 31
+        versionCode 1019
+        versionName "1.0.19"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
     }
@@ -64,16 +64,15 @@ afterEvaluate {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "androidx.core:core-ktx:$versions.ktx.core"
-    implementation "androidx.appcompat:appcompat:$versions.android_appcompat"
-    implementation "androidx.annotation:annotation:$versions.android_annotation"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$versions.android_lifecycle"
-    implementation "androidx.work:work-runtime:$versions.android_work"
-    implementation "androidx.preference:preference-ktx:$versions.android_preference"
-    implementation "com.google.android.material:material:$versions.material"
+    implementation "androidx.appcompat:appcompat:$versions.android.appcompat"
+    implementation "androidx.annotation:annotation:$versions.android.annotation"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$versions.android.lifecycle"
+    implementation "androidx.work:work-runtime:$versions.android.work"
+    implementation "androidx.preference:preference-ktx:$versions.android.preference"
+    implementation "com.google.android.material:material:$versions.android.material"
     implementation "com.github.rooneyandshadows:java-commons:$versions.java.commons"
     implementation "com.github.rooneyandshadows:lightbulb-commons:$versions.lightbulb.commons"
     implementation "com.github.rooneyandshadows:lightbulb-textinputview:$versions.lightbulb.textinputview"
-    implementation 'com.github.franmontiel:LocaleChanger:1.1'
     implementation "com.mikepenz:materialdrawer:8.4.2"
     implementation "com.github.terrakok:cicerone:7.1"
 }

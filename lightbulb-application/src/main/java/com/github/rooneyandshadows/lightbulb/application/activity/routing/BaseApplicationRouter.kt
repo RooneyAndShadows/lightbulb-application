@@ -22,24 +22,22 @@ open class BaseApplicationRouter(contextActivity: BaseActivity, fragmentContaine
         cicerone.getNavigatorHolder().setNavigator(setupNavigator(contextActivity))
     }
 
-    protected fun navigate(command: NavigationCommands?, screen: Screen) {
-        when (command) {
-            NavigationCommands.NAVIGATE_TO -> router.navigateTo(
-                convertScreen(
-                    screen
-                )
+    protected fun navigate(command: NavigationCommands, screen: Screen) {
+        if (command == NavigationCommands.NAVIGATE_TO) router.navigateTo(
+            convertScreen(
+                screen
             )
-            NavigationCommands.NAVIGATE_TO_AND_CLEAR_BACKSTACK -> router.newRootChain(
-                convertScreen(
-                    screen
-                )
+        )
+        if (command == NavigationCommands.NAVIGATE_TO_AND_CLEAR_BACKSTACK) router.newRootChain(
+            convertScreen(
+                screen
             )
-            NavigationCommands.BACK_TO -> router.backTo(
-                convertScreen(
-                    screen
-                )
+        )
+        if (command == NavigationCommands.BACK_TO) router.backTo(
+            convertScreen(
+                screen
             )
-        }
+        )
     }
 
     fun newChain(vararg screens: Screen) {
