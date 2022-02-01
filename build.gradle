@@ -14,11 +14,11 @@ buildscript {
 
                 ],
                 lightbulb: [
-                        commons      : "1.0.2",
+                        commons      : "1.0.3",
                         textinputview: "1.0.4",
                 ],
                 java     : [
-                        commons: "1.0.1"
+                        commons: "1.0.2"
                 ]
 
         ]

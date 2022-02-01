@@ -20,6 +20,7 @@ import android.net.NetworkCapabilities
 import androidx.work.Configuration
 import com.github.rooneyandshadows.java.commons.date.DateUtils
 import com.github.rooneyandshadows.java.commons.stomp.StompSubscription
+import com.github.rooneyandshadows.lightbulb.commons.utils.InteractionUtils
 
 
 /*
@@ -38,7 +39,7 @@ Add below code in manifest
 */
 
 abstract class StompNotificationJobService() : JobService() {
-    private val maxExecutionTime = 10 * 60 * 1000
+    private val maxExecutionTime = 180000//3 minutes
     private var jobStartTime: Long = 0
     private var jobParameters: JobParameters? = null
     private var isConnected = false
@@ -101,15 +102,15 @@ abstract class StompNotificationJobService() : JobService() {
                     if (!configuration.listenUntilCondition()) return
                     if (jobStompSubscription != null)
                         jobStompClient.removeSubscription(jobStompSubscription)
-                    jobStompSubscription =
-                        subscribe(configuration.stompSubscribeUrl) { stompFrame: StompFrame ->
-                            showNotification(configuration.onFrameReceived(stompFrame))
-                        }
-                    val message = configuration.stompStartPayload?.configureMessage() ?: ""
                     val headers: MutableMap<String, String> = HashMap()
                     configuration.stompStartPayload?.configureHeaders(headers)
-                    send(configuration.stompStartListenUrl, message, headers)
-                    configuration.onStartListenCallback()
+                    jobStompSubscription =
+                        subscribe(
+                            configuration.stompSubscribeUrl,
+                            headers
+                        ) { stompFrame: StompFrame ->
+                            showNotification(configuration.onFrameReceived(stompFrame))
+                        }
                 }
 
                 override fun onDisconnected() {
@@ -122,13 +123,10 @@ abstract class StompNotificationJobService() : JobService() {
     }
 
     private fun stopListenForNotifications(clearShownNotifications: Boolean) {
-        val message = configuration.stompStopPayload?.configureMessage() ?: ""
         val headers: MutableMap<String, String> = HashMap()
         configuration.stompStopPayload?.configureHeaders(headers)
-        jobStompClient.send(configuration.stompStopListenUrl, message, headers)
-        configuration.onStopListenCallback()
         if (jobStompSubscription != null)
-            jobStompClient.removeSubscription(jobStompSubscription)
+            jobStompClient.removeSubscription(jobStompSubscription, headers)
         jobStompClient.closeConnection(0, "")
         if (clearShownNotifications)
             cancelAllNotifications()
@@ -198,7 +196,7 @@ abstract class StompNotificationJobService() : JobService() {
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                jobFinished(jobParameters, true)
+                jobFinished(jobParameters, false)
             }
         }
     }
@@ -221,37 +219,21 @@ abstract class StompNotificationJobService() : JobService() {
     abstract class StompNotificationJobServiceConfiguration constructor(
         val notificationChannelName: String,
         val stompApiUrl: String,
-        val stompStartListenUrl: String,
-        val stompStopListenUrl: String,
         val stompSubscribeUrl: String
     ) {
         var stompStartPayload: StompPayload? = null
         var stompStopPayload: StompPayload? = null
-        var onStartListenCallback: (() -> Unit) = {}
-        var onStopListenCallback: (() -> Unit) = {}
         var listenUntilCondition: (() -> Boolean) = { true }
 
         abstract fun onFrameReceived(receivedFrame: StompFrame): Notification
 
-        fun withOnStartListeningCallback(onStartListeningCallback: (() -> Unit)): StompNotificationJobServiceConfiguration {
-            return apply {
-                this.onStartListenCallback = onStartListeningCallback
-            }
-        }
-
-        fun withOnStopListeningCallback(onStopListeningCallback: (() -> Unit)): StompNotificationJobServiceConfiguration {
-            return apply {
-                this.onStopListenCallback = onStopListeningCallback
-            }
-        }
-
-        fun withStartPayload(startPayload: StompPayload): StompNotificationJobServiceConfiguration {
+        fun withSubscribePayload(startPayload: StompPayload): StompNotificationJobServiceConfiguration {
             return apply {
                 this.stompStartPayload = startPayload
             }
         }
 
-        fun withStopPayload(stopPayload: StompPayload): StompNotificationJobServiceConfiguration {
+        fun withUnsubscribePayload(stopPayload: StompPayload): StompNotificationJobServiceConfiguration {
             return apply {
                 this.stompStopPayload = stopPayload
             }
