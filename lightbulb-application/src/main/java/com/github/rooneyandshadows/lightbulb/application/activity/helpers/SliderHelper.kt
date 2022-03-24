@@ -127,9 +127,8 @@ class SliderHelper(
             name = StringHolder(item.title)
             level = item.level
             onDrawerItemClickListener = { view, drawerItem, position ->
-                closeSlider()
+                item.onClick?.invoke(this@SliderHelper)
                 onSliderClosed = {
-                    item.onClick?.invoke(this@SliderHelper)
                 }
                 true
             }
@@ -143,9 +142,8 @@ class SliderHelper(
             name = StringHolder(item.title)
             level = item.level
             onDrawerItemClickListener = { view, drawerItem, position ->
-                closeSlider()
+                item.onClick?.invoke(this@SliderHelper)
                 onSliderClosed = {
-                    item.onClick?.invoke(this@SliderHelper)
                 }
                 true
             }
