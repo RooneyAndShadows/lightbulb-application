@@ -1,7 +1,6 @@
 package com.github.rooneyandshadows.lightbulb.application.fragment
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,8 +8,6 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import androidx.appcompat.app.ActionBar
-import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.BaseFragmentConfiguration
@@ -21,7 +18,8 @@ abstract class BaseFragment : Fragment() {
         private set
     lateinit var contextActivity: BaseActivity
         private set
-    private var actionBarUtils: ActionBarHelper? = null
+    lateinit var actionBarManager: ActionBarManager
+        private set
     private val isReusedKey = "IS_FRAGMENT_PREVIOUSLY_CREATED"
     protected val isSafe: Boolean
         get() = !(this.isRemoving || this.activity == null || this.isDetached || !this.isAdded || this.view == null)
@@ -131,7 +129,7 @@ abstract class BaseFragment : Fragment() {
         super.onViewCreated(fragmentView, savedInstanceState)
         if (fragmentConfiguration.isContentFragment) {
             contextActivity.enableLeftDrawer(fragmentConfiguration.hasLeftDrawer)
-            actionBarUtils = ActionBarHelper(this, fragmentConfiguration.actionBarConfiguration)
+            actionBarManager = ActionBarManager(this, fragmentConfiguration.actionBarConfiguration)
         }
         selectViews()
         viewCreated(fragmentView, savedInstanceState)
@@ -196,39 +194,5 @@ abstract class BaseFragment : Fragment() {
         CREATED(0),
         RESTARTED(1),
         REUSED(2)
-    }
-
-    class ActionBarHelper(
-        private val contextFragment: BaseFragment,
-        private val configuration: BaseFragmentConfiguration.ActionBarConfiguration?
-    ) {
-
-        init {
-            if (this.configuration != null)
-                initializeActionBarForConfiguration(configuration)
-        }
-
-        private fun initializeActionBarForConfiguration(configuration: BaseFragmentConfiguration.ActionBarConfiguration?) {
-            if (configuration == null)
-                return
-            val toolbar: Toolbar =
-                contextFragment.requireView().findViewById(configuration.actionBarId)
-            toolbar.contentInsetStartWithNavigation = 0
-            contextFragment.contextActivity.setSupportActionBar(toolbar)
-            contextFragment.contextActivity.supportActionBar!!.title = configuration.title
-            contextFragment.contextActivity.supportActionBar!!.subtitle = configuration.subtitle
-            if (configuration.isEnableActions) setupHomeIcon(configuration.homeIcon)
-        }
-
-        private fun setupHomeIcon(icon: Drawable?) {
-            val actionBar = getActionBar()!!
-            actionBar.setDisplayHomeAsUpEnabled(true)
-            actionBar.setHomeButtonEnabled(false)
-            actionBar.setHomeAsUpIndicator(icon)
-        }
-
-        private fun getActionBar(): ActionBar? {
-            return contextFragment.contextActivity.supportActionBar
-        }
     }
 }
