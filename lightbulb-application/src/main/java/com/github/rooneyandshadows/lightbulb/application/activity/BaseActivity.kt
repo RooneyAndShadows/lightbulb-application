@@ -17,18 +17,19 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
-import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
-import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.SliderMenu
-import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseApplicationRouter
-import com.github.rooneyandshadows.lightbulb.application.fragment.BaseFragment
-import com.github.rooneyandshadows.lightbulb.commons.utils.KeyboardUtils.Companion.hideKeyboard
-import com.github.rooneyandshadows.lightbulb.textinputview.TextInputView
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.R
 import com.github.rooneyandshadows.lightbulb.application.activity.configuration.StompNotificationServiceRegistry
+import com.github.rooneyandshadows.lightbulb.application.activity.receivers.NotificationBroadcastReceiver
+import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseApplicationRouter
 import com.github.rooneyandshadows.lightbulb.application.activity.service.ConnectionCheckerService
+import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.SliderMenu
 import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.config.SliderMenuConfiguration
+import com.github.rooneyandshadows.lightbulb.application.fragment.BaseFragment
+import com.github.rooneyandshadows.lightbulb.commons.utils.KeyboardUtils.Companion.hideKeyboard
 import com.github.rooneyandshadows.lightbulb.commons.utils.LocaleHelper
+import com.github.rooneyandshadows.lightbulb.textinputview.TextInputView
+import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
 
 @Suppress(
     "unused",
@@ -42,6 +43,9 @@ abstract class BaseActivity : AppCompatActivity() {
     private var dragged = false
     private var appRouter: BaseApplicationRouter? = null
     private lateinit var sliderMenu: SliderMenu
+    var onNotificationReceivedListener: Runnable? = null
+    private val notificationBroadcastReceiver: NotificationBroadcastReceiver =
+        NotificationBroadcastReceiver()
 
     //private lateinit var localeChangerAppCompatDelegate: LocaleChangerAppCompatDelegate
     protected abstract val drawerConfiguration: SliderMenuConfiguration
@@ -88,6 +92,10 @@ abstract class BaseActivity : AppCompatActivity() {
         return null
     }
 
+    protected open fun onNotificationReceived() {
+
+    }
+
     open fun onInternetConnectionStatusChanged(hasInternetServiceEnabled: Boolean) {
     }
 
@@ -102,10 +110,12 @@ abstract class BaseActivity : AppCompatActivity() {
         create(savedInstanceState)
     }
 
+    @Override
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.onAttach(newBase))
     }
 
+    @Override
     override fun onResume() {
         super.onResume()
         startInternetCheckerService();
@@ -130,6 +140,7 @@ abstract class BaseActivity : AppCompatActivity() {
     final override fun onDestroy() {
         super.onDestroy()
         appRouter?.removeNavigator()
+        unregisterReceiver(notificationBroadcastReceiver)
         destroy()
     }
 
@@ -187,6 +198,11 @@ abstract class BaseActivity : AppCompatActivity() {
             }
         }
         return false
+    }
+
+    fun notificationReceived() {
+        onNotificationReceivedListener?.run()
+        onNotificationReceived()
     }
 
     fun reload() {
@@ -281,6 +297,11 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     private fun initializeStompNotificationServiceIfPresented() {
+        notificationBroadcastReceiver.setActivity(this)
+        registerReceiver(
+            notificationBroadcastReceiver,
+            IntentFilter("NOTIFICATION_RECEIVED_ACTION")
+        )
         val stompNotificationServiceRegistry = registerStompService() ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_DEFAULT

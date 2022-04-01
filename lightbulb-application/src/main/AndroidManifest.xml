@@ -13,5 +13,12 @@
             <!--android:stopWithTask="false"-->
             <!--android:process=":NotificationServiceProcess"-->
         </service>
+        <receiver
+            android:name=".activity.receivers.NotificationBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="NotificationBroadcastReceiver" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

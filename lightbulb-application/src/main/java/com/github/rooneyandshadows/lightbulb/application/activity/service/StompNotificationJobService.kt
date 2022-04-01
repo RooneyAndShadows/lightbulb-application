@@ -1,26 +1,22 @@
 package com.github.rooneyandshadows.lightbulb.application.activity.service
 
 import android.app.*
-import android.os.Build
-import android.util.Log
-import com.github.rooneyandshadows.lightbulb.application.BuildConfig
-import com.github.rooneyandshadows.java.commons.stomp.StompClient
-import com.github.rooneyandshadows.java.commons.stomp.frame.StompFrame
-import com.github.rooneyandshadows.java.commons.stomp.listener.StompConnectionListener
-import org.java_websocket.drafts.Draft_6455
-import java.lang.Exception
-import java.net.URI
-import java.util.HashMap
-import android.app.NotificationManager
 import android.app.job.JobParameters
 import android.app.job.JobService
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.os.Build
+import android.util.Log
 import androidx.work.Configuration
-import com.github.rooneyandshadows.java.commons.date.DateUtils
+import com.github.rooneyandshadows.java.commons.stomp.StompClient
 import com.github.rooneyandshadows.java.commons.stomp.StompSubscription
-import com.github.rooneyandshadows.lightbulb.commons.utils.InteractionUtils
+import com.github.rooneyandshadows.java.commons.stomp.frame.StompFrame
+import com.github.rooneyandshadows.java.commons.stomp.listener.StompConnectionListener
+import com.github.rooneyandshadows.lightbulb.application.BuildConfig
+import org.java_websocket.drafts.Draft_6455
+import java.net.URI
 
 
 /*
@@ -104,13 +100,14 @@ abstract class StompNotificationJobService() : JobService() {
                         jobStompClient.removeSubscription(jobStompSubscription)
                     val headers: MutableMap<String, String> = HashMap()
                     configuration.stompStartPayload?.configureHeaders(headers)
-                    jobStompSubscription =
-                        subscribe(
-                            configuration.stompSubscribeUrl,
-                            headers
-                        ) { stompFrame: StompFrame ->
-                            showNotification(configuration.onFrameReceived(stompFrame))
-                        }
+                    jobStompSubscription = subscribe(
+                        configuration.stompSubscribeUrl,
+                        headers
+                    ) { stompFrame: StompFrame ->
+                        val notification = configuration.onFrameReceived(stompFrame)
+                        showNotification(notification)
+                        sendBroadcast(Intent("NOTIFICATION_RECEIVED_ACTION"))
+                    }
                 }
 
                 override fun onDisconnected() {

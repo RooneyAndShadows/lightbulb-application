@@ -46,11 +46,11 @@ class SliderMenu(
         sliderLayout.updateName(id, StringHolder(title))
     }
 
-    fun setItemBadge(id: Long, badge: String) {
+    fun setItemBadge(id: Long, badge: String?) {
         sliderLayout.updateBadge(id, StringHolder(badge))
     }
 
-    fun setItemIcon(id: Long, icon: Drawable) {
+    fun setItemIcon(id: Long, icon: Drawable?) {
         sliderLayout.updateIcon(id, ImageHolder(icon))
     }
 
