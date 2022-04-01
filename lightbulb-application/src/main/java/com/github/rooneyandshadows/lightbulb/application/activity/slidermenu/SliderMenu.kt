@@ -1,5 +1,6 @@
-package com.github.rooneyandshadows.lightbulb.application.activity.helpers
+package com.github.rooneyandshadows.lightbulb.application.activity.slidermenu
 
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
@@ -12,19 +13,22 @@ import com.mikepenz.materialdrawer.model.ExpandableDrawerItem
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem
 import com.mikepenz.materialdrawer.model.SecondaryDrawerItem
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem
-import com.mikepenz.materialdrawer.util.addItems
-import com.mikepenz.materialdrawer.util.removeAllItems
 import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
+import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.config.SliderMenuConfiguration
+import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.items.*
 import com.github.rooneyandshadows.lightbulb.commons.utils.KeyboardUtils
+import com.mikepenz.materialdrawer.holder.BadgeStyle
+import com.mikepenz.materialdrawer.holder.ColorHolder
+import com.mikepenz.materialdrawer.util.*
 
 @Suppress("UNUSED_ANONYMOUS_PARAMETER")
-class SliderHelper(
+class SliderMenu(
     private val contextActivity: BaseActivity,
     private val drawerLayout: DrawerLayout,
     private val sliderLayout: MaterialDrawerSliderView,
     private val sliderSavedState: Bundle?,
-    private var sliderSettings: SliderSetup?
+    private var sliderSettings: SliderMenuConfiguration?
 ) {
     private val sliderStateKey = "SLIDER_STATE_KEY"
     private val drawerEnabledKey = "DRAWER_ENABLED_KEY"
@@ -38,13 +42,29 @@ class SliderHelper(
         setupSlider()
     }
 
-    fun isDrawerOpen(): Boolean {
-        return drawerLayout.isDrawerOpen(GravityCompat.START)
+    fun setItemTitle(id: Long, title: String) {
+        sliderLayout.updateName(id, StringHolder(title))
     }
 
-    fun reInitialize(settings: SliderSetup?) {
-        sliderSettings = settings
-        setupSlider()
+    fun setItemBadge(id: Long, badge: String) {
+        sliderLayout.updateBadge(id, StringHolder(badge))
+    }
+
+    fun setItemIcon(id: Long, icon: Drawable) {
+        sliderLayout.updateIcon(id, ImageHolder(icon))
+    }
+
+    fun openSlider() {
+        drawerLayout.open()
+    }
+
+    fun closeSlider() {
+        drawerLayout.close()
+    }
+
+    fun enableSlider() {
+        isSliderEnabled = true
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
     }
 
     fun disableSlider() {
@@ -53,17 +73,8 @@ class SliderHelper(
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
     }
 
-    fun enableSlider() {
-        isSliderEnabled = true
-        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
-    }
-
-    fun closeSlider() {
-        drawerLayout.close()
-    }
-
-    fun openSlider() {
-        drawerLayout.open()
+    fun isDrawerOpen(): Boolean {
+        return drawerLayout.isDrawerOpen(GravityCompat.START)
     }
 
     private fun setupDrawer() {
@@ -106,8 +117,20 @@ class SliderHelper(
         for (itemToAdd in items) {
             when (itemToAdd) {
                 is DividerMenuItem -> result.add(mapDividerItem(itemToAdd))
-                is PrimaryMenuItem -> result.add(mapPrimaryItem(itemToAdd))
-                is SecondaryMenuItem -> result.add(mapSecondaryItem(itemToAdd))
+                is PrimaryMenuItem -> result.add(
+                    mapPrimaryItem(
+                        itemToAdd,
+                        sliderSettings!!.badgeTextColor,
+                        sliderSettings!!.badgeCircleColor
+                    )
+                )
+                is SecondaryMenuItem -> result.add(
+                    mapSecondaryItem(
+                        itemToAdd,
+                        sliderSettings!!.badgeTextColor,
+                        sliderSettings!!.badgeCircleColor
+                    )
+                )
                 is ExpandableMenuItem -> result.add(mapExpandableItem(itemToAdd))
             }
         }
@@ -120,14 +143,23 @@ class SliderHelper(
         }
     }
 
-    private fun mapPrimaryItem(item: PrimaryMenuItem): PrimaryDrawerItem {
+    private fun mapPrimaryItem(
+        item: PrimaryMenuItem,
+        badgeTextColor: Int,
+        badgeBackgroundColor: Int
+    ): PrimaryDrawerItem {
         return PrimaryDrawerItem().apply {
-            identifier = item.hashCode().toLong()
+            identifier = item.id
             icon = ImageHolder(item.drawable)
             name = StringHolder(item.title)
+            badge = StringHolder(item.badge)
+            badgeStyle = BadgeStyle().apply {
+                textColor = ColorHolder.fromColor(badgeTextColor)
+                color = ColorHolder.fromColor(badgeBackgroundColor)
+            }
             level = item.level
             onDrawerItemClickListener = { view, drawerItem, position ->
-                item.onClick?.invoke(this@SliderHelper)
+                item.onClick?.invoke(this@SliderMenu)
                 onSliderClosed = {
                 }
                 true
@@ -135,14 +167,23 @@ class SliderHelper(
         }
     }
 
-    private fun mapSecondaryItem(item: SecondaryMenuItem): SecondaryDrawerItem {
+    private fun mapSecondaryItem(
+        item: SecondaryMenuItem,
+        badgeTextColor: Int,
+        badgeBackgroundColor: Int
+    ): SecondaryDrawerItem {
         return SecondaryDrawerItem().apply {
-            identifier = item.hashCode().toLong()
+            identifier = item.id
             icon = ImageHolder(item.drawable)
             name = StringHolder(item.title)
+            badge = StringHolder(item.badge)
+            badgeStyle = BadgeStyle().apply {
+                textColor = ColorHolder.fromColor(badgeTextColor)
+                color = ColorHolder.fromColor(badgeBackgroundColor)
+            }
             level = item.level
             onDrawerItemClickListener = { view, drawerItem, position ->
-                item.onClick?.invoke(this@SliderHelper)
+                item.onClick?.invoke(this@SliderMenu)
                 onSliderClosed = {
                 }
                 true
@@ -166,64 +207,4 @@ class SliderHelper(
         stateBundle.putBoolean(drawerEnabledKey, isSliderEnabled)
         return stateBundle
     }
-
-    class SliderSetup {
-        var headerView: View? = null
-        val itemsList: ArrayList<MenuItem> = ArrayList()
-
-        fun addMenuItem(item: MenuItem): SliderSetup {
-            itemsList.add(item)
-            return this
-        }
-
-        fun withHeaderView(headerView: View?): SliderSetup {
-            this.headerView = headerView
-            return this
-        }
-    }
-
-    class DividerMenuItem() : MenuItem()
-
-    class PrimaryMenuItem(
-        title: String,
-        drawable: Drawable?,
-        level: Int = 1,
-        val onClick: ((slider: SliderHelper) -> Unit)?
-    ) :
-        MenuItem(title, drawable, level)
-
-    class SecondaryMenuItem(
-        title: String,
-        drawable: Drawable?,
-        level: Int = 1,
-        val onClick: ((slider: SliderHelper) -> Unit)?
-    ) :
-        MenuItem(title, drawable, level)
-
-    class ExpandableMenuItem(
-        title: String,
-        drawable: Drawable?,
-        level: Int = 1,
-        vararg children: MenuItem
-    ) :
-        MenuItem(title, drawable, level) {
-        val children: ArrayList<MenuItem> = ArrayList()
-
-        init {
-            this.children.addAll(children);
-        }
-    }
-
-    abstract class MenuItem protected constructor(
-        val title: String,
-        val drawable: Drawable?,
-        val level: Int
-    ) {
-        constructor() : this("", null, 0)
-    }
-
-    interface SliderConfiguration {
-        fun configure(): SliderSetup
-    }
-
 }

@@ -18,8 +18,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
-import com.github.rooneyandshadows.lightbulb.application.activity.helpers.SliderHelper
-import com.github.rooneyandshadows.lightbulb.application.activity.helpers.SliderHelper.*
+import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.SliderMenu
 import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseApplicationRouter
 import com.github.rooneyandshadows.lightbulb.application.fragment.BaseFragment
 import com.github.rooneyandshadows.lightbulb.commons.utils.KeyboardUtils.Companion.hideKeyboard
@@ -28,6 +27,7 @@ import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.R
 import com.github.rooneyandshadows.lightbulb.application.activity.configuration.StompNotificationServiceRegistry
 import com.github.rooneyandshadows.lightbulb.application.activity.service.ConnectionCheckerService
+import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.config.SliderMenuConfiguration
 import com.github.rooneyandshadows.lightbulb.commons.utils.LocaleHelper
 
 @Suppress(
@@ -41,10 +41,10 @@ abstract class BaseActivity : AppCompatActivity() {
     private val contentContainerIdentifier = R.id.fragmentContainer
     private var dragged = false
     private var appRouter: BaseApplicationRouter? = null
-    private lateinit var sliderUtils: SliderHelper
+    private lateinit var sliderMenu: SliderMenu
 
     //private lateinit var localeChangerAppCompatDelegate: LocaleChangerAppCompatDelegate
-    protected abstract val drawerConfiguration: SliderConfiguration
+    protected abstract val drawerConfiguration: SliderMenuConfiguration
     private val internetAccessServiceConnection = object : ServiceConnection {
 
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
@@ -122,7 +122,7 @@ abstract class BaseActivity : AppCompatActivity() {
     @Override
     final override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putParcelable(sliderBundleKey, sliderUtils.saveState())
+        outState.putParcelable(sliderBundleKey, sliderMenu.saveState())
         saveInstanceState(outState)
     }
 
@@ -176,13 +176,13 @@ abstract class BaseActivity : AppCompatActivity() {
     final override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
-                if (!sliderUtils.isSliderEnabled) {
+                if (!sliderMenu.isSliderEnabled) {
                     onBackPressed()
                 } else {
-                    if (sliderUtils.isDrawerOpen())
-                        sliderUtils.closeSlider();
+                    if (sliderMenu.isDrawerOpen())
+                        sliderMenu.closeSlider();
                     else
-                        sliderUtils.openSlider();
+                        sliderMenu.openSlider();
                 }
             }
         }
@@ -197,20 +197,20 @@ abstract class BaseActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
+    fun getSliderMenu(): SliderMenu {
+        return sliderMenu
+    }
+
     fun isDrawerEnabled(): Boolean {
-        return sliderUtils.isSliderEnabled
+        return sliderMenu.isSliderEnabled
     }
 
     /**
      * Method enables or disables drawer
      */
     fun enableLeftDrawer(enabled: Boolean) {
-        if (enabled) sliderUtils.enableSlider()
-        else sliderUtils.disableSlider()
-    }
-
-    fun reinitializeLeftDrawer() {
-        sliderUtils.reInitialize(drawerConfiguration.configure());
+        if (enabled) sliderMenu.enableSlider()
+        else sliderMenu.disableSlider()
     }
 
     /**
@@ -222,12 +222,12 @@ abstract class BaseActivity : AppCompatActivity() {
         val drawerState = activityState?.getBundle(sliderBundleKey)
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout);
         val sliderView = findViewById<MaterialDrawerSliderView>(R.id.sliderView)
-        sliderUtils = SliderHelper(
+        sliderMenu = SliderMenu(
             this,
             drawerLayout,
             sliderView,
             drawerState,
-            drawerConfiguration.configure()
+            drawerConfiguration
         )
         appRouter = initializeRouter(contentContainerIdentifier)
     }
