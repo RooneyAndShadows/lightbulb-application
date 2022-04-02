@@ -14,7 +14,7 @@ buildscript {
 
                 ],
                 lightbulb: [
-                        commons      : "1.0.4",
+                        commons      : "1.0.5",
                         textinputview: "1.0.5",
                 ],
                 java     : [
