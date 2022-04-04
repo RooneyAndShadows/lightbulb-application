@@ -20,6 +20,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.R
 import com.github.rooneyandshadows.lightbulb.application.activity.configuration.StompNotificationServiceRegistry
+import com.github.rooneyandshadows.lightbulb.application.activity.receivers.MenuChangedBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.NotificationBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseApplicationRouter
 import com.github.rooneyandshadows.lightbulb.application.activity.service.ConnectionCheckerService
@@ -43,24 +44,37 @@ abstract class BaseActivity : AppCompatActivity() {
     private var dragged = false
     private var appRouter: BaseApplicationRouter? = null
     private lateinit var sliderMenu: SliderMenu
+    private lateinit var notificationBroadcastReceiver: NotificationBroadcastReceiver
+    private lateinit var menuConfigurationBroadcastReceiver: MenuChangedBroadcastReceiver
+    private lateinit var internetAccessServiceConnection: ServiceConnection
     var onNotificationReceivedListener: Runnable? = null
-    private val notificationBroadcastReceiver: NotificationBroadcastReceiver =
-        NotificationBroadcastReceiver()
 
-    //private lateinit var localeChangerAppCompatDelegate: LocaleChangerAppCompatDelegate
-    protected abstract val drawerConfiguration: SliderMenuConfiguration
-    private val internetAccessServiceConnection = object : ServiceConnection {
+    companion object {
+        @JvmStatic
+        private val menuConfigurations: MutableMap<Class<out BaseActivity>, (() -> SliderMenuConfiguration)> =
+            hashMapOf()
 
-        override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
-            val binder = service as ConnectionCheckerService.LocalBinder
-            binder.getService().activity = this@BaseActivity
+        @JvmStatic
+        fun updateMenuConfiguration(
+            context: Context,
+            target: Class<out BaseActivity>,
+            configuration: (() -> SliderMenuConfiguration)
+        ) {
+            menuConfigurations[target] = configuration
+            val intent = Intent(BuildConfig.menuConfigChangedAction)
+            val extras = Bundle()
+            extras.putString("TARGET_ACTIVITY", target.name)
+            intent.putExtras(extras)
+            context.sendBroadcast(intent)
         }
 
-        override fun onServiceDisconnected(arg0: ComponentName) {
+        @JvmStatic
+        fun getMenuConfiguration(
+            targetActivity: Class<out BaseActivity>
+        ): (() -> SliderMenuConfiguration)? {
+            return menuConfigurations[targetActivity]
         }
     }
-
 
     protected open fun initializeRouter(fragmentContainerId: Int): BaseApplicationRouter? {
         return null
@@ -104,7 +118,8 @@ abstract class BaseActivity : AppCompatActivity() {
         beforeCreate(savedInstanceState)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.base_activity_layout)
-        initializeStompNotificationServiceIfPresented();
+        initializeMenuChangedReceiver()
+        initializeStompNotificationServiceIfPresented()
         setupActivity(savedInstanceState)
         setUnhandledGlobalExceptionHandler()
         create(savedInstanceState)
@@ -141,6 +156,7 @@ abstract class BaseActivity : AppCompatActivity() {
         super.onDestroy()
         appRouter?.removeNavigator()
         unregisterReceiver(notificationBroadcastReceiver)
+        unregisterReceiver(menuConfigurationBroadcastReceiver)
         destroy()
     }
 
@@ -150,12 +166,6 @@ abstract class BaseActivity : AppCompatActivity() {
         setIntent(intent)
         newIntent(getIntent())
     }
-
-    //@Override
-    //final override fun getDelegate(): AppCompatDelegate {
-    ///    localeChangerAppCompatDelegate = LocaleChangerAppCompatDelegate(super.getDelegate())
-    //    return localeChangerAppCompatDelegate
-    //}
 
     @Override
     final override fun onBackPressed() {
@@ -191,18 +201,13 @@ abstract class BaseActivity : AppCompatActivity() {
                     onBackPressed()
                 } else {
                     if (sliderMenu.isDrawerOpen())
-                        sliderMenu.closeSlider();
+                        sliderMenu.closeSlider()
                     else
-                        sliderMenu.openSlider();
+                        sliderMenu.openSlider()
                 }
             }
         }
         return false
-    }
-
-    fun notificationReceived() {
-        onNotificationReceivedListener?.run()
-        onNotificationReceived()
     }
 
     fun reload() {
@@ -236,14 +241,16 @@ abstract class BaseActivity : AppCompatActivity() {
      */
     private fun setupActivity(activityState: Bundle?) {
         val drawerState = activityState?.getBundle(sliderBundleKey)
-        val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout);
+        val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
         val sliderView = findViewById<MaterialDrawerSliderView>(R.id.sliderView)
+        val menuConfiguration =
+            getMenuConfiguration(this.javaClass)?.invoke() ?: SliderMenuConfiguration()
         sliderMenu = SliderMenu(
             this,
             drawerLayout,
             sliderView,
             drawerState,
-            drawerConfiguration
+            menuConfiguration
         )
         appRouter = initializeRouter(contentContainerIdentifier)
     }
@@ -286,21 +293,50 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     private fun startInternetCheckerService() {
-        Intent(this, ConnectionCheckerService::class.java).also { intent ->
-            bindService(intent, internetAccessServiceConnection, Context.BIND_AUTO_CREATE)
+        internetAccessServiceConnection = object : ServiceConnection {
+            override fun onServiceConnected(className: ComponentName, service: IBinder) {
+                // We've bound to LocalService, cast the IBinder and get LocalService instance
+                val binder = service as ConnectionCheckerService.LocalBinder
+                binder.getService().activity = this@BaseActivity
+            }
+
+            override fun onServiceDisconnected(arg0: ComponentName) {
+            }
         }
-        startService(Intent(this, ConnectionCheckerService::class.java))
+        val intent = Intent(this, ConnectionCheckerService::class.java)
+        bindService(intent, internetAccessServiceConnection, Context.BIND_AUTO_CREATE)
+        startService(intent)
     }
 
     private fun stopInternetCheckerService() {
+        stopService(Intent(this, ConnectionCheckerService::class.java))
         unbindService(internetAccessServiceConnection)
     }
 
+    private fun initializeMenuChangedReceiver() {
+        menuConfigurationBroadcastReceiver = MenuChangedBroadcastReceiver()
+        menuConfigurationBroadcastReceiver.onMenuConfigurationChanged = { targetActivity ->
+            val currentActivity = javaClass.name
+            if (targetActivity == currentActivity) {
+                val newMenuConfiguration = getMenuConfiguration(javaClass)?.invoke()
+                sliderMenu.setConfiguration(newMenuConfiguration ?: SliderMenuConfiguration())
+            }
+        }
+        registerReceiver(
+            menuConfigurationBroadcastReceiver,
+            IntentFilter(BuildConfig.menuConfigChangedAction)
+        )
+    }
+
     private fun initializeStompNotificationServiceIfPresented() {
-        notificationBroadcastReceiver.setActivity(this)
+        notificationBroadcastReceiver = NotificationBroadcastReceiver()
+        notificationBroadcastReceiver.onNotificationReceived = {
+            onNotificationReceivedListener?.run()
+            onNotificationReceived()
+        }
         registerReceiver(
             notificationBroadcastReceiver,
-            IntentFilter("NOTIFICATION_RECEIVED_ACTION")
+            IntentFilter(BuildConfig.notificationReceivedAction)
         )
         val stompNotificationServiceRegistry = registerStompService() ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

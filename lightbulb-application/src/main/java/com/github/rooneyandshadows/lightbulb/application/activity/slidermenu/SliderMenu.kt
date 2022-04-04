@@ -1,6 +1,5 @@
 package com.github.rooneyandshadows.lightbulb.application.activity.slidermenu
 
-import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
@@ -28,7 +27,7 @@ class SliderMenu(
     private val drawerLayout: DrawerLayout,
     private val sliderLayout: MaterialDrawerSliderView,
     private val sliderSavedState: Bundle?,
-    private var sliderSettings: SliderMenuConfiguration?
+    private var sliderConfiguration: SliderMenuConfiguration
 ) {
     private val sliderStateKey = "SLIDER_STATE_KEY"
     private val drawerEnabledKey = "DRAWER_ENABLED_KEY"
@@ -36,10 +35,14 @@ class SliderMenu(
     var isSliderEnabled: Boolean = true
         private set
 
-
     init {
-        setupDrawer()
-        setupSlider()
+        initializeDrawer()
+        initializeSlider()
+    }
+
+    fun setConfiguration(configuration: SliderMenuConfiguration) {
+        sliderConfiguration = configuration
+        initializeSlider()
     }
 
     fun setItemTitle(id: Long, title: String) {
@@ -77,7 +80,7 @@ class SliderMenu(
         return drawerLayout.isDrawerOpen(GravityCompat.START)
     }
 
-    private fun setupDrawer() {
+    private fun initializeDrawer() {
         drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
                 KeyboardUtils.hideKeyboard(contextActivity)
@@ -99,11 +102,11 @@ class SliderMenu(
         })
     }
 
-    private fun setupSlider() {
-        val mappedItems = ArrayList<IDrawerItem<*>>(mapItems(sliderSettings?.itemsList))
+    private fun initializeSlider() {
+        val mappedItems = ArrayList<IDrawerItem<*>>(mapItems(sliderConfiguration.itemsList))
         sliderLayout.removeAllItems()
         sliderLayout.addItems(*mappedItems.toTypedArray())
-        sliderLayout.headerView = sliderSettings?.headerView
+        sliderLayout.headerView = sliderConfiguration.headerView
         if (sliderSavedState != null) {
             sliderLayout.setSavedInstance(sliderSavedState.getBundle(sliderStateKey))
             isSliderEnabled = sliderSavedState.getBoolean(drawerEnabledKey)
@@ -120,15 +123,15 @@ class SliderMenu(
                 is PrimaryMenuItem -> result.add(
                     mapPrimaryItem(
                         itemToAdd,
-                        sliderSettings!!.badgeTextColor,
-                        sliderSettings!!.badgeCircleColor
+                        sliderConfiguration.badgeTextColor,
+                        sliderConfiguration.badgeCircleColor
                     )
                 )
                 is SecondaryMenuItem -> result.add(
                     mapSecondaryItem(
                         itemToAdd,
-                        sliderSettings!!.badgeTextColor,
-                        sliderSettings!!.badgeCircleColor
+                        sliderConfiguration.badgeTextColor,
+                        sliderConfiguration.badgeCircleColor
                     )
                 )
                 is ExpandableMenuItem -> result.add(mapExpandableItem(itemToAdd))

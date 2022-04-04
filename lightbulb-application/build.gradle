@@ -21,10 +21,14 @@ android {
         debug {
             //Notification configuration
             buildConfigField "String", "notificationChannelId", "\"NOTIFICATION_CHANNEL_ID\""
+            buildConfigField "String", "notificationReceivedAction", "\"NOTIFICATION_RECEIVED_ACTION\""
+            buildConfigField "String", "menuConfigChangedAction", "\"MENU_CONFIGURATION_CHANGED_ACTION\""
         }
         release {
             //Notification configuration
             buildConfigField "String", "notificationChannelId", "\"NOTIFICATION_CHANNEL_ID\""
+            buildConfigField "String", "notificationReceivedAction", "\"NOTIFICATION_RECEIVED_ACTION\""
+            buildConfigField "String", "menuConfigChangedAction", "\"MENU_CONFIGURATION_CHANGED_ACTION\""
         }
     }
     compileOptions {

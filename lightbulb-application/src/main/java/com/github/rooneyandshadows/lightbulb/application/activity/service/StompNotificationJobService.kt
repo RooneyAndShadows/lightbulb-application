@@ -106,7 +106,7 @@ abstract class StompNotificationJobService() : JobService() {
                     ) { stompFrame: StompFrame ->
                         val notification = configuration.onFrameReceived(stompFrame)
                         showNotification(notification)
-                        sendBroadcast(Intent("NOTIFICATION_RECEIVED_ACTION"))
+                        sendBroadcast(Intent(BuildConfig.notificationReceivedAction))
                     }
                 }
 

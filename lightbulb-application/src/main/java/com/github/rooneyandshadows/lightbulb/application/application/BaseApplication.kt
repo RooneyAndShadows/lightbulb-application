@@ -2,8 +2,12 @@ package com.github.rooneyandshadows.lightbulb.application.application
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.content.res.Resources
+import com.github.rooneyandshadows.lightbulb.application.BuildConfig
+import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
+import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.config.SliderMenuConfiguration
 import com.github.rooneyandshadows.lightbulb.commons.utils.LocaleHelper
 
 abstract class BaseApplication : Application() {
@@ -16,6 +20,10 @@ abstract class BaseApplication : Application() {
         @JvmStatic
         val context: Context
             get() = application.applicationContext
+
+        @JvmStatic
+        private val activityMenuConfigurations: MutableMap<Class<out BaseActivity>, (() -> SliderMenuConfiguration)> =
+            hashMapOf()
     }
 
     protected open fun create() {
