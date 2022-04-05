@@ -43,7 +43,7 @@ abstract class BaseApplication : Application() {
 
     @Override
     override fun getResources(): Resources {
-        return LocaleHelper.wrapContext(baseContext).resources
+        return baseContext.resources
     }
 
     @Override

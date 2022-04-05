@@ -118,10 +118,12 @@ abstract class BaseActivity : AppCompatActivity() {
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.onAttach(newBase))
     }
+
     @Override
     override fun getResources(): Resources {
-        return LocaleHelper.wrapContext(baseContext).resources
+        return baseContext.resources
     }
+
     @Override
     override fun getApplicationContext(): Context {
         return LocaleHelper.wrapContext(super.getApplicationContext())
