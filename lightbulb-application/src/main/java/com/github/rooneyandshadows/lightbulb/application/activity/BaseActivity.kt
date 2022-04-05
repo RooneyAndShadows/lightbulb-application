@@ -51,14 +51,14 @@ abstract class BaseActivity : AppCompatActivity() {
 
     companion object {
         @JvmStatic
-        private val menuConfigurations: MutableMap<Class<out BaseActivity>, (() -> SliderMenuConfiguration)> =
+        private val menuConfigurations: MutableMap<Class<out BaseActivity>, ((targetActivity: BaseActivity) -> SliderMenuConfiguration)> =
             hashMapOf()
 
         @JvmStatic
         fun updateMenuConfiguration(
             context: Context,
             target: Class<out BaseActivity>,
-            configuration: (() -> SliderMenuConfiguration)
+            configuration: ((targetActivity: BaseActivity) -> SliderMenuConfiguration)
         ) {
             menuConfigurations[target] = configuration
             val intent = Intent(BuildConfig.menuConfigChangedAction)
@@ -71,7 +71,7 @@ abstract class BaseActivity : AppCompatActivity() {
         @JvmStatic
         fun getMenuConfiguration(
             targetActivity: Class<out BaseActivity>
-        ): (() -> SliderMenuConfiguration)? {
+        ): ((targetActivity: BaseActivity) -> SliderMenuConfiguration)? {
             return menuConfigurations[targetActivity]
         }
     }
@@ -244,7 +244,7 @@ abstract class BaseActivity : AppCompatActivity() {
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
         val sliderView = findViewById<MaterialDrawerSliderView>(R.id.sliderView)
         val menuConfiguration =
-            getMenuConfiguration(this.javaClass)?.invoke() ?: SliderMenuConfiguration()
+            getMenuConfiguration(this.javaClass)?.invoke(this) ?: SliderMenuConfiguration()
         sliderMenu = SliderMenu(
             this,
             drawerLayout,
@@ -318,7 +318,7 @@ abstract class BaseActivity : AppCompatActivity() {
         menuConfigurationBroadcastReceiver.onMenuConfigurationChanged = { targetActivity ->
             val currentActivity = javaClass.name
             if (targetActivity == currentActivity) {
-                val newMenuConfiguration = getMenuConfiguration(javaClass)?.invoke()
+                val newMenuConfiguration = getMenuConfiguration(javaClass)?.invoke(this)
                 sliderMenu.setConfiguration(newMenuConfiguration ?: SliderMenuConfiguration())
             }
         }
