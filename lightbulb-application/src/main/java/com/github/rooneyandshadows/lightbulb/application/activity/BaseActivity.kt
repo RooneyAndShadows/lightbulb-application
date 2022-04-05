@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.app.job.JobInfo
 import android.app.job.JobScheduler
 import android.content.*
+import android.content.res.Resources
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
@@ -114,6 +115,24 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     @Override
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.onAttach(newBase))
+    }
+    @Override
+    override fun getResources(): Resources {
+        return LocaleHelper.wrapContext(baseContext).resources
+    }
+    @Override
+    override fun getApplicationContext(): Context {
+        return LocaleHelper.wrapContext(super.getApplicationContext())
+    }
+
+    @Override
+    override fun getBaseContext(): Context {
+        return LocaleHelper.wrapContext(super.getBaseContext())
+    }
+
+    @Override
     final override fun onCreate(savedInstanceState: Bundle?) {
         beforeCreate(savedInstanceState)
         super.onCreate(savedInstanceState)
@@ -125,10 +144,6 @@ abstract class BaseActivity : AppCompatActivity() {
         create(savedInstanceState)
     }
 
-    @Override
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(LocaleHelper.onAttach(newBase))
-    }
 
     @Override
     override fun onResume() {
