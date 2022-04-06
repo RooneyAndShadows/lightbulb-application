@@ -17,6 +17,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.drawerlayout.widget.DrawerLayout
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.R
@@ -126,7 +127,8 @@ abstract class BaseActivity : AppCompatActivity() {
 
     @Override
     override fun getApplicationContext(): Context {
-        return LocaleHelper.wrapContext(super.getApplicationContext())
+        val localeWrapper = LocaleHelper.wrapContext(super.getApplicationContext())
+        return ContextThemeWrapper(localeWrapper, theme)
     }
 
     @Override

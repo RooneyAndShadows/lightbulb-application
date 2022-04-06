@@ -2,10 +2,8 @@ package com.github.rooneyandshadows.lightbulb.application.application
 
 import android.app.Application
 import android.content.Context
-import android.content.Intent
-import android.content.res.Configuration
 import android.content.res.Resources
-import com.github.rooneyandshadows.lightbulb.application.BuildConfig
+import androidx.appcompat.view.ContextThemeWrapper
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.config.SliderMenuConfiguration
 import com.github.rooneyandshadows.lightbulb.commons.utils.LocaleHelper
@@ -48,7 +46,8 @@ abstract class BaseApplication : Application() {
 
     @Override
     override fun getApplicationContext(): Context {
-        return LocaleHelper.wrapContext(super.getApplicationContext())
+        val localeWrapper = LocaleHelper.wrapContext(super.getApplicationContext())
+        return ContextThemeWrapper(localeWrapper, theme)
     }
 
     @Override
