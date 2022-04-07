@@ -148,21 +148,6 @@ abstract class BaseActivity : AppCompatActivity() {
         create(savedInstanceState)
     }
 
-
-    @Override
-    override fun onResume() {
-        super.onResume()
-        startInternetCheckerService();
-        resume()
-    }
-
-    @Override
-    final override fun onPause() {
-        super.onPause()
-        stopInternetCheckerService()
-        pause()
-    }
-
     @Override
     final override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
@@ -177,6 +162,20 @@ abstract class BaseActivity : AppCompatActivity() {
         unregisterReceiver(notificationBroadcastReceiver)
         unregisterReceiver(menuConfigurationBroadcastReceiver)
         destroy()
+    }
+
+    @Override
+    final override fun onPause() {
+        super.onPause()
+        stopInternetCheckerService()
+        pause()
+    }
+
+    @Override
+    override fun onResume() {
+        super.onResume()
+        startInternetCheckerService();
+        resume()
     }
 
     @Override

@@ -29,9 +29,9 @@ abstract class BaseFragment : Fragment() {
         private set
     protected var isReused: Boolean = false
         private set
+    private var willExecuteAnimation = false
 
     protected abstract fun configureFragment(): BaseFragmentConfiguration
-
 
     /**
      * Method is used to handle fragment arguments.
@@ -59,9 +59,9 @@ abstract class BaseFragment : Fragment() {
     protected open fun viewCreated(fragmentView: View, savedInstanceState: Bundle?) {
     }
 
-    /**
-     * Called when the transition animation for the fragment is finished.
-     */
+    protected open fun viewStateRestored(savedInstanceState: Bundle?) {
+    }
+
     protected open fun onEnterTransitionFinished() {
     }
 
@@ -74,13 +74,21 @@ abstract class BaseFragment : Fragment() {
     protected open fun pause() {
     }
 
+    protected open fun destroy() {
+    }
+
+    protected open fun resume() {
+    }
+
     /**
      * Method is used to handle back press on fragment.
      */
+    @Override
     open fun onBackPressed(): Boolean {
         return false
     }
 
+    @Override
     final override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState != null)
@@ -95,21 +103,7 @@ abstract class BaseFragment : Fragment() {
         fragmentConfiguration = configureFragment()
     }
 
-    final override fun onPause() {
-        super.onPause()
-        isCreated = false
-        isRestarted = false
-        isReused = true
-        pause()
-    }
-
-    final override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        if (!isFragmentVisible()) //previously created bundle needed only when fragment is not visible
-            outState.putBoolean(isReusedKey, isReused)
-        saveInstanceState(outState)
-    }
-
+    @Override
     final override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -125,6 +119,7 @@ abstract class BaseFragment : Fragment() {
      * @param fragmentView       main view of the fragment.
      * @param savedInstanceState saved state for the fragment.
      */
+    @Override
     final override fun onViewCreated(fragmentView: View, savedInstanceState: Bundle?) {
         super.onViewCreated(fragmentView, savedInstanceState)
         if (fragmentConfiguration.isContentFragment) {
@@ -135,6 +130,44 @@ abstract class BaseFragment : Fragment() {
         viewCreated(fragmentView, savedInstanceState)
     }
 
+    @Override
+    final override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
+        viewStateRestored(savedInstanceState)
+    }
+
+    @Override
+    final override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        if (!isFragmentVisible()) //previously created bundle needed only when fragment is not visible
+            outState.putBoolean(isReusedKey, isReused)
+        saveInstanceState(outState)
+    }
+
+    @Override
+    final override fun onDestroy() {
+        super.onDestroy()
+        destroy()
+    }
+
+    @Override
+    final override fun onPause() {
+        super.onPause()
+        isCreated = false
+        isRestarted = false
+        isReused = true
+        pause()
+    }
+
+    @Override
+    final override fun onResume() {
+        super.onResume()
+        if (!willExecuteAnimation)
+            onEnterTransitionFinished()
+        resume()
+    }
+
+    @Override
     final override fun onAttach(context: Context) {
         super.onAttach(context)
         if (context is BaseActivity)
@@ -142,6 +175,7 @@ abstract class BaseFragment : Fragment() {
         attach()
     }
 
+    @Override
     final override fun onCreateAnimation(
         transit: Int,
         isEnterTransition: Boolean,
@@ -149,6 +183,7 @@ abstract class BaseFragment : Fragment() {
     ): Animation? {
         enableTouch(false)
         return if (fragmentConfiguration.isContentFragment && nextAnim != 0) {
+            willExecuteAnimation = true
             val anim = AnimationUtils.loadAnimation(contextActivity, nextAnim)
             anim.setAnimationListener(object : Animation.AnimationListener {
                 override fun onAnimationStart(animation: Animation) {}
