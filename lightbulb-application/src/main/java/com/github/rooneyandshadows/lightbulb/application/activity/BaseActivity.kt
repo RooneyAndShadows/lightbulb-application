@@ -115,6 +115,9 @@ abstract class BaseActivity : AppCompatActivity() {
     open fun onInternetConnectionStatusChanged(hasInternetServiceEnabled: Boolean) {
     }
 
+    open fun onUnhandledException(paramThread: Thread?, exception: Throwable) {
+    }
+
     @Override
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LocaleHelper.onAttach(newBase))
@@ -138,13 +141,13 @@ abstract class BaseActivity : AppCompatActivity() {
 
     @Override
     final override fun onCreate(savedInstanceState: Bundle?) {
+        setUnhandledGlobalExceptionHandler()
         beforeCreate(savedInstanceState)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.base_activity_layout)
         initializeMenuChangedReceiver()
         initializeStompNotificationServiceIfPresented()
         setupActivity(savedInstanceState)
-        setUnhandledGlobalExceptionHandler()
         create(savedInstanceState)
     }
 
@@ -278,14 +281,7 @@ abstract class BaseActivity : AppCompatActivity() {
      */
     private fun setUnhandledGlobalExceptionHandler() {
         Thread.setDefaultUncaughtExceptionHandler { paramThread: Thread?, exception: Throwable ->
-            exception.printStackTrace()
-            this.runOnUiThread {
-                Toast.makeText(
-                    this@BaseActivity,
-                    "Error occurred.",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            onUnhandledException(paramThread, exception)
         }
     }
 
