@@ -1,5 +1,7 @@
 package com.github.rooneyandshadows.lightbulb.application.fragment
 
+import android.animation.Animator
+import android.animation.AnimatorInflater
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -201,6 +203,45 @@ abstract class BaseFragment : Fragment() {
             enableTouch(true)
             if (isEnterTransition && isEnterTransition) onEnterTransitionFinished()
             super.onCreateAnimation(transit, isEnterTransition, nextAnim)
+        }
+    }
+
+    @Override
+    final override fun onCreateAnimator(
+        transit: Int,
+        isEnterTransition: Boolean,
+        nextAnim: Int
+    ): Animator? {
+        enableTouch(false)
+        return if (fragmentConfiguration.isContentFragment && nextAnim != 0) {
+            willExecuteAnimation = true
+            val animator = AnimatorInflater.loadAnimator(contextActivity, nextAnim)
+            animator.addListener(object : Animator.AnimatorListener {
+                override fun onAnimationStart(animation: Animator?) {
+                    TODO("Not yet implemented")
+                }
+
+                override fun onAnimationEnd(animation: Animator?) {
+                    if (isEnterTransition && isSafe) {
+                        enableTouch(true)
+                        onEnterTransitionFinished()
+                    }
+                }
+
+                override fun onAnimationCancel(animation: Animator?) {
+                    if (isEnterTransition && isSafe) {
+                        enableTouch(true)
+                        onEnterTransitionFinished()
+                    }
+                }
+
+                override fun onAnimationRepeat(animation: Animator?) {}
+            })
+            animator
+        } else {
+            enableTouch(true)
+            if (isEnterTransition && isEnterTransition) onEnterTransitionFinished()
+            super.onCreateAnimator(transit, isEnterTransition, nextAnim)
         }
     }
 
