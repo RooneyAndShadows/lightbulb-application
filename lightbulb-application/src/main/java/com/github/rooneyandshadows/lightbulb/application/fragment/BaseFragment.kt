@@ -164,7 +164,7 @@ abstract class BaseFragment : Fragment() {
     @Override
     final override fun onResume() {
         super.onResume()
-        if (!willExecuteAnimation)
+        if (!willExecuteAnimation && isCreated)
             onEnterTransitionFinished()
         resume()
     }
