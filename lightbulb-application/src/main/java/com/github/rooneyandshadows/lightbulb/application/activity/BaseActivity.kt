@@ -15,13 +15,15 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.Toast
+import android.widget.FrameLayout
+import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.drawerlayout.widget.DrawerLayout
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.R
 import com.github.rooneyandshadows.lightbulb.application.activity.configuration.StompNotificationServiceRegistry
+import com.github.rooneyandshadows.lightbulb.application.activity.receivers.InternetConnectionStatusBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.MenuChangedBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.NotificationBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseApplicationRouter
@@ -42,14 +44,16 @@ import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
 abstract class BaseActivity : AppCompatActivity() {
     private val sliderBundleKey = "DRAWER_STATE"
     private val stompNotificationJobId = 1
-    private val contentContainerIdentifier = R.id.fragmentContainer
+    private val fragmentContainerIdentifier = R.id.fragmentContainer
     private var dragged = false
     private var appRouter: BaseApplicationRouter? = null
     private lateinit var sliderMenu: SliderMenu
+    private lateinit var fragmentContainerWrapper: RelativeLayout
     private lateinit var notificationBroadcastReceiver: NotificationBroadcastReceiver
     private lateinit var menuConfigurationBroadcastReceiver: MenuChangedBroadcastReceiver
-    private lateinit var internetAccessServiceConnection: ServiceConnection
+    private lateinit var internetConnectionStatusBroadcastReceiver: InternetConnectionStatusBroadcastReceiver
     var onNotificationReceivedListener: Runnable? = null
+
 
     companion object {
         @JvmStatic
@@ -109,10 +113,9 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     protected open fun onNotificationReceived() {
-
     }
 
-    open fun onInternetConnectionStatusChanged(hasInternetServiceEnabled: Boolean) {
+    protected open fun onInternetConnectionStatusReceived(hasInternetServiceEnabled: Boolean) {
     }
 
     open fun onUnhandledException(paramThread: Thread?, exception: Throwable) {
@@ -164,6 +167,7 @@ abstract class BaseActivity : AppCompatActivity() {
         appRouter?.removeNavigator()
         unregisterReceiver(notificationBroadcastReceiver)
         unregisterReceiver(menuConfigurationBroadcastReceiver)
+        unregisterReceiver(internetConnectionStatusBroadcastReceiver)
         destroy()
     }
 
@@ -239,20 +243,21 @@ abstract class BaseActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
+    fun enableLeftDrawer(enabled: Boolean) {
+        if (enabled) sliderMenu.enableSlider()
+        else sliderMenu.disableSlider()
+    }
+
+    fun getFragmentContainerWrapper(): RelativeLayout {
+        return fragmentContainerWrapper
+    }
+
     fun getSliderMenu(): SliderMenu {
         return sliderMenu
     }
 
     fun isDrawerEnabled(): Boolean {
         return sliderMenu.isSliderEnabled
-    }
-
-    /**
-     * Method enables or disables drawer
-     */
-    fun enableLeftDrawer(enabled: Boolean) {
-        if (enabled) sliderMenu.enableSlider()
-        else sliderMenu.disableSlider()
     }
 
     /**
@@ -273,7 +278,8 @@ abstract class BaseActivity : AppCompatActivity() {
             drawerState,
             menuConfiguration
         )
-        appRouter = initializeRouter(contentContainerIdentifier)
+        appRouter = initializeRouter(fragmentContainerIdentifier)
+        fragmentContainerWrapper = findViewById(R.id.fragmentContainerWrapper)
     }
 
     /**
@@ -307,24 +313,19 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     private fun startInternetCheckerService() {
-        internetAccessServiceConnection = object : ServiceConnection {
-            override fun onServiceConnected(className: ComponentName, service: IBinder) {
-                // We've bound to LocalService, cast the IBinder and get LocalService instance
-                val binder = service as ConnectionCheckerService.LocalBinder
-                binder.getService().activity = this@BaseActivity
-            }
-
-            override fun onServiceDisconnected(arg0: ComponentName) {
-            }
-        }
+        internetConnectionStatusBroadcastReceiver = InternetConnectionStatusBroadcastReceiver()
+        internetConnectionStatusBroadcastReceiver.onInternetConnectionStatusReceived =
+            { internetAvailable -> onInternetConnectionStatusReceived(internetAvailable) }
+        registerReceiver(
+            internetConnectionStatusBroadcastReceiver,
+            IntentFilter(BuildConfig.internetConnectionStatusAction)
+        )
         val intent = Intent(this, ConnectionCheckerService::class.java)
-        bindService(intent, internetAccessServiceConnection, Context.BIND_AUTO_CREATE)
         startService(intent)
     }
 
     private fun stopInternetCheckerService() {
         stopService(Intent(this, ConnectionCheckerService::class.java))
-        unbindService(internetAccessServiceConnection)
     }
 
     private fun initializeMenuChangedReceiver() {

@@ -9,6 +9,7 @@ import android.os.IBinder
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import java.lang.Exception
 import android.os.Binder
+import android.os.Bundle
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 
 class ConnectionCheckerService : Service() {
@@ -51,10 +52,15 @@ class ConnectionCheckerService : Service() {
                     synchronized(this) {
                         while (true) {
                             sleep(2000)
-                            activity?.onInternetConnectionStatusChanged(isInternetAvailable())
+                            val intent = Intent(BuildConfig.internetConnectionStatusAction)
+                            val extras = Bundle()
+                            extras.putBoolean("IS_INTERNET_AVAILABLE", isInternetAvailable())
+                            intent.putExtras(extras)
+                            sendBroadcast(intent)
                         }
                     }
                 } catch (e: Exception) {
+                    e.printStackTrace()
                     //ignored
                 }
             }
