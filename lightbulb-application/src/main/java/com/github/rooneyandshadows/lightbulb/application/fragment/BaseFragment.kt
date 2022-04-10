@@ -31,7 +31,7 @@ abstract class BaseFragment : Fragment() {
         private set
     protected var isReused: Boolean = false
         private set
-    private var willExecuteAnimation = false
+    private var animationCreated = false
 
     protected abstract fun configureFragment(): BaseFragmentConfiguration
 
@@ -164,7 +164,7 @@ abstract class BaseFragment : Fragment() {
     @Override
     final override fun onResume() {
         super.onResume()
-        if (!willExecuteAnimation && isCreated)
+        if (fragmentConfiguration.isContentFragment && isCreated && !animationCreated)
             onEnterTransitionFinished()
         resume()
     }
@@ -183,9 +183,9 @@ abstract class BaseFragment : Fragment() {
         isEnterTransition: Boolean,
         nextAnim: Int
     ): Animation? {
+        animationCreated = true
         enableTouch(false)
         return if (fragmentConfiguration.isContentFragment && nextAnim != 0) {
-            willExecuteAnimation = true
             val anim = AnimationUtils.loadAnimation(contextActivity, nextAnim)
             anim.setAnimationListener(object : Animation.AnimationListener {
                 override fun onAnimationStart(animation: Animation) {}
@@ -212,13 +212,12 @@ abstract class BaseFragment : Fragment() {
         isEnterTransition: Boolean,
         nextAnim: Int
     ): Animator? {
+        animationCreated = true
         enableTouch(false)
         return if (fragmentConfiguration.isContentFragment && nextAnim != 0) {
-            willExecuteAnimation = true
             val animator = AnimatorInflater.loadAnimator(contextActivity, nextAnim)
             animator.addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator?) {
-                    TODO("Not yet implemented")
                 }
 
                 override fun onAnimationEnd(animation: Animator?) {
