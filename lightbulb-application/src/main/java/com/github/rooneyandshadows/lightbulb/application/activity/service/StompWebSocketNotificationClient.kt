@@ -1,77 +1,29 @@
 package com.github.rooneyandshadows.lightbulb.application.activity.service
 
-import android.app.*
-import android.app.job.JobParameters
-import android.app.job.JobService
+import android.app.Notification
 import android.content.Context
-import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.os.Build
 import android.util.Log
-import androidx.work.Configuration
 import com.github.rooneyandshadows.java.commons.stomp.StompClient
 import com.github.rooneyandshadows.java.commons.stomp.StompSubscription
 import com.github.rooneyandshadows.java.commons.stomp.frame.StompFrame
 import com.github.rooneyandshadows.java.commons.stomp.listener.StompConnectionListener
-import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import org.java_websocket.drafts.Draft_6455
 import java.net.URI
+import java.util.function.Consumer
 
-
-/*
-Add below code in manifest
-<service
-    android:name="{classpath of your implementation}"
-    android:exported="true"
-    android:permission="android.permission.BIND_JOB_SERVICE"
-    android:stopWithTask="false">
-    <!--android:process=":notificationServiceProcess"-->
-    <intent-filter>
-        <action android:name="com.opasnite.pfm.android.service.NotificationService" />
-        <category android:name="android.intent.category.DEFAULT" />
-    </intent-filter>
-</service>
-*/
-
-abstract class StompNotificationJobService() : JobService() {
+class StompWebSocketNotificationClient(val configuration: StompNotificationJobServiceConfiguration) :
+    NotificationClient() {
     private val maxExecutionTime = 180000//3 minutes
     private var jobStartTime: Long = 0
-    private var jobParameters: JobParameters? = null
-    private var isConnected = false
-    private var jobStompSubscription: StompSubscription? = null
-    private lateinit var configuration: StompNotificationJobServiceConfiguration
-    private lateinit var jobStompThread: StompThread
     private lateinit var jobStompClient: StompClient
+    private lateinit var jobStompThread: StompThread
+    private var jobStompSubscription: StompSubscription? = null
+    private var isConnected: Boolean = false
 
-    init {
-        val builder = Configuration.Builder()
-        builder.setJobSchedulerJobIdRange(0, 1000)
-    }
-
-    abstract fun configure(): StompNotificationJobServiceConfiguration
-
-    override fun onCreate() {
-        super.onCreate()
-        configuration = configure()
-    }
-
-    override fun onStartJob(jobParameters: JobParameters): Boolean {
-        this.jobParameters = jobParameters
-        this.jobStartTime = System.currentTimeMillis()
-        this.jobStompClient = initializeStompClient()
-        this.jobStompThread = StompThread()
-        this.jobStompThread.start()
-        return false //reschedule
-    }
-
-    override fun onStopJob(jobParameters: JobParameters?): Boolean {
-        jobStompThread.stopThread()
-        return false //reschedule
-    }
-
-    private fun initializeStompClient(): StompClient {
-        return object :
+    override fun initialize() {
+        jobStompClient = object :
             StompClient(URI.create(configuration.stompApiUrl), Draft_6455(), null, 3000) {
             override fun onError(ex: Exception) {
                 Log.d(
@@ -95,7 +47,7 @@ abstract class StompNotificationJobService() : JobService() {
                         "Notification service connected"
                     )
                     isConnected = true
-                    if (!configuration.listenUntilCondition()) return
+                    if (configuration.listenUntilCondition.invoke()) return
                     if (jobStompSubscription != null)
                         jobStompClient.removeSubscription(jobStompSubscription)
                     val headers: MutableMap<String, String> = HashMap()
@@ -104,9 +56,11 @@ abstract class StompNotificationJobService() : JobService() {
                         configuration.stompSubscribeUrl,
                         headers
                     ) { stompFrame: StompFrame ->
-                        val notification = configuration.onFrameReceived(stompFrame)
-                        showNotification(notification)
-                        sendBroadcast(Intent(BuildConfig.notificationReceivedAction))
+                        val notification =
+                            configuration.generateNotificationFromMessage(stompFrame.body)
+                        onNotificationReceived.forEach(Consumer { listener ->
+                            listener.invoke(notification)
+                        })
                     }
                 }
 
@@ -119,6 +73,16 @@ abstract class StompNotificationJobService() : JobService() {
         }
     }
 
+    override fun start() {
+        this.jobStartTime = System.currentTimeMillis()
+        this.jobStompThread = StompThread()
+        this.jobStompThread.start()
+    }
+
+    override fun stop() {
+        jobStompThread.stopThread()
+    }
+
     private fun stopListenForNotifications(clearShownNotifications: Boolean) {
         val headers: MutableMap<String, String> = HashMap()
         configuration.stompStopPayload?.configureHeaders(headers)
@@ -126,32 +90,9 @@ abstract class StompNotificationJobService() : JobService() {
             jobStompClient.removeSubscription(jobStompSubscription, headers)
         jobStompClient.closeConnection(0, "")
         if (clearShownNotifications)
-            cancelAllNotifications()
-    }
-
-    private fun cancelAllNotifications() {
-        val notificationManager =
-            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancelAll()
-    }
-
-    private fun showNotification(notificationToShow: Notification) {
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val mChannel = NotificationChannel(
-                BuildConfig.notificationChannelId,
-                configuration.notificationChannelName,
-                importance
-            )
-            notificationManager.createNotificationChannel(mChannel)
-            notificationManager.notify(
-                notificationToShow.hashCode(),
-                notificationToShow
-            ) // 0 is the request code, it should be unique id
-        } else {
-            notificationManager.notify(notificationToShow.hashCode(), notificationToShow)
-        }
+            onNotificationsInvalidated.forEach(Consumer { listener ->
+                listener.invoke()
+            })
     }
 
     inner class StompThread : Thread() {
@@ -165,7 +106,7 @@ abstract class StompNotificationJobService() : JobService() {
         override fun run() {
             try {
                 while (!interrupt) {
-                    if (!isInternetAvailable())
+                    if (!isInternetAvailable(configuration.connectivityManager))
                         jobStompClient.closeConnection(0, "")
                     if (!isConnected && configuration.listenUntilCondition()) {
                         if (initialConnection) {
@@ -193,36 +134,22 @@ abstract class StompNotificationJobService() : JobService() {
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                jobFinished(jobParameters, false)
+                onClose.forEach(Consumer { listener ->
+                    listener.invoke()
+                })
             }
         }
     }
 
-    private fun isInternetAvailable(): Boolean {
-        val result: Boolean
-        val connectivityManager =
-            getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val networkCapabilities = connectivityManager.activeNetwork ?: return false
-        val actNw = connectivityManager.getNetworkCapabilities(networkCapabilities) ?: return false
-        result = when {
-            actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-            actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-            actNw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
-            else -> false
-        }
-        return result
-    }
-
-    abstract class StompNotificationJobServiceConfiguration constructor(
-        val notificationChannelName: String,
+    class StompNotificationJobServiceConfiguration constructor(
         val stompApiUrl: String,
-        val stompSubscribeUrl: String
+        val stompSubscribeUrl: String,
+        val connectivityManager: ConnectivityManager,
+        val generateNotificationFromMessage: ((receivedMessage: String) -> Notification)
     ) {
         var stompStartPayload: StompPayload? = null
         var stompStopPayload: StompPayload? = null
         var listenUntilCondition: (() -> Boolean) = { true }
-
-        abstract fun onFrameReceived(receivedFrame: StompFrame): Notification
 
         fun withSubscribePayload(startPayload: StompPayload): StompNotificationJobServiceConfiguration {
             return apply {
