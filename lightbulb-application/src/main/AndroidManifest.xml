@@ -14,6 +14,14 @@
             <!--android:process=":NotificationServiceProcess"-->
         </service>
 
+        <!--<receiver
+            android:name=".activity.receivers.BootBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>-->
+
         <receiver
             android:name=".activity.receivers.NotificationBroadcastReceiver"
             android:exported="false">
