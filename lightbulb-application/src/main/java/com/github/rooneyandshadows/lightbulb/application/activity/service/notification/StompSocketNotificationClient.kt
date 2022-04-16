@@ -3,7 +3,6 @@ package com.github.rooneyandshadows.lightbulb.application.activity.service.notif
 import android.app.Notification
 import io.netty.util.internal.logging.InternalLoggerFactory
 import io.netty.util.internal.logging.JdkLoggerFactory
-import io.vertx.core.Handler
 import io.vertx.core.Vertx
 import io.vertx.ext.stomp.StompClient
 import io.vertx.ext.stomp.StompClientConnection
@@ -21,7 +20,7 @@ class StompSocketNotificationClient(val configuration: Configuration) :
 
     @Override
     override fun initialize() {
-        InternalLoggerFactory.setDefaultFactory(null)
+        InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE)
         vertx = Vertx.vertx()
         jobStompClient = StompClient.create(
             vertx,
