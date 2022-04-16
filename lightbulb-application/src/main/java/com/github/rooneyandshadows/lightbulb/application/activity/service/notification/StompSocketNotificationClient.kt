@@ -17,11 +17,12 @@ class StompSocketNotificationClient(val configuration: Configuration) :
     private var jobStompClientConnection: StompClientConnection? = null
     private lateinit var jobStompThread: StompThread
     private var isConnected: Boolean = false
+    private lateinit var vertx: Vertx
 
     @Override
     override fun initialize() {
-        InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE)
-        val vertx = Vertx.vertx()
+        InternalLoggerFactory.setDefaultFactory(null)
+        vertx = Vertx.vertx()
         jobStompClient = StompClient.create(
             vertx,
             StompClientOptions()
@@ -42,24 +43,14 @@ class StompSocketNotificationClient(val configuration: Configuration) :
         jobStompThread.stopThread()
     }
 
-    private fun stopListenForNotifications(clearShownNotifications: Boolean) {
-        val headers: MutableMap<String, String> = HashMap()
-        configuration.stompUnsubscribePayload?.configureHeaders(headers)
-        jobStompClientConnection!!.unsubscribe(configuration.stompSubscribeDestination, headers)
-        jobStompClient.close()
-        if (clearShownNotifications)
-            onNotificationsInvalidated.forEach { it.invoke() }
-    }
-
-    private fun connectClient(stompClient: StompClient) {
-        stompClient.connect()
+    private fun connectClient() {
+        jobStompClient.connect()
             .onSuccess { connection: StompClientConnection ->
                 connection.connectionDroppedHandler {
                     isConnected = false
                     configuration.clientListener?.onDisconnected()
                     Thread.sleep(2000)
-                    stompClient.close()
-                    connectClient(stompClient)
+                    reconnectClient()
                 }
                 isConnected = true
                 jobStompClientConnection = connection
@@ -80,9 +71,28 @@ class StompSocketNotificationClient(val configuration: Configuration) :
                 isConnected = false
                 configuration.clientListener?.onError(err)
                 Thread.sleep(2000)
-                stompClient.close()
-                connectClient(stompClient)
+                reconnectClient()
             }
+    }
+
+    private fun reconnectClient() {
+        jobStompClient.close()
+        jobStompClient = StompClient.create(
+            vertx,
+            StompClientOptions()
+                .setHost(configuration.stompHost)
+                .setPort(configuration.stompPort)
+        )
+        connectClient();
+    }
+
+    private fun stopListenForNotifications(clearShownNotifications: Boolean) {
+        val headers: MutableMap<String, String> = HashMap()
+        configuration.stompUnsubscribePayload?.configureHeaders(headers)
+        jobStompClientConnection?.unsubscribe(configuration.stompSubscribeDestination, headers)
+        jobStompClient.close()
+        if (clearShownNotifications)
+            onNotificationsInvalidated.forEach { it.invoke() }
     }
 
     inner class StompThread : Thread() {
@@ -94,7 +104,7 @@ class StompSocketNotificationClient(val configuration: Configuration) :
 
         override fun run() {
             try {
-                connectClient(jobStompClient)
+                connectClient()
                 while (!interrupt) {
                     if ((System.currentTimeMillis() - jobStartTime) > maxExecutionTime) {
                         if (isConnected)
