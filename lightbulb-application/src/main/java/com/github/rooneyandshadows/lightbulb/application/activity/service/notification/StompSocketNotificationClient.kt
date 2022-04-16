@@ -4,6 +4,7 @@ import android.app.Notification
 import io.netty.util.internal.logging.InternalLoggerFactory
 import io.netty.util.internal.logging.JdkLoggerFactory
 import io.vertx.core.Vertx
+import io.vertx.core.VertxOptions
 import io.vertx.ext.stomp.StompClient
 import io.vertx.ext.stomp.StompClientConnection
 import io.vertx.ext.stomp.StompClientOptions
@@ -22,6 +23,9 @@ class StompSocketNotificationClient(val configuration: Configuration) :
     override fun initialize() {
         InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE)
         vertx = Vertx.vertx()
+        val options = VertxOptions();
+        options.blockedThreadCheckInterval = 1000 * 60 * 60
+        Vertx.vertx(options)
         jobStompClient = StompClient.create(
             vertx,
             StompClientOptions()
@@ -48,7 +52,7 @@ class StompSocketNotificationClient(val configuration: Configuration) :
                 connection.connectionDroppedHandler {
                     isConnected = false
                     configuration.clientListener?.onDisconnected()
-                    Thread.sleep(2000)
+                    Thread.sleep(5000)
                     reconnectClient()
                 }
                 isConnected = true
@@ -69,7 +73,7 @@ class StompSocketNotificationClient(val configuration: Configuration) :
             .onFailure { err: Throwable ->
                 isConnected = false
                 configuration.clientListener?.onError(err)
-                Thread.sleep(2000)
+                Thread.sleep(5000)
                 reconnectClient()
             }
     }
