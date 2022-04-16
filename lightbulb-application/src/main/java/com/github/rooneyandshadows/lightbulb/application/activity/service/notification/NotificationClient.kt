@@ -1,4 +1,4 @@
-package com.github.rooneyandshadows.lightbulb.application.activity.service
+package com.github.rooneyandshadows.lightbulb.application.activity.service.notification
 
 import android.app.Notification
 import android.net.ConnectivityManager

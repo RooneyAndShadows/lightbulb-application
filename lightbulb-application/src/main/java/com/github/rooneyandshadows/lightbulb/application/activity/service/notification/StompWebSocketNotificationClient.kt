@@ -1,19 +1,15 @@
-package com.github.rooneyandshadows.lightbulb.application.activity.service
+package com.github.rooneyandshadows.lightbulb.application.activity.service.notification
 
 import android.app.Notification
-import android.content.Context
 import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.util.Log
 import com.github.rooneyandshadows.java.commons.stomp.StompClient
 import com.github.rooneyandshadows.java.commons.stomp.StompSubscription
 import com.github.rooneyandshadows.java.commons.stomp.frame.StompFrame
 import com.github.rooneyandshadows.java.commons.stomp.listener.StompConnectionListener
 import org.java_websocket.drafts.Draft_6455
 import java.net.URI
-import java.util.function.Consumer
 
-class StompWebSocketNotificationClient(val configuration: StompNotificationJobServiceConfiguration) :
+class StompWebSocketNotificationClient(val configuration: Configuration) :
     NotificationClient() {
     private val maxExecutionTime = 180000//3 minutes
     private var jobStartTime: Long = 0
@@ -22,14 +18,13 @@ class StompWebSocketNotificationClient(val configuration: StompNotificationJobSe
     private var jobStompSubscription: StompSubscription? = null
     private var isConnected: Boolean = false
 
+    @Override
     override fun initialize() {
         jobStompClient = object :
             StompClient(URI.create(configuration.stompApiUrl), Draft_6455(), null, 3000) {
             override fun onError(ex: Exception) {
-                Log.d(
-                    this.javaClass.simpleName,
-                    "Failed to connect notification service. Retrying..."
-                )
+                isConnected = false
+                configuration.clientListener?.onError(ex)
             }
         }.apply {
             isReuseAddr = true
@@ -42,12 +37,9 @@ class StompWebSocketNotificationClient(val configuration: StompNotificationJobSe
 
                 override fun onConnected() {
                     super.onConnected()
-                    Log.d(
-                        this.javaClass.simpleName,
-                        "Notification service connected"
-                    )
                     isConnected = true
-                    if (configuration.listenUntilCondition.invoke()) return
+                    configuration.clientListener?.onConnected()
+                    if (!configuration.listenUntilCondition.invoke()) return
                     if (jobStompSubscription != null)
                         jobStompClient.removeSubscription(jobStompSubscription)
                     val headers: MutableMap<String, String> = HashMap()
@@ -58,27 +50,27 @@ class StompWebSocketNotificationClient(val configuration: StompNotificationJobSe
                     ) { stompFrame: StompFrame ->
                         val notification =
                             configuration.generateNotificationFromMessage(stompFrame.body)
-                        onNotificationReceived.forEach(Consumer { listener ->
-                            listener.invoke(notification)
-                        })
+                        onNotificationReceived.forEach { it.invoke(notification) }
                     }
                 }
 
                 override fun onDisconnected() {
                     super.onDisconnected()
                     isConnected = false
-                    Log.d(this.javaClass.simpleName, "Notification service disconnected")
+                    configuration.clientListener?.onDisconnected()
                 }
             })
         }
     }
 
+    @Override
     override fun start() {
         this.jobStartTime = System.currentTimeMillis()
         this.jobStompThread = StompThread()
         this.jobStompThread.start()
     }
 
+    @Override
     override fun stop() {
         jobStompThread.stopThread()
     }
@@ -90,9 +82,7 @@ class StompWebSocketNotificationClient(val configuration: StompNotificationJobSe
             jobStompClient.removeSubscription(jobStompSubscription, headers)
         jobStompClient.closeConnection(0, "")
         if (clearShownNotifications)
-            onNotificationsInvalidated.forEach(Consumer { listener ->
-                listener.invoke()
-            })
+            onNotificationsInvalidated.forEach { it.invoke() }
     }
 
     inner class StompThread : Thread() {
@@ -134,14 +124,12 @@ class StompWebSocketNotificationClient(val configuration: StompNotificationJobSe
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                onClose.forEach(Consumer { listener ->
-                    listener.invoke()
-                })
+                onClose.forEach { it.invoke() }
             }
         }
     }
 
-    class StompNotificationJobServiceConfiguration constructor(
+    class Configuration constructor(
         val stompApiUrl: String,
         val stompSubscribeUrl: String,
         val connectivityManager: ConnectivityManager,
@@ -149,21 +137,28 @@ class StompWebSocketNotificationClient(val configuration: StompNotificationJobSe
     ) {
         var stompStartPayload: StompPayload? = null
         var stompStopPayload: StompPayload? = null
+        var clientListener: ClientListener? = null
         var listenUntilCondition: (() -> Boolean) = { true }
 
-        fun withSubscribePayload(startPayload: StompPayload): StompNotificationJobServiceConfiguration {
+        fun withSubscribePayload(startPayload: StompPayload): Configuration {
             return apply {
                 this.stompStartPayload = startPayload
             }
         }
 
-        fun withUnsubscribePayload(stopPayload: StompPayload): StompNotificationJobServiceConfiguration {
+        fun withUnsubscribePayload(stopPayload: StompPayload): Configuration {
             return apply {
                 this.stompStopPayload = stopPayload
             }
         }
 
-        fun withListenUntilCondition(condition: (() -> Boolean)): StompNotificationJobServiceConfiguration {
+        fun withListener(clientListener: ClientListener): Configuration {
+            return apply {
+                this.clientListener = clientListener
+            }
+        }
+
+        fun withListenUntilCondition(condition: (() -> Boolean)): Configuration {
             return apply {
                 this.listenUntilCondition = condition
             }
@@ -176,6 +171,19 @@ class StompWebSocketNotificationClient(val configuration: StompNotificationJobSe
 
             open fun configureMessage(): String {
                 return ""
+            }
+        }
+
+        abstract class ClientListener {
+
+            open fun onConnected() {
+            }
+
+            open fun onDisconnected() {
+            }
+
+            open fun onError(exception: Exception) {
+
             }
         }
     }

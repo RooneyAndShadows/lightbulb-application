@@ -1,21 +1,19 @@
-package com.github.rooneyandshadows.lightbulb.application.activity.service
+package com.github.rooneyandshadows.lightbulb.application.activity.service.notification
 
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.job.JobParameters
 import android.app.job.JobService
-import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.os.Build
 import androidx.work.Configuration
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
+import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.NotificationClient
 
 abstract class BaseNotificationJobService : JobService() {
-    protected lateinit var notificationClient: NotificationClient
-    protected lateinit var jobParameters: JobParameters
+    private lateinit var notificationClient: NotificationClient
+    private lateinit var jobParameters: JobParameters
 
     init {
         val builder = Configuration.Builder()
@@ -26,6 +24,7 @@ abstract class BaseNotificationJobService : JobService() {
 
     protected abstract fun getNotificationChannelName(): String
 
+    @Override
     override fun onCreate() {
         super.onCreate()
         notificationClient = buildNotificationClient()
@@ -53,13 +52,13 @@ abstract class BaseNotificationJobService : JobService() {
         return false //reschedule
     }
 
-    protected fun cancelAllNotifications() {
+    private fun cancelAllNotifications() {
         val notificationManager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancelAll()
     }
 
-    protected fun showNotification(notificationToShow: Notification) {
+    private fun showNotification(notificationToShow: Notification) {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_DEFAULT
