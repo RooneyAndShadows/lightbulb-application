@@ -9,20 +9,18 @@ import android.content.res.Resources
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.drawerlayout.widget.DrawerLayout
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.R
-import com.github.rooneyandshadows.lightbulb.application.activity.configuration.StompNotificationServiceRegistry
+import com.github.rooneyandshadows.lightbulb.application.activity.configuration.NotificationServiceRegistry
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.InternetConnectionStatusBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.MenuChangedBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.NotificationBroadcastReceiver
@@ -108,7 +106,7 @@ abstract class BaseActivity : AppCompatActivity() {
     protected open fun destroy() {
     }
 
-    protected open fun registerStompService(): StompNotificationServiceRegistry? {
+    protected open fun registerNotificationService(): NotificationServiceRegistry? {
         return null
     }
 
@@ -149,7 +147,7 @@ abstract class BaseActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.base_activity_layout)
         initializeMenuChangedReceiver()
-        initializeStompNotificationServiceIfPresented()
+        initializeNotificationServiceIfPresented()
         setupActivity(savedInstanceState)
         create(savedInstanceState)
     }
@@ -343,7 +341,7 @@ abstract class BaseActivity : AppCompatActivity() {
         )
     }
 
-    private fun initializeStompNotificationServiceIfPresented() {
+    private fun initializeNotificationServiceIfPresented() {
         notificationBroadcastReceiver = NotificationBroadcastReceiver()
         notificationBroadcastReceiver.onNotificationReceived = {
             onNotificationReceivedListener?.run()
@@ -353,12 +351,12 @@ abstract class BaseActivity : AppCompatActivity() {
             notificationBroadcastReceiver,
             IntentFilter(BuildConfig.notificationReceivedAction)
         )
-        val stompNotificationServiceRegistry = registerStompService() ?: return
+        val notificationServiceRegistry = registerNotificationService() ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_DEFAULT
             val channel = NotificationChannel(
                 BuildConfig.notificationChannelId,
-                stompNotificationServiceRegistry.notificationChannelName,
+                notificationServiceRegistry.notificationChannelName,
                 importance
             )
             channel.setShowBadge(true)
@@ -367,7 +365,7 @@ abstract class BaseActivity : AppCompatActivity() {
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
         }
-        val name = ComponentName(this, stompNotificationServiceRegistry.notificationServiceClass)
+        val name = ComponentName(this, notificationServiceRegistry.notificationServiceClass)
         val scheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
         if (!checkIfJobServiceScheduled(stompNotificationJobId)) {
             val b = JobInfo.Builder(stompNotificationJobId, name)
