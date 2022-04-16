@@ -24,7 +24,7 @@ class StompSocketNotificationClient(val configuration: Configuration) :
         InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE)
         vertx = Vertx.vertx()
         val options = VertxOptions();
-        options.blockedThreadCheckInterval = 1000 * 60 * 60
+        options.blockedThreadCheckInterval = 5000
         Vertx.vertx(options)
         jobStompClient = StompClient.create(
             vertx,
