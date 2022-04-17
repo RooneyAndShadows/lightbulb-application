@@ -369,7 +369,6 @@ abstract class BaseActivity : AppCompatActivity() {
         val scheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
         if (!checkIfJobServiceScheduled(stompNotificationJobId)) {
             val b = JobInfo.Builder(stompNotificationJobId, name)
-                .setOverrideDeadline(0)
                 .setPeriodic(900000L)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setPersisted(true)
