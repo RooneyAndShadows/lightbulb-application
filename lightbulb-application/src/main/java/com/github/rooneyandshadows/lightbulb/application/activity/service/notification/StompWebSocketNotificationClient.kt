@@ -75,16 +75,6 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
         jobStompThread.stopThread()
     }
 
-    private fun stopListenForNotifications(clearShownNotifications: Boolean) {
-        val headers: MutableMap<String, String> = HashMap()
-        configuration.stompStopPayload?.configureHeaders(headers)
-        if (jobStompSubscription != null)
-            jobStompClient.removeSubscription(jobStompSubscription, headers)
-        jobStompClient.closeConnection(0, "")
-        if (clearShownNotifications)
-            onNotificationsInvalidated.forEach { it.invoke() }
-    }
-
     inner class StompThread : Thread() {
         private var initialConnection = true
         private var interrupt = false
@@ -110,20 +100,20 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
                             continue
                         }
                     }
-                    if ((System.currentTimeMillis() - jobStartTime) > maxExecutionTime) {
-                        if (isConnected)
-                            stopListenForNotifications(false)
-                        break
-                    }
+                    if ((System.currentTimeMillis() - jobStartTime) > maxExecutionTime) break
                     if (isConnected && !configuration.listenUntilCondition())
-                        stopListenForNotifications(true)
+                        onNotificationsInvalidated.forEach { it.invoke() }
                     sleep(5000)
                 }
-                if (interrupt && isConnected)
-                    stopListenForNotifications(false)
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
+                val headers: MutableMap<String, String> = HashMap()
+                configuration.stompStopPayload?.configureHeaders(headers)
+                if (jobStompSubscription != null)
+                    jobStompClient.removeSubscription(jobStompSubscription, headers)
+                jobStompClient.closeConnection(0, "")
+                jobStompClient.close()
                 onClose.forEach { it.invoke() }
             }
         }
