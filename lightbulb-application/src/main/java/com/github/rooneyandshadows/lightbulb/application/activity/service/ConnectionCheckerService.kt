@@ -12,6 +12,20 @@ import android.os.Binder
 import android.os.Bundle
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 
+/*
+Add below declaration in manifest file
+<service
+    android:name="{classpath of your implementation}"
+    android:exported="true"
+    android:label="@string/system_app_name_phrase"
+    android:permission="android.permission.BIND_JOB_SERVICE"
+    android:stopWithTask="false">
+    <intent-filter>
+        <action android:name="{name}" />
+        <category android:name="android.intent.category.DEFAULT" />
+    </intent-filter>
+</service>
+ */
 class ConnectionCheckerService : Service() {
     private var isRunning = false
     private var connectionManager: ConnectivityManager? = null
