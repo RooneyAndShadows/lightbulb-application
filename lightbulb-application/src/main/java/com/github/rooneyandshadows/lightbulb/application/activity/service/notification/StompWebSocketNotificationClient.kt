@@ -11,7 +11,7 @@ import java.net.URI
 
 class StompWebSocketNotificationClient(val configuration: Configuration) :
     NotificationClient() {
-    private val maxExecutionTime = 180000//3 minutes 
+    private val maxExecutionTime = 180000//3 minutes
     private var jobStartTime: Long = 0
     private lateinit var jobStompClient: StompClient
     private lateinit var jobStompThread: StompThread
