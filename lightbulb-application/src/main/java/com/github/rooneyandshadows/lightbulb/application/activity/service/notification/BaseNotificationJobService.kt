@@ -11,6 +11,22 @@ import androidx.work.Configuration
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.NotificationClient
 
+/*
+Add below code in manifest
+<service
+    android:name="{classpath of your implementation}"
+    android:exported="true"
+    android:label="@string/system_app_name_phrase"
+    android:permission="android.permission.BIND_JOB_SERVICE"
+    android:stopWithTask="false">
+    <!--android:process=":notificationServiceProcess"-->
+    <intent-filter>
+        <action android:name="ServiceNotification" />
+
+        <category android:name="android.intent.category.DEFAULT" />
+    </intent-filter>
+</service>
+ */
 abstract class BaseNotificationJobService : JobService() {
     private lateinit var notificationClient: NotificationClient
     private lateinit var jobParameters: JobParameters
