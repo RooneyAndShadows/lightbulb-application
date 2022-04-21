@@ -13,8 +13,8 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
     NotificationClient() {
     private val maxExecutionTime = 180000//3 minutes
     private var jobStartTime: Long = 0
-    private lateinit var jobStompClient: StompClient
-    private lateinit var jobStompThread: StompThread
+    private var jobStompClient: StompClient? = null
+    private var jobStompThread: StompThread? = null
     private var jobStompSubscription: StompSubscription? = null
     private var isConnected: Boolean = false
 
@@ -41,7 +41,7 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
                     configuration.clientListener?.onConnected()
                     if (!configuration.listenUntilCondition.invoke()) return
                     if (jobStompSubscription != null)
-                        jobStompClient.removeSubscription(jobStompSubscription)
+                        jobStompClient!!.removeSubscription(jobStompSubscription)
                     val headers: MutableMap<String, String> = HashMap()
                     configuration.stompStartPayload?.configureHeaders(headers)
                     jobStompSubscription = subscribe(
@@ -67,33 +67,29 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
     override fun start() {
         this.jobStartTime = System.currentTimeMillis()
         this.jobStompThread = StompThread()
-        this.jobStompThread.start()
+        this.jobStompThread!!.start()
     }
 
     @Override
     override fun stop() {
-        jobStompThread.stopThread()
+        jobStompThread?.stopThread()
     }
 
     inner class StompThread : Thread() {
         private var initialConnection = true
         private var interrupt = false
 
-        fun stopThread() {
-            interrupt = true
-        }
-
         override fun run() {
             try {
                 while (!interrupt) {
                     if (!isInternetAvailable(configuration.connectivityManager))
-                        jobStompClient.closeConnection(0, "")
+                        jobStompClient!!.closeConnection(0, "")
                     if (!isConnected && configuration.listenUntilCondition()) {
                         if (initialConnection) {
-                            jobStompClient.connectBlocking()
+                            jobStompClient!!.connectBlocking()
                             initialConnection = false
                         } else {
-                            jobStompClient.reconnectBlocking()
+                            jobStompClient!!.reconnectBlocking()
                         }
                         if (!isConnected) {
                             sleep(5000)
@@ -101,20 +97,32 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
                         }
                     }
                     if ((System.currentTimeMillis() - jobStartTime) > maxExecutionTime) break
-                    if (isConnected && !configuration.listenUntilCondition())
+                    if (isConnected && !configuration.listenUntilCondition()) {
                         onNotificationsInvalidated.forEach { it.invoke() }
+                        break
+                    }
                     sleep(5000)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                val headers: MutableMap<String, String> = HashMap()
-                configuration.stompStopPayload?.configureHeaders(headers)
-                if (jobStompSubscription != null)
-                    jobStompClient.removeSubscription(jobStompSubscription, headers)
-                jobStompClient.closeConnection(0, "")
-                jobStompClient.close()
+                closeStompClient()
                 onClose.forEach { it.invoke() }
+            }
+        }
+
+        fun stopThread() {
+            interrupt = true
+        }
+
+        private fun closeStompClient() {
+            val headers: MutableMap<String, String> = HashMap()
+            configuration.stompStopPayload?.configureHeaders(headers)
+            if (jobStompClient!!.isOpen) {
+                if (jobStompSubscription != null)
+                    jobStompClient!!.removeSubscription(jobStompSubscription, headers)
+                jobStompClient!!.closeConnection(0, "")
+                jobStompClient!!.close()
             }
         }
     }
