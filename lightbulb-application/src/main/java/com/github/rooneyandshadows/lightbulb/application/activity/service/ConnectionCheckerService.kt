@@ -12,8 +12,7 @@ import android.os.Binder
 import android.os.Bundle
 
 class ConnectionCheckerService : Service() {
-    private var connectionManager: ConnectivityManager? = null
-    private lateinit var checkerThread: CheckerThread
+    private var checkerThread: CheckerThread? = null
     private val binder: IBinder = LocalBinder()
 
     inner class LocalBinder : Binder() {
@@ -23,19 +22,18 @@ class ConnectionCheckerService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        connectionManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        checkerThread = CheckerThread()
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        checkerThread = CheckerThread()
-        checkerThread.start()
+        checkerThread!!.start()
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        checkerThread.stopThread()
+        checkerThread?.stopThread()
     }
 
     override fun onBind(arg0: Intent): IBinder {

@@ -31,12 +31,12 @@ class StompSocketNotificationClient(val configuration: Configuration) :
                 .setHost(configuration.stompHost)
                 .setPort(configuration.stompPort)
         )
+        jobStompThread = StompThread()
     }
 
     @Override
     override fun start() {
         this.jobStartTime = System.currentTimeMillis()
-        this.jobStompThread = StompThread()
         this.jobStompThread.start()
     }
 
@@ -96,15 +96,6 @@ class StompSocketNotificationClient(val configuration: Configuration) :
         }, 5000)
     }
 
-    private fun stopListenForNotifications(clearShownNotifications: Boolean) {
-        val headers: MutableMap<String, String> = HashMap()
-        configuration.stompUnsubscribePayload?.configureHeaders(headers)
-        jobStompClientConnection?.unsubscribe(configuration.stompSubscribeDestination, headers)
-        jobStompClient.close()
-        if (clearShownNotifications)
-            onNotificationsInvalidated.forEach { it.invoke() }
-    }
-
     inner class StompThread : Thread() {
         private var interrupt = false
 
@@ -117,19 +108,27 @@ class StompSocketNotificationClient(val configuration: Configuration) :
                 connectClient()
                 while (!interrupt) {
                     if ((System.currentTimeMillis() - jobStartTime) > maxExecutionTime) {
-                        if (isConnected)
-                            stopListenForNotifications(false)
                         break
                     }
-                    if (isConnected && !configuration.listenUntilCondition())
-                        stopListenForNotifications(true)
+                    if (isConnected && !configuration.listenUntilCondition()) {
+                        onNotificationsInvalidated.forEach { it.invoke() }
+                        break
+                    }
                     sleep(5000)
                 }
-                if (interrupt && isConnected)
-                    stopListenForNotifications(false)
+
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
+                if (isConnected) {
+                    val headers: MutableMap<String, String> = HashMap()
+                    configuration.stompUnsubscribePayload?.configureHeaders(headers)
+                    jobStompClientConnection?.unsubscribe(
+                        configuration.stompSubscribeDestination,
+                        headers
+                    )
+                    jobStompClient.close()
+                }
                 closing = true
                 jobStompClient.close()
                 onClose.forEach { it.invoke() }
