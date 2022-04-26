@@ -20,47 +20,6 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
 
     @Override
     override fun initialize() {
-        jobStompClient = object :
-            StompClient(URI.create(configuration.stompApiUrl), Draft_6455(), null, 3000) {
-            override fun onError(ex: Exception) {
-                isConnected = false
-                configuration.clientListener?.onError(ex)
-            }
-        }.apply {
-            isReuseAddr = true
-        }.apply {
-            setStompConnectionListener(object : StompConnectionListener() {
-                override fun onConnecting() {
-                    super.onConnecting()
-                    isConnected = false
-                }
-
-                override fun onConnected() {
-                    super.onConnected()
-                    isConnected = true
-                    configuration.clientListener?.onConnected()
-                    if (!configuration.listenUntilCondition.invoke()) return
-                    if (jobStompSubscription != null)
-                        jobStompClient.removeSubscription(jobStompSubscription)
-                    val headers: MutableMap<String, String> = HashMap()
-                    configuration.stompStartPayload?.configureHeaders(headers)
-                    jobStompSubscription = subscribe(
-                        configuration.stompSubscribeUrl,
-                        headers
-                    ) { stompFrame: StompFrame ->
-                        val notification =
-                            configuration.generateNotificationFromMessage(stompFrame.body)
-                        onNotificationReceived.forEach { it.invoke(notification) }
-                    }
-                }
-
-                override fun onDisconnected() {
-                    super.onDisconnected()
-                    isConnected = false
-                    configuration.clientListener?.onDisconnected()
-                }
-            })
-        }
         jobStompThread = StompThread()
     }
 
@@ -79,12 +38,9 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
         private var initialConnection = true
         private var interrupt = false
 
-        fun stopThread() {
-            interrupt = true
-        }
-
         override fun run() {
             try {
+                initializeClient();
                 while (!interrupt) {
                     if (!isInternetAvailable(configuration.connectivityManager))
                         jobStompClient.closeConnection(0, "")
@@ -119,6 +75,54 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
                 jobStompClient.close()
                 onClose.forEach { it.invoke() }
             }
+        }
+
+        private fun initializeClient() {
+            jobStompClient = object :
+                StompClient(URI.create(configuration.stompApiUrl), Draft_6455(), null, 3000) {
+                override fun onError(ex: Exception) {
+                    isConnected = false
+                    configuration.clientListener?.onError(ex)
+                }
+            }.apply {
+                isReuseAddr = true
+            }.apply {
+                setStompConnectionListener(object : StompConnectionListener() {
+                    override fun onConnecting() {
+                        super.onConnecting()
+                        isConnected = false
+                    }
+
+                    override fun onConnected() {
+                        super.onConnected()
+                        isConnected = true
+                        configuration.clientListener?.onConnected()
+                        if (!configuration.listenUntilCondition.invoke()) return
+                        if (jobStompSubscription != null)
+                            jobStompClient.removeSubscription(jobStompSubscription)
+                        val headers: MutableMap<String, String> = HashMap()
+                        configuration.stompStartPayload?.configureHeaders(headers)
+                        jobStompSubscription = subscribe(
+                            configuration.stompSubscribeUrl,
+                            headers
+                        ) { stompFrame: StompFrame ->
+                            val notification =
+                                configuration.generateNotificationFromMessage(stompFrame.body)
+                            onNotificationReceived.forEach { it.invoke(notification) }
+                        }
+                    }
+
+                    override fun onDisconnected() {
+                        super.onDisconnected()
+                        isConnected = false
+                        configuration.clientListener?.onDisconnected()
+                    }
+                })
+            }
+        }
+
+        fun stopThread() {
+            interrupt = true
         }
     }
 
