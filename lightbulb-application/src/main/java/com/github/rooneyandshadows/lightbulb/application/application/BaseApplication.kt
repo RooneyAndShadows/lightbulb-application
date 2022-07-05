@@ -18,10 +18,6 @@ abstract class BaseApplication : Application() {
         @JvmStatic
         val context: Context
             get() = application.applicationContext
-
-        @JvmStatic
-        private val activityMenuConfigurations: MutableMap<Class<out BaseActivity>, (() -> SliderMenuConfiguration)> =
-            hashMapOf()
     }
 
     protected open fun create() {
