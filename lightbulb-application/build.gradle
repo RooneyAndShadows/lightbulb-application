@@ -55,10 +55,13 @@ afterEvaluate {
         }
         publications {
             release(MavenPublication) {
+                from components.release
                 groupId "$environment.group_id"
                 version android.defaultConfig.versionName
                 artifactId project.name
-                artifact(bundleReleaseAar)
+                artifact sourceJar {
+                    classifier "sources"
+                }
             }
         }
     }

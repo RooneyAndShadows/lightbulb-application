@@ -3,7 +3,7 @@ buildscript {
         versions = [
                 kotlin   : "1.7.10",
                 ktx      : [
-                        core: "1.9.0"
+                        core: "1.7.0"
                 ],
                 android  : [
                         annotation: "1.4.0",
