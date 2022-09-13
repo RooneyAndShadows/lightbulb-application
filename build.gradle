@@ -1,16 +1,17 @@
 buildscript {
     ext {
         versions = [
-                kotlin   : "1.6.21",
+                kotlin   : "1.7.10",
                 ktx      : [
-                        core: "1.7.0"
+                        core: "1.9.0"
                 ],
                 android  : [
-                        annotation       : "1.1.0",
-                        appcompat        : "1.4.2",
-                        android_lifecycle: "2.4.1",
-                        work             : "2.7.1",
-                        material         : "1.4.0"
+                        annotation: "1.4.0",
+                        appcompat : "1.5.1",
+                        lifecycle : "2.5.1",
+                        preference: "1.2.0",
+                        work      : "2.7.1",
+                        material  : "1.4.0"
 
                 ],
                 lightbulb: [
@@ -32,7 +33,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:7.0.4"
+        classpath 'com.android.tools.build:gradle:7.2.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files

@@ -9,6 +9,7 @@ import com.github.terrakok.cicerone.androidx.AppNavigator
 import com.github.terrakok.cicerone.androidx.FragmentScreen
 import com.github.rooneyandshadows.lightbulb.application.R
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
+import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseApplicationRouter.NavigationCommands.*
 
 @Suppress("CanBePrimaryConstructorProperty")
 open class BaseApplicationRouter(contextActivity: BaseActivity, fragmentContainerId: Int) {
@@ -23,21 +24,12 @@ open class BaseApplicationRouter(contextActivity: BaseActivity, fragmentContaine
     }
 
     protected fun navigate(command: NavigationCommands, screen: Screen) {
-        if (command == NavigationCommands.NAVIGATE_TO) router.navigateTo(
-            convertScreen(
-                screen
-            )
-        )
-        if (command == NavigationCommands.NAVIGATE_TO_AND_CLEAR_BACKSTACK) router.newRootChain(
-            convertScreen(
-                screen
-            )
-        )
-        if (command == NavigationCommands.BACK_TO) router.backTo(
-            convertScreen(
-                screen
-            )
-        )
+        when (command) {
+            NAVIGATE_TO -> router.navigateTo(convertScreen(screen))
+            NAVIGATE_TO_AND_CLEAR_BACKSTACK -> router.newRootChain(convertScreen(screen))
+            REPLACE -> router.replaceScreen(convertScreen(screen))
+            BACK_TO -> router.backTo(convertScreen(screen))
+        }
     }
 
     fun newChain(vararg screens: Screen) {
@@ -45,12 +37,12 @@ open class BaseApplicationRouter(contextActivity: BaseActivity, fragmentContaine
         router.newRootChain(*chain.toTypedArray())
     }
 
-    fun removeNavigator() {
-        cicerone.getNavigatorHolder().removeNavigator()
-    }
-
     fun navigateBack() {
         router.exit()
+    }
+
+    fun removeNavigator() {
+        cicerone.getNavigatorHolder().removeNavigator()
     }
 
     private fun convertScreen(screen: Screen): FragmentScreen {
@@ -142,6 +134,9 @@ open class BaseApplicationRouter(contextActivity: BaseActivity, fragmentContaine
     }
 
     enum class NavigationCommands {
-        NAVIGATE_TO, NAVIGATE_TO_AND_CLEAR_BACKSTACK, BACK_TO
+        NAVIGATE_TO,
+        NAVIGATE_TO_AND_CLEAR_BACKSTACK,
+        REPLACE,
+        BACK_TO
     }
 }

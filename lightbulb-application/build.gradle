@@ -9,8 +9,8 @@ android {
     defaultConfig {
         minSdkVersion 24
         targetSdkVersion 31
-        versionCode 1040
-        versionName "1.0.40"
+        versionCode 1041
+        versionName "1.0.41"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
     }
@@ -55,13 +55,10 @@ afterEvaluate {
         }
         publications {
             release(MavenPublication) {
-                from components.release
                 groupId "$environment.group_id"
                 version android.defaultConfig.versionName
                 artifactId project.name
-                artifact sourceJar {
-                    classifier "sources"
-                }
+                artifact(bundleReleaseAar)
             }
         }
     }
