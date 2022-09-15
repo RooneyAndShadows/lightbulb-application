@@ -66,6 +66,26 @@ open class BaseApplicationRouter(contextActivity: BaseActivity, fragmentContaine
 
     private fun setupNavigator(contextActivity: BaseActivity): Navigator {
         return object : AppNavigator(contextActivity, fragmentContainerId) {
+
+            override fun replace(command: Replace) {
+                val fragmentManager = contextActivity.supportFragmentManager
+                val screen = command.screen as FragmentScreen
+                val currentFragment = fragmentManager.findFragmentById(fragmentContainerId)
+                val requestedFragment = screen.createFragment(fragmentFactory)
+                if (currentFragment != null && currentFragment.javaClass == requestedFragment.javaClass)
+                    return
+                val fragmentTransaction = fragmentManager.beginTransaction()
+                setupFragmentTransaction(
+                    screen,
+                    fragmentTransaction,
+                    currentFragment,
+                    requestedFragment
+                )
+                fragmentTransaction
+                    .replace(fragmentContainerId, requestedFragment, screen.screenKey)
+                    .commit()
+            }
+
             override fun forward(command: Forward) {
                 val fragmentManager = contextActivity.supportFragmentManager
                 val screen = command.screen as FragmentScreen
