@@ -4,6 +4,9 @@
     <style name="Theme.Components.Dark" parent="Theme.MaterialComponents">
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:colorBackground">@color/dark_background</item>
+        <item name="android:background">@null</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
         <item name="colorPrimary">@color/dark_primary</item>
         <item name="colorPrimaryDark">@color/dark_primary_dark</item>
         <item name="colorSecondary">@color/dark_secondary</item>
@@ -28,6 +31,9 @@
     <style name="Theme.Components.Light" parent="Theme.MaterialComponents.Light">
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:colorBackground">@color/light_background</item>
+        <item name="android:background">@null</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
         <item name="colorPrimary">@color/light_primary</item>
         <item name="colorPrimaryDark">@color/light_primary_dark</item>
         <item name="colorSecondary">@color/light_secondary</item>
