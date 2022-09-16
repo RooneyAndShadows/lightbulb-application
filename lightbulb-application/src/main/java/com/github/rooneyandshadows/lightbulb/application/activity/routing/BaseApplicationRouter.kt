@@ -145,7 +145,7 @@ open class BaseApplicationRouter(contextActivity: BaseActivity, fragmentContaine
         }
     }
 
-    abstract class Screen() {
+    abstract class Screen {
         internal fun getId(): String {
             return this::class.java.name
         }
