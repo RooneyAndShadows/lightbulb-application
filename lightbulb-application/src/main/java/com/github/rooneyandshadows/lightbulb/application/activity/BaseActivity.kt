@@ -24,7 +24,7 @@ import com.github.rooneyandshadows.lightbulb.application.activity.configuration.
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.InternetConnectionStatusBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.MenuChangedBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.NotificationBroadcastReceiver
-import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseApplicationRouter
+import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseActivityRouter
 import com.github.rooneyandshadows.lightbulb.application.activity.service.ConnectionCheckerService
 import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.SliderMenu
 import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.config.SliderMenuConfiguration
@@ -44,7 +44,7 @@ abstract class BaseActivity : AppCompatActivity() {
     private val stompNotificationJobId = 1
     private val fragmentContainerIdentifier = R.id.fragmentContainer
     private var dragged = false
-    private var appRouter: BaseApplicationRouter? = null
+    private var router: BaseActivityRouter? = null
     private lateinit var sliderMenu: SliderMenu
     private lateinit var fragmentContainerWrapper: RelativeLayout
     private lateinit var notificationBroadcastReceiver: NotificationBroadcastReceiver
@@ -80,7 +80,7 @@ abstract class BaseActivity : AppCompatActivity() {
         }
     }
 
-    protected open fun initializeRouter(fragmentContainerId: Int): BaseApplicationRouter? {
+    protected open fun initializeRouter(fragmentContainerId: Int): BaseActivityRouter? {
         return null
     }
 
@@ -162,7 +162,6 @@ abstract class BaseActivity : AppCompatActivity() {
     @Override
     final override fun onDestroy() {
         super.onDestroy()
-        appRouter?.removeNavigator()
         unregisterReceiver(notificationBroadcastReceiver)
         unregisterReceiver(menuConfigurationBroadcastReceiver)
         unregisterReceiver(internetConnectionStatusBroadcastReceiver)
@@ -201,7 +200,7 @@ abstract class BaseActivity : AppCompatActivity() {
             }
         if (!handled)
             if (supportFragmentManager.backStackEntryCount == 0) moveTaskToBack(true)
-            else appRouter?.navigateBack()
+            else router?.back()
     }
 
     @Override
@@ -276,7 +275,7 @@ abstract class BaseActivity : AppCompatActivity() {
             drawerState,
             menuConfiguration
         )
-        appRouter = initializeRouter(fragmentContainerIdentifier)
+        router = initializeRouter(fragmentContainerIdentifier)
         fragmentContainerWrapper = findViewById(R.id.fragmentContainerWrapper)
     }
 
