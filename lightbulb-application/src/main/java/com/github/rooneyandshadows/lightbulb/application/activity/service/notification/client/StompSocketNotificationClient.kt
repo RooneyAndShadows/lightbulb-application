@@ -1,6 +1,7 @@
-package com.github.rooneyandshadows.lightbulb.application.activity.service.notification
+package com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client
 
 import android.app.Notification
+import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.base.NotificationClient
 import io.netty.util.internal.logging.InternalLoggerFactory
 import io.netty.util.internal.logging.JdkLoggerFactory
 import io.vertx.core.Vertx

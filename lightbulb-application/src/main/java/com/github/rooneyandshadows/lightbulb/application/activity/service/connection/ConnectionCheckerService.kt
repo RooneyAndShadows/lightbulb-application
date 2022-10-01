@@ -1,21 +1,21 @@
-package com.github.rooneyandshadows.lightbulb.application.activity.service
+package com.github.rooneyandshadows.lightbulb.application.activity.service.connection
 
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.os.IBinder
-import com.github.rooneyandshadows.lightbulb.application.BuildConfig
-import java.lang.Exception
 import android.os.Binder
 import android.os.Bundle
+import android.os.IBinder
+import com.github.rooneyandshadows.lightbulb.application.BuildConfig
+
 
 class ConnectionCheckerService : Service() {
     private var checkerThread: CheckerThread? = null
-    private val binder: IBinder = LocalBinder()
+    private val binder: IBinder = ConnectionCheckerServiceBinder()
 
-    inner class LocalBinder : Binder() {
+    inner class ConnectionCheckerServiceBinder : Binder() {
         // Return this instance of LocalService so clients can call public methods
         fun getService(): ConnectionCheckerService = this@ConnectionCheckerService
     }

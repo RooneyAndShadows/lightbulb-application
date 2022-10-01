@@ -9,7 +9,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.work.Configuration
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
-import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.NotificationClient
+import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.base.NotificationClient
 
 /*
 Add below code in manifest

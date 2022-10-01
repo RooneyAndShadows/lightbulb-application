@@ -1,13 +1,8 @@
 package com.github.rooneyandshadows.lightbulb.application.activity
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.job.JobInfo
-import android.app.job.JobScheduler
 import android.content.*
 import android.content.res.Resources
 import android.graphics.Rect
-import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -18,14 +13,15 @@ import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.LifecycleOwner
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.R
 import com.github.rooneyandshadows.lightbulb.application.activity.configuration.NotificationServiceRegistry
-import com.github.rooneyandshadows.lightbulb.application.activity.receivers.InternetConnectionStatusBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.MenuChangedBroadcastReceiver
-import com.github.rooneyandshadows.lightbulb.application.activity.receivers.NotificationBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseActivityRouter
-import com.github.rooneyandshadows.lightbulb.application.activity.service.ConnectionCheckerService
+import com.github.rooneyandshadows.lightbulb.application.activity.service.connection.ConnectionCheckerServiceWrapper
+import com.github.rooneyandshadows.lightbulb.application.activity.service.connection.ConnectionCheckerServiceWrapper.InternetConnectionStateListeners
+import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.NotificationJobServiceWrapper
 import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.SliderMenu
 import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.config.SliderMenuConfiguration
 import com.github.rooneyandshadows.lightbulb.application.fragment.BaseFragment
@@ -34,24 +30,15 @@ import com.github.rooneyandshadows.lightbulb.commons.utils.LocaleHelper
 import com.github.rooneyandshadows.lightbulb.textinputview.TextInputView
 import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
 
-@Suppress(
-    "unused",
-    "UNUSED_PARAMETER",
-    "UNUSED_ANONYMOUS_PARAMETER"
-)
-abstract class BaseActivity : AppCompatActivity() {
+abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     private val sliderBundleKey = "DRAWER_STATE"
-    private val stompNotificationJobId = 1
     private val fragmentContainerIdentifier = R.id.fragmentContainer
     private var dragged = false
     private var router: BaseActivityRouter? = null
     private lateinit var sliderMenu: SliderMenu
     private lateinit var fragmentContainerWrapper: RelativeLayout
-    private lateinit var notificationBroadcastReceiver: NotificationBroadcastReceiver
     private lateinit var menuConfigurationBroadcastReceiver: MenuChangedBroadcastReceiver
-    private lateinit var internetConnectionStatusBroadcastReceiver: InternetConnectionStatusBroadcastReceiver
     var onNotificationReceivedListener: Runnable? = null
-
 
     companion object {
         @JvmStatic
@@ -91,7 +78,6 @@ abstract class BaseActivity : AppCompatActivity() {
     }
 
     protected open fun resume() {
-
     }
 
     protected open fun newIntent(intent: Intent) {
@@ -110,10 +96,8 @@ abstract class BaseActivity : AppCompatActivity() {
         return null
     }
 
-    protected open fun onNotificationReceived() {
-    }
-
-    protected open fun onInternetConnectionStatusReceived(hasInternetServiceEnabled: Boolean) {
+    protected open fun registerInternetConnectionStateListeners(): InternetConnectionStateListeners? {
+        return null
     }
 
     open fun onUnhandledException(paramThread: Thread?, exception: Throwable) {
@@ -147,7 +131,8 @@ abstract class BaseActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.base_activity_layout)
         initializeMenuChangedReceiver()
-        initializeNotificationServiceIfPresented()
+        initializeNotificationService()
+        initializeInternetCheckerService()
         setupActivity(savedInstanceState)
         create(savedInstanceState)
     }
@@ -162,23 +147,19 @@ abstract class BaseActivity : AppCompatActivity() {
     @Override
     final override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(notificationBroadcastReceiver)
         unregisterReceiver(menuConfigurationBroadcastReceiver)
-        unregisterReceiver(internetConnectionStatusBroadcastReceiver)
         destroy()
     }
 
     @Override
     final override fun onPause() {
         super.onPause()
-        stopInternetCheckerService()
         pause()
     }
 
     @Override
     override fun onResume() {
         super.onResume()
-        startInternetCheckerService();
         resume()
     }
 
@@ -257,6 +238,29 @@ abstract class BaseActivity : AppCompatActivity() {
         return sliderMenu.isSliderEnabled
     }
 
+    private fun initializeNotificationService() {
+        val serviceRegistry = registerNotificationService()
+        if (serviceRegistry != null) {
+            lifecycle.addObserver(
+                NotificationJobServiceWrapper(
+                    this,
+                    serviceRegistry
+                )
+            )
+        }
+    }
+
+    private fun initializeInternetCheckerService() {
+        val internetConnectionListeners = registerInternetConnectionStateListeners()
+        if (internetConnectionListeners != null)
+            lifecycle.addObserver(
+                ConnectionCheckerServiceWrapper(
+                    this,
+                    internetConnectionListeners
+                )
+            )
+    }
+
     /**
      * Method setup up the activity view and main components.
      *
@@ -309,22 +313,6 @@ abstract class BaseActivity : AppCompatActivity() {
         }
     }
 
-    private fun startInternetCheckerService() {
-        internetConnectionStatusBroadcastReceiver = InternetConnectionStatusBroadcastReceiver()
-        internetConnectionStatusBroadcastReceiver.onInternetConnectionStatusReceived =
-            { internetAvailable -> onInternetConnectionStatusReceived(internetAvailable) }
-        registerReceiver(
-            internetConnectionStatusBroadcastReceiver,
-            IntentFilter(BuildConfig.internetConnectionStatusAction)
-        )
-        val intent = Intent(this, ConnectionCheckerService::class.java)
-        startService(intent)
-    }
-
-    private fun stopInternetCheckerService() {
-        stopService(Intent(this, ConnectionCheckerService::class.java))
-    }
-
     private fun initializeMenuChangedReceiver() {
         menuConfigurationBroadcastReceiver = MenuChangedBroadcastReceiver()
         menuConfigurationBroadcastReceiver.onMenuConfigurationChanged = { targetActivity ->
@@ -340,50 +328,5 @@ abstract class BaseActivity : AppCompatActivity() {
         )
     }
 
-    private fun initializeNotificationServiceIfPresented() {
-        notificationBroadcastReceiver = NotificationBroadcastReceiver()
-        notificationBroadcastReceiver.onNotificationReceived = {
-            onNotificationReceivedListener?.run()
-            onNotificationReceived()
-        }
-        registerReceiver(
-            notificationBroadcastReceiver,
-            IntentFilter(BuildConfig.notificationReceivedAction)
-        )
-        val notificationServiceRegistry = registerNotificationService() ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(
-                BuildConfig.notificationChannelId,
-                notificationServiceRegistry.notificationChannelName,
-                importance
-            )
-            channel.setShowBadge(true)
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            val notificationManager = getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
-        }
-        val name = ComponentName(this, notificationServiceRegistry.notificationServiceClass)
-        val scheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        if (!checkIfJobServiceScheduled(stompNotificationJobId)) {
-            val b = JobInfo.Builder(stompNotificationJobId, name)
-                .setPeriodic(900000L)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setPersisted(true)
-            scheduler.schedule(b.build())
-        }
-    }
 
-    private fun checkIfJobServiceScheduled(jobServiceId: Int): Boolean {
-        val scheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        var hasBeenScheduled = false
-        for (jobInfo in scheduler.allPendingJobs) {
-            if (jobInfo.id == stompNotificationJobId) {
-                hasBeenScheduled = true
-                break
-            }
-        }
-        return hasBeenScheduled
-    }
 }

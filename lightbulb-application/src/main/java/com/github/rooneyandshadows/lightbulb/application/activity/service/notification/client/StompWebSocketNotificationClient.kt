@@ -1,4 +1,4 @@
-package com.github.rooneyandshadows.lightbulb.application.activity.service.notification
+package com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client
 
 import android.app.Notification
 import android.net.ConnectivityManager
@@ -6,6 +6,7 @@ import com.github.rooneyandshadows.java.commons.stomp.StompClient
 import com.github.rooneyandshadows.java.commons.stomp.StompSubscription
 import com.github.rooneyandshadows.java.commons.stomp.frame.StompFrame
 import com.github.rooneyandshadows.java.commons.stomp.listener.StompConnectionListener
+import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.base.NotificationClient
 import org.java_websocket.drafts.Draft_6455
 import java.net.URI
 
