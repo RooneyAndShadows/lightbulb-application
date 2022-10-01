@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application>
         <service
@@ -29,7 +30,6 @@
                 <action android:name="NotificationBroadcastReceiver" />
             </intent-filter>
         </receiver>
-
         <receiver
             android:name=".activity.receivers.MenuChangedBroadcastReceiver"
             android:exported="false">
@@ -37,7 +37,6 @@
                 <action android:name="MenuChangedBroadcastReceiver" />
             </intent-filter>
         </receiver>
-
         <receiver
             android:name=".activity.receivers.InternetConnectionStatusBroadcastReceiver"
             android:exported="false">
