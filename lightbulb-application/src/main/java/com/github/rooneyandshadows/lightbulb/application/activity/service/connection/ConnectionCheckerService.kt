@@ -12,7 +12,7 @@ import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 
 
 class ConnectionCheckerService : Service() {
-    private var checkerThread: CheckerThread? = null
+    private lateinit var checkerThread: CheckerThread
     private val binder: IBinder = ConnectionCheckerServiceBinder()
 
     inner class ConnectionCheckerServiceBinder : Binder() {
@@ -27,13 +27,13 @@ class ConnectionCheckerService : Service() {
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        checkerThread!!.start()
+        checkerThread.start()
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        checkerThread?.stopThread()
+        checkerThread.stopThread()
     }
 
     override fun onBind(arg0: Intent): IBinder {

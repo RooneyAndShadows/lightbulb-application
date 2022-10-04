@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.github.rooneyandshadows.lightbulb.application.activity
 
 import android.content.*
@@ -13,14 +15,17 @@ import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.R
-import com.github.rooneyandshadows.lightbulb.application.activity.configuration.NotificationServiceRegistry
+import com.github.rooneyandshadows.lightbulb.application.activity.service.configuration.NotificationServiceRegistry
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.MenuChangedBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseActivityRouter
+import com.github.rooneyandshadows.lightbulb.application.activity.service.configuration.ForegroundServiceRegistry
 import com.github.rooneyandshadows.lightbulb.application.activity.service.connection.ConnectionCheckerServiceWrapper
 import com.github.rooneyandshadows.lightbulb.application.activity.service.connection.ConnectionCheckerServiceWrapper.InternetConnectionStateListeners
+import com.github.rooneyandshadows.lightbulb.application.activity.service.foreground.ForegroundServiceWrapper
 import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.NotificationJobServiceWrapper
 import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.SliderMenu
 import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.config.SliderMenuConfiguration
@@ -38,6 +43,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     private lateinit var sliderMenu: SliderMenu
     private lateinit var fragmentContainerWrapper: RelativeLayout
     private lateinit var menuConfigurationBroadcastReceiver: MenuChangedBroadcastReceiver
+    private val lifecycleObservers = mutableListOf<LifecycleObserver>()
     var onNotificationReceivedListener: Runnable? = null
 
     companion object {
@@ -203,10 +209,8 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
                 if (!sliderMenu.isSliderEnabled) {
                     onBackPressed()
                 } else {
-                    if (sliderMenu.isDrawerOpen())
-                        sliderMenu.closeSlider()
-                    else
-                        sliderMenu.openSlider()
+                    if (sliderMenu.isDrawerOpen()) sliderMenu.closeSlider()
+                    else sliderMenu.openSlider()
                 }
             }
         }
@@ -214,7 +218,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     }
 
     fun reload() {
-        val intent: Intent = getIntent()
+        val intent: Intent = intent
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
         finish()
         overridePendingTransition(0, 0)
@@ -236,6 +240,18 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
 
     fun isDrawerEnabled(): Boolean {
         return sliderMenu.isSliderEnabled
+    }
+
+    fun registerForegroundService(registry: ForegroundServiceRegistry) {
+        lifecycleObservers.removeIf {
+            return@removeIf it is ForegroundServiceWrapper &&
+                    it.serviceRegistry.serviceClass == registry.foregroundServiceClass
+        }
+        lifecycle.addObserver(
+            ForegroundServiceWrapper(this, registry).apply {
+                lifecycleObservers.add(this)
+            }
+        )
     }
 
     private fun initializeNotificationService() {

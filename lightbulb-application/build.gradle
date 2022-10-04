@@ -9,8 +9,8 @@ android {
     defaultConfig {
         minSdkVersion 24
         targetSdkVersion 31
-        versionCode 1046
-        versionName "1.0.46"
+        versionCode 1047
+        versionName "1.0.47"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
     }
@@ -20,14 +20,12 @@ android {
     buildTypes {
         debug {
             //Notification configuration
-            buildConfigField "String", "notificationChannelId", "\"NOTIFICATION_CHANNEL_ID\""
             buildConfigField "String", "notificationReceivedAction", "\"NOTIFICATION_RECEIVED_ACTION\""
             buildConfigField "String", "menuConfigChangedAction", "\"MENU_CONFIGURATION_CHANGED_ACTION\""
             buildConfigField "String", "internetConnectionStatusAction", "\"INTERNET_CONNECTION_STATUS_ACTION\""
         }
         release {
             //Notification configuration
-            buildConfigField "String", "notificationChannelId", "\"NOTIFICATION_CHANNEL_ID\""
             buildConfigField "String", "notificationReceivedAction", "\"NOTIFICATION_RECEIVED_ACTION\""
             buildConfigField "String", "menuConfigChangedAction", "\"MENU_CONFIGURATION_CHANGED_ACTION\""
             buildConfigField "String", "internetConnectionStatusAction", "\"INTERNET_CONNECTION_STATUS_ACTION\""

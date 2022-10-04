@@ -8,7 +8,11 @@ import android.app.job.JobService
 import android.content.Intent
 import android.os.Build
 import androidx.work.Configuration
+import com.github.rooneyandshadows.java.commons.string.StringUtils
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
+import com.github.rooneyandshadows.lightbulb.application.activity.service.NOTIFICATION_CHANNEL_DESCRIPTION_KEY
+import com.github.rooneyandshadows.lightbulb.application.activity.service.NOTIFICATION_CHANNEL_ID_KEY
+import com.github.rooneyandshadows.lightbulb.application.activity.service.NOTIFICATION_CHANNEL_NAME_KEY
 import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.base.NotificationClient
 
 /*
@@ -30,6 +34,9 @@ Add below code in manifest
 abstract class BaseNotificationJobService : JobService() {
     private lateinit var notificationClient: NotificationClient
     private lateinit var jobParameters: JobParameters
+    private lateinit var channelId: String
+    private lateinit var channelName: String
+    private lateinit var channelDescription: String
 
     init {
         val builder = Configuration.Builder()
@@ -37,8 +44,6 @@ abstract class BaseNotificationJobService : JobService() {
     }
 
     protected abstract fun buildNotificationClient(): NotificationClient
-
-    protected abstract fun getNotificationChannelName(): String
 
     @Override
     override fun onCreate() {
@@ -59,6 +64,8 @@ abstract class BaseNotificationJobService : JobService() {
 
     override fun onStartJob(jobParameters: JobParameters): Boolean {
         this.jobParameters = jobParameters
+        readParameters()
+        setupNotificationChannel()
         notificationClient.start()
         return true
     }
@@ -78,6 +85,18 @@ abstract class BaseNotificationJobService : JobService() {
         notificationClient.stop()
     }
 
+    private fun readParameters() {
+        val extras = jobParameters.extras
+        channelId = extras.getString(NOTIFICATION_CHANNEL_ID_KEY)
+            ?: NOTIFICATION_CHANNEL_ID_KEY
+        val name = extras.getString(NOTIFICATION_CHANNEL_NAME_KEY)
+        val description = extras.getString(NOTIFICATION_CHANNEL_DESCRIPTION_KEY)
+        channelName = if (StringUtils.isNullOrEmptyString(name)) channelId
+        else name!!
+        channelDescription = if (StringUtils.isNullOrEmptyString(description)) channelId
+        else description!!
+    }
+
     private fun cancelAllNotifications() {
         val notificationManager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -85,21 +104,28 @@ abstract class BaseNotificationJobService : JobService() {
     }
 
     private fun showNotification(notificationToShow: Notification) {
+        setupNotificationChannel()
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(
+            notificationToShow.hashCode(),
+            notificationToShow
+        )
+    }
+
+    private fun setupNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val mChannel = NotificationChannel(
-                BuildConfig.notificationChannelId,
-                getNotificationChannelName(),
+            val channel = NotificationChannel(
+                channelId,
+                channelName,
                 importance
             )
-            notificationManager.createNotificationChannel(mChannel)
-            notificationManager.notify(
-                notificationToShow.hashCode(),
-                notificationToShow
-            ) // 0 is the request code, it should be unique id
-        } else {
-            notificationManager.notify(notificationToShow.hashCode(), notificationToShow)
+            channel.description = channelDescription
+            channel.setShowBadge(true)
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
         }
     }
 }
