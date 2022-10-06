@@ -13,7 +13,7 @@ import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.activity.service.NOTIFICATION_CHANNEL_DESCRIPTION_KEY
 import com.github.rooneyandshadows.lightbulb.application.activity.service.NOTIFICATION_CHANNEL_ID_KEY
 import com.github.rooneyandshadows.lightbulb.application.activity.service.NOTIFICATION_CHANNEL_NAME_KEY
-import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.base.NotificationClient
+import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.BaseNotificationClient
 
 /*
 Add below code in manifest
@@ -32,7 +32,7 @@ Add below code in manifest
 </service>
  */
 abstract class BaseNotificationJobService : JobService() {
-    private lateinit var notificationClient: NotificationClient
+    private var notificationClient: BaseNotificationClient? = null
     private lateinit var jobParameters: JobParameters
     private lateinit var channelId: String
     private lateinit var channelName: String
@@ -43,46 +43,35 @@ abstract class BaseNotificationJobService : JobService() {
         builder.setJobSchedulerJobIdRange(0, 1000)
     }
 
-    protected abstract fun buildNotificationClient(): NotificationClient
+    protected abstract fun buildNotificationClient(notificationChannelId: String): BaseNotificationClient
 
     @Override
     override fun onCreate() {
         super.onCreate()
-        notificationClient = buildNotificationClient()
-        notificationClient.initialize()
-        notificationClient.onNotificationReceived.add { notification ->
-            showNotification(notification)
-            sendBroadcast(Intent(BuildConfig.notificationReceivedAction))
-        }
-        notificationClient.onClose.add {
-            jobFinished(jobParameters, false)
-        }
-        notificationClient.onNotificationsInvalidated.add {
-            cancelAllNotifications()
-        }
     }
 
     override fun onStartJob(jobParameters: JobParameters): Boolean {
         this.jobParameters = jobParameters
         readParameters()
         setupNotificationChannel()
-        notificationClient.start()
+        initializeNotificationClient()
+        notificationClient!!.start()
         return true
     }
 
     override fun onStopJob(jobParameters: JobParameters?): Boolean {
-        notificationClient.stop()
+        notificationClient!!.stop()
         return false //reschedule
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        notificationClient.stop()
+        notificationClient!!.stop()
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        notificationClient.stop()
+        notificationClient!!.stop()
     }
 
     private fun readParameters() {
@@ -95,6 +84,24 @@ abstract class BaseNotificationJobService : JobService() {
         else name!!
         channelDescription = if (StringUtils.isNullOrEmptyString(description)) channelId
         else description!!
+    }
+
+    private fun initializeNotificationClient() {
+        if (notificationClient != null)
+            return
+        notificationClient = buildNotificationClient(channelId).apply {
+            initialize()
+            onNotificationReceived.add { notification ->
+                showNotification(notification)
+                sendBroadcast(Intent(BuildConfig.notificationReceivedAction))
+            }
+            onClose.add {
+                jobFinished(jobParameters, false)
+            }
+            onNotificationsInvalidated.add {
+                cancelAllNotifications()
+            }
+        }
     }
 
     private fun cancelAllNotifications() {

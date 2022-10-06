@@ -1,17 +1,16 @@
-package com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client
+package com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.stomp
 
-import android.app.Notification
 import android.net.ConnectivityManager
 import com.github.rooneyandshadows.java.commons.stomp.StompClient
 import com.github.rooneyandshadows.java.commons.stomp.StompSubscription
 import com.github.rooneyandshadows.java.commons.stomp.frame.StompFrame
 import com.github.rooneyandshadows.java.commons.stomp.listener.StompConnectionListener
-import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.base.NotificationClient
+import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.stomp.base.StompNotificationClient
 import org.java_websocket.drafts.Draft_6455
 import java.net.URI
 
 class StompWebSocketNotificationClient(val configuration: Configuration) :
-    NotificationClient() {
+    StompNotificationClient(configuration) {
     private val maxExecutionTime = 180000//3 minutes
     private var jobStartTime: Long = 0
     private lateinit var jobStompClient: StompClient
@@ -43,7 +42,7 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
             try {
                 initializeClient();
                 while (!interrupt) {
-                    if (!isInternetAvailable(configuration.connectivityManager))
+                    if (!isInternetAvailable())
                         jobStompClient.closeConnection(0, "")
                     if (!isConnected && configuration.listenUntilCondition()) {
                         if (initialConnection) {
@@ -61,7 +60,7 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
                     if (isConnected && !configuration.listenUntilCondition()) {
                         if (jobStompSubscription != null) {
                             val headers: MutableMap<String, String> = HashMap()
-                            configuration.stompStopPayload?.configureHeaders(headers)
+                            configuration.unsubscribePayload?.configureHeaders(headers)
                             jobStompClient.removeSubscription(jobStompSubscription, headers)
                         }
                         onNotificationsInvalidated.forEach { it.invoke() }
@@ -102,13 +101,13 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
                         if (jobStompSubscription != null)
                             jobStompClient.removeSubscription(jobStompSubscription)
                         val headers: MutableMap<String, String> = HashMap()
-                        configuration.stompStartPayload?.configureHeaders(headers)
+                        configuration.subscribePayload?.configureHeaders(headers)
                         jobStompSubscription = subscribe(
                             configuration.stompSubscribeUrl,
                             headers
                         ) { stompFrame: StompFrame ->
                             val notification =
-                                configuration.generateNotificationFromMessage(stompFrame.body)
+                                configuration.notificationBuilder.build(stompFrame.body)
                             onNotificationReceived.forEach { it.invoke(notification) }
                         }
                     }
@@ -127,62 +126,29 @@ class StompWebSocketNotificationClient(val configuration: Configuration) :
         }
     }
 
-    class Configuration constructor(
+    class Configuration(
         val stompApiUrl: String,
         val stompSubscribeUrl: String,
-        val connectivityManager: ConnectivityManager,
-        val generateNotificationFromMessage: ((receivedMessage: String) -> Notification)
+        connectivityManager: ConnectivityManager,
+        notificationBuilder: NotificationBuilder,
+    ) : StompNotificationClientConfiguration(
+        connectivityManager,
+        notificationBuilder
     ) {
-        var stompStartPayload: StompPayload? = null
-        var stompStopPayload: StompPayload? = null
-        var clientListener: ClientListener? = null
-        var listenUntilCondition: (() -> Boolean) = { true }
-
-        fun withSubscribePayload(startPayload: StompPayload): Configuration {
-            return apply {
-                this.stompStartPayload = startPayload
-            }
+        override fun withSubscribePayload(startPayload: StompPayload): Configuration {
+            return super.withSubscribePayload(startPayload) as Configuration
         }
 
-        fun withUnsubscribePayload(stopPayload: StompPayload): Configuration {
-            return apply {
-                this.stompStopPayload = stopPayload
-            }
+        override fun withUnsubscribePayload(stopPayload: StompPayload): Configuration {
+            return super.withUnsubscribePayload(stopPayload) as Configuration
         }
 
-        fun withListener(clientListener: ClientListener): Configuration {
-            return apply {
-                this.clientListener = clientListener
-            }
+        override fun withListener(clientListener: ClientListener): Configuration {
+            return super.withListener(clientListener) as Configuration
         }
 
-        fun withListenUntilCondition(condition: (() -> Boolean)): Configuration {
-            return apply {
-                this.listenUntilCondition = condition
-            }
-        }
-
-        abstract class StompPayload {
-
-            open fun configureHeaders(stompHeaders: Map<String, String>) {
-            }
-
-            open fun configureMessage(): String {
-                return ""
-            }
-        }
-
-        abstract class ClientListener {
-
-            open fun onConnected() {
-            }
-
-            open fun onDisconnected() {
-            }
-
-            open fun onError(exception: Exception) {
-
-            }
+        override fun withListenUntilCondition(condition: () -> Boolean): Configuration {
+            return super.withListenUntilCondition(condition) as Configuration
         }
     }
 }

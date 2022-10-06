@@ -1,10 +1,10 @@
-package com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.base
+package com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client
 
 import android.app.Notification
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 
-abstract class NotificationClient {
+abstract class BaseNotificationClient(private val configuration: NotificationClientConfiguration) {
     val onNotificationReceived: MutableList<((notification: Notification) -> Unit)> =
         mutableListOf()
     val onNotificationsInvalidated: MutableList<(() -> Unit)> = mutableListOf()
@@ -14,7 +14,8 @@ abstract class NotificationClient {
     abstract fun start()
     abstract fun stop()
 
-    protected fun isInternetAvailable(connectivityManager: ConnectivityManager): Boolean {
+    protected fun isInternetAvailable(): Boolean {
+        val connectivityManager = configuration.connectivityManager
         val result: Boolean
         val networkCapabilities = connectivityManager.activeNetwork ?: return false
         val actNw = connectivityManager.getNetworkCapabilities(networkCapabilities) ?: return false
@@ -25,5 +26,14 @@ abstract class NotificationClient {
             else -> false
         }
         return result
+    }
+
+    open class NotificationClientConfiguration constructor(
+        val connectivityManager: ConnectivityManager,
+        val notificationBuilder: NotificationBuilder
+    ) {
+        interface NotificationBuilder {
+            fun build(receivedMessage: String): Notification
+        }
     }
 }

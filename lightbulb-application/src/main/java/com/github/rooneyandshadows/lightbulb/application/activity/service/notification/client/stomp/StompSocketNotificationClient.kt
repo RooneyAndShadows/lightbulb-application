@@ -1,7 +1,7 @@
-package com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client
+package com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.stomp
 
-import android.app.Notification
-import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.base.NotificationClient
+import android.net.ConnectivityManager
+import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.client.stomp.base.StompNotificationClient
 import io.netty.util.internal.logging.InternalLoggerFactory
 import io.netty.util.internal.logging.JdkLoggerFactory
 import io.vertx.core.Vertx
@@ -12,7 +12,7 @@ import java.util.*
 import kotlin.collections.HashMap
 
 class StompSocketNotificationClient(val configuration: Configuration) :
-    NotificationClient() {
+    StompNotificationClient(configuration) {
     private val maxExecutionTime = 180000//3 minutes
     private var jobStartTime: Long = 0
     private lateinit var jobStompClient: StompClient
@@ -62,10 +62,10 @@ class StompSocketNotificationClient(val configuration: Configuration) :
                     return@onSuccess
                 }
                 val headers: MutableMap<String, String> = HashMap()
-                configuration.stompSubscribePayload?.configureHeaders(headers)
+                configuration.subscribePayload?.configureHeaders(headers)
                 connection.subscribe(configuration.stompSubscribeDestination, headers) { frame ->
                     val notification =
-                        configuration.generateNotificationFromMessage(frame.bodyAsString)
+                        configuration.notificationBuilder.build(frame.bodyAsString)
                     onNotificationReceived.forEach { it.invoke(notification) }
                 }
             }
@@ -123,7 +123,7 @@ class StompSocketNotificationClient(val configuration: Configuration) :
             } finally {
                 if (isConnected) {
                     val headers: MutableMap<String, String> = HashMap()
-                    configuration.stompUnsubscribePayload?.configureHeaders(headers)
+                    configuration.unsubscribePayload?.configureHeaders(headers)
                     jobStompClientConnection?.unsubscribe(
                         configuration.stompSubscribeDestination,
                         headers
@@ -137,62 +137,30 @@ class StompSocketNotificationClient(val configuration: Configuration) :
         }
     }
 
-    class Configuration constructor(
+    class Configuration(
         val stompHost: String,
         val stompPort: Int,
         val stompSubscribeDestination: String,
-        val generateNotificationFromMessage: ((receivedMessage: String) -> Notification)
+        connectivityManager: ConnectivityManager,
+        notificationBuilder: NotificationBuilder,
+    ) : StompNotificationClientConfiguration(
+        connectivityManager,
+        notificationBuilder
     ) {
-        var stompSubscribePayload: StompPayload? = null
-        var stompUnsubscribePayload: StompPayload? = null
-        var clientListener: ClientListener? = null
-        var listenUntilCondition: (() -> Boolean) = { true }
-
-        fun withSubscribePayload(startPayload: StompPayload): Configuration {
-            return apply {
-                this.stompSubscribePayload = startPayload
-            }
+        override fun withSubscribePayload(startPayload: StompPayload): Configuration {
+            return super.withSubscribePayload(startPayload) as Configuration
         }
 
-        fun withUnsubscribePayload(stopPayload: StompPayload): Configuration {
-            return apply {
-                this.stompUnsubscribePayload = stopPayload
-            }
+        override fun withUnsubscribePayload(stopPayload: StompPayload): Configuration {
+            return super.withUnsubscribePayload(stopPayload) as Configuration
         }
 
-        fun withListener(clientListener: ClientListener): Configuration {
-            return apply {
-                this.clientListener = clientListener
-            }
+        override fun withListener(clientListener: ClientListener): Configuration {
+            return super.withListener(clientListener) as Configuration
         }
 
-        fun withListenUntilCondition(condition: (() -> Boolean)): Configuration {
-            return apply {
-                this.listenUntilCondition = condition
-            }
-        }
-
-        abstract class StompPayload {
-
-            open fun configureHeaders(stompHeaders: Map<String, String>) {
-            }
-
-            open fun configureMessage(): String {
-                return ""
-            }
-        }
-
-        abstract class ClientListener {
-
-            open fun onConnected() {
-            }
-
-            open fun onDisconnected() {
-            }
-
-            open fun onError(exception: Throwable) {
-
-            }
+        override fun withListenUntilCondition(condition: () -> Boolean): Configuration {
+            return super.withListenUntilCondition(condition) as Configuration
         }
     }
 }
