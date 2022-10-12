@@ -217,9 +217,10 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
         return false
     }
 
-    fun reload() {
+    fun relaunch() {
         val intent: Intent = intent
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         finish()
         overridePendingTransition(0, 0)
         startActivity(intent)
