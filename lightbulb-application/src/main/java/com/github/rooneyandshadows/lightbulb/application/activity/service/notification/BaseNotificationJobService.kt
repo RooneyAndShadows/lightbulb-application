@@ -48,6 +48,7 @@ abstract class BaseNotificationJobService : JobService() {
     @Override
     override fun onCreate() {
         super.onCreate()
+
     }
 
     override fun onStartJob(jobParameters: JobParameters): Boolean {
@@ -60,18 +61,18 @@ abstract class BaseNotificationJobService : JobService() {
     }
 
     override fun onStopJob(jobParameters: JobParameters?): Boolean {
-        notificationClient!!.stop()
+        notificationClient?.stop()
         return false //reschedule
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        notificationClient!!.stop()
+        notificationClient?.stop()
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        notificationClient!!.stop()
+        notificationClient?.stop()
     }
 
     private fun readParameters() {
