@@ -26,12 +26,7 @@ class StompSocketNotificationClient(val configuration: Configuration) :
     override fun initialize() {
         InternalLoggerFactory.setDefaultFactory(JdkLoggerFactory.INSTANCE)
         vertx = Vertx.vertx()
-        jobStompClient = StompClient.create(
-            vertx,
-            StompClientOptions()
-                .setHost(configuration.stompHost)
-                .setPort(configuration.stompPort)
-        )
+        buildClient()
         jobStompThread = StompThread()
     }
 
@@ -44,6 +39,21 @@ class StompSocketNotificationClient(val configuration: Configuration) :
     @Override
     override fun stop() {
         jobStompThread.stopThread()
+    }
+
+    private fun buildClient() {
+        val options = StompClientOptions()
+            .setHost(configuration.stompHost)
+            .setPort(configuration.stompPort)
+            .setSsl(configuration.useSSL)
+        if (!configuration.username.isNullOrBlank())
+            options.login = configuration.username
+        if (!configuration.password.isNullOrBlank())
+            options.passcode = configuration.password
+        jobStompClient = StompClient.create(
+            vertx,
+            options
+        )
     }
 
     private fun connectClient() {
@@ -63,7 +73,10 @@ class StompSocketNotificationClient(val configuration: Configuration) :
                 }
                 val headers: MutableMap<String, String> = HashMap()
                 configuration.subscribePayload?.configureHeaders(headers)
-                connection.subscribe(configuration.stompSubscribeDestination, headers) { frame ->
+                connection.subscribe(
+                    configuration.stompSubscribeDestination.generate(),
+                    headers
+                ) { frame ->
                     val notification =
                         configuration.notificationBuilder.build(frame.bodyAsString)
                     onNotificationReceived.forEach { it.invoke(notification) }
@@ -76,7 +89,6 @@ class StompSocketNotificationClient(val configuration: Configuration) :
             }
     }
 
-
     private fun reconnectClient() {
         if (closing)
             return
@@ -86,12 +98,7 @@ class StompSocketNotificationClient(val configuration: Configuration) :
                 jobStompClient.close()
                 if (closing)
                     return
-                jobStompClient = StompClient.create(
-                    vertx,
-                    StompClientOptions()
-                        .setHost(configuration.stompHost)
-                        .setPort(configuration.stompPort)
-                )
+                buildClient()
                 connectClient();
             }
         }, 5000)
@@ -125,7 +132,7 @@ class StompSocketNotificationClient(val configuration: Configuration) :
                     val headers: MutableMap<String, String> = HashMap()
                     configuration.unsubscribePayload?.configureHeaders(headers)
                     jobStompClientConnection?.unsubscribe(
-                        configuration.stompSubscribeDestination,
+                        configuration.stompSubscribeDestination.generate(),
                         headers
                     )
                     jobStompClient.close()
@@ -140,7 +147,10 @@ class StompSocketNotificationClient(val configuration: Configuration) :
     class Configuration(
         val stompHost: String,
         val stompPort: Int,
-        val stompSubscribeDestination: String,
+        val stompSubscribeDestination: SubscriptionDestination,
+        val useSSL: Boolean = false,
+        val username: String? = null,
+        val password: String? = null,
         connectivityManager: ConnectivityManager,
         notificationBuilder: NotificationBuilder,
     ) : StompNotificationClientConfiguration(
@@ -161,6 +171,10 @@ class StompSocketNotificationClient(val configuration: Configuration) :
 
         override fun withListenUntilCondition(condition: () -> Boolean): Configuration {
             return super.withListenUntilCondition(condition) as Configuration
+        }
+
+        interface SubscriptionDestination {
+            fun generate(): String
         }
     }
 }
