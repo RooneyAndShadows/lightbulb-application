@@ -9,6 +9,8 @@ class NotificationServiceRegistry(
     notificationServiceClass
 ) {
     class Configuration(
+        val jobServiceId: Int = 1,
+        val startOnSystemBoot: Boolean = true,
         val notificationChannelId: String,
         val notificationChannelName: String? = null,
         val notificationChannelDescription: String? = null,

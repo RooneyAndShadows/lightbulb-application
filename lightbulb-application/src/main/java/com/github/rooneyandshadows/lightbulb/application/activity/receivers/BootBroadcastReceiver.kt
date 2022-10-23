@@ -1,9 +1,13 @@
 package com.github.rooneyandshadows.lightbulb.application.activity.receivers
 
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import com.github.rooneyandshadows.lightbulb.application.activity.receivers.BootBroadcastReceiver
+import android.util.Log
+import com.github.rooneyandshadows.lightbulb.application.activity.service.utils.PersistedJobUtils
 
 /*
 add in manifest
@@ -12,13 +16,40 @@ add in manifest
     android:exported="true">
     <intent-filter>
         <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.QUICKBOOT_POWERON" />
     </intent-filter>
 </receiver>
  */
 class BootBroadcastReceiver : BroadcastReceiver() {
-    private val ACTION = "android.intent.action.BOOT_COMPLETED"
+    private val BOOT_ACTION = "android.intent.action.BOOT_COMPLETED"
+    private val REBOOT_ACTION = "android.intent.action.QUICKBOOT_POWERON"
+    private val logTag: String = "[".plus(javaClass.simpleName).plus("]")
+
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == ACTION) {
+        if (intent.action != BOOT_ACTION && intent.action != REBOOT_ACTION)
+            return
+        Log.i(logTag, "BOOT DETECTED")
+        schedulePersistedJobs(context)
+    }
+
+    private fun schedulePersistedJobs(context: Context) {
+        val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+        PersistedJobUtils.getPersistedJobs(context).forEach {
+            val name = ComponentName(context, it.componentName)
+            if (!PersistedJobUtils.checkIfJobServiceScheduled(context, it.jobId)) {
+                val jobInfoBuilder = JobInfo.Builder(it.jobId, name)
+                    .setPeriodic(900000L)
+                    .setExtras(it.extras)
+                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                    .setPersisted(true)
+                scheduler.schedule(jobInfoBuilder.build())
+                Log.i(logTag, "Scheduled job service:".plus(it.componentName))
+            } else {
+                Log.i(
+                    logTag,
+                    "Job schedule ignored, because it's already scheduled:".plus(it.componentName)
+                )
+            }
         }
     }
 }

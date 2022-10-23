@@ -1,6 +1,6 @@
 package com.github.rooneyandshadows.lightbulb.application.activity.routing
 
-import android.content.ContentValues.TAG
+import android.content.ContentValues
 import android.util.Log
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -14,9 +14,11 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
     protected val contextActivity: BaseActivity = contextActivity
     private val fragmentContainerId: Int = fragmentContainerId
     private val fragmentManager: FragmentManager
+    private val logTag: String
 
     init {
         fragmentManager = contextActivity.supportFragmentManager
+        logTag = "[".plus(javaClass.simpleName).plus("]")
     }
 
 
@@ -139,13 +141,16 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
     }
 
     fun printBackStack() {
-        Log.i(TAG, "CURRENT BACKSTACK")
-        Log.i(TAG, "----------------------------")
+        Log.i(logTag, "CURRENT BACKSTACK")
+        Log.i(logTag, "----------------------------")
         val entriesCount = fragmentManager.backStackEntryCount
         if (entriesCount == 0)
-            Log.i(TAG, "Backstack is empty")
+            Log.i(logTag, "Backstack is empty")
         for (entry in 0 until entriesCount)
-            Log.i(TAG, entry.toString().plus(" " + fragmentManager.getBackStackEntryAt(entry).name))
+            Log.i(
+                logTag,
+                entry.toString().plus(" " + fragmentManager.getBackStackEntryAt(entry).name)
+            )
     }
 
     enum class TransitionTypes(val type: Int) {

@@ -6,7 +6,11 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
-    <application>
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/backup_rules"
+        android:fullBackupContent="false">
+
         <service
             android:name=".activity.service.connection.ConnectionCheckerService"
             android:exported="false"
@@ -15,14 +19,14 @@
             <!--android:process=":NotificationServiceProcess"-->
         </service>
 
-        <!--<receiver
+        <receiver
             android:name=".activity.receivers.BootBroadcastReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
-        </receiver>-->
-
+        </receiver>
         <receiver
             android:name=".activity.receivers.NotificationBroadcastReceiver"
             android:exported="false">

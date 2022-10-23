@@ -1,5 +1,6 @@
 package com.github.rooneyandshadows.lightbulb.application.activity.service
 
+const val PERSISTED_SERVICE_JOBS: String = "PERSISTED_SERVICE_JOBS"
 const val NOTIFICATION_CHANNEL_ID_KEY: String = "NOTIFICATION_CHANNEL_ID"
 const val NOTIFICATION_CHANNEL_NAME_KEY: String = "NOTIFICATION_CHANNEL_NAME"
 const val NOTIFICATION_CHANNEL_DESCRIPTION_KEY: String = "NOTIFICATION_CHANNEL_DESCRIPTION"

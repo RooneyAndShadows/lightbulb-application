@@ -11,21 +11,22 @@ import androidx.lifecycle.LifecycleOwner
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.NotificationBroadcastReceiver
-import com.github.rooneyandshadows.lightbulb.application.activity.service.NOTIFICATION_CHANNEL_DESCRIPTION_KEY
-import com.github.rooneyandshadows.lightbulb.application.activity.service.NOTIFICATION_CHANNEL_ID_KEY
-import com.github.rooneyandshadows.lightbulb.application.activity.service.NOTIFICATION_CHANNEL_NAME_KEY
+import com.github.rooneyandshadows.lightbulb.application.activity.service.*
 import com.github.rooneyandshadows.lightbulb.application.activity.service.configuration.NotificationServiceRegistry
+import com.github.rooneyandshadows.lightbulb.application.activity.service.configuration.NotificationServiceRegistry.Configuration
+import com.github.rooneyandshadows.lightbulb.application.activity.service.utils.PersistedJobUtils
 
 class NotificationJobServiceWrapper(
     private val activity: BaseActivity,
     private val notificationServiceRegistry: NotificationServiceRegistry
 ) : DefaultLifecycleObserver {
-    private val stompNotificationJobId = 1
+    private lateinit var configuration: Configuration
     private lateinit var broadcastReceiver: NotificationBroadcastReceiver
 
     @Override
     override fun onCreate(owner: LifecycleOwner) {
         super.onCreate(owner)
+        configuration = notificationServiceRegistry.configuration
         initializeNotificationService()
     }
 
@@ -46,7 +47,6 @@ class NotificationJobServiceWrapper(
     }
 
     private fun initializeNotificationService() {
-        val configuration = notificationServiceRegistry.configuration
         broadcastReceiver = NotificationBroadcastReceiver()
         broadcastReceiver.onNotificationReceived = {
             configuration.notificationListeners.onNotificationReceived()
@@ -67,41 +67,38 @@ class NotificationJobServiceWrapper(
         notificationChannelName: String?,
         notificationChannelDescription: String?
     ) {
-        val name = ComponentName(activity, notificationServiceRegistry.notificationServiceClass)
+        val componentName = notificationServiceRegistry.notificationServiceClass.name
+        val name = ComponentName(activity, componentName)
         val scheduler = activity.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        if (!checkIfJobServiceScheduled()) {
+        if (!PersistedJobUtils.checkIfJobServiceScheduled(activity, configuration.jobServiceId)) {
             val jobInfoBundle = PersistableBundle().apply {
-                putString(
-                    NOTIFICATION_CHANNEL_ID_KEY,
-                    notificationChannelId
-                )
-                putString(
-                    NOTIFICATION_CHANNEL_NAME_KEY,
-                    notificationChannelName
-                )
-                putString(
-                    NOTIFICATION_CHANNEL_DESCRIPTION_KEY,
-                    notificationChannelDescription
-                )
+                putString(NOTIFICATION_CHANNEL_ID_KEY, notificationChannelId)
+                putString(NOTIFICATION_CHANNEL_NAME_KEY, notificationChannelName)
+                putString(NOTIFICATION_CHANNEL_DESCRIPTION_KEY, notificationChannelDescription)
             }
-            val jobInfoBuilder = JobInfo.Builder(stompNotificationJobId, name)
+            val jobInfoBuilder = JobInfo.Builder(configuration.jobServiceId, name)
                 .setPeriodic(900000L)
                 .setExtras(jobInfoBundle)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setPersisted(true)
-            scheduler.schedule(jobInfoBuilder.build())
+            if (configuration.startOnSystemBoot)
+                jobInfoBuilder.setPersisted(true)
+            scheduler.schedule(jobInfoBuilder.build().apply {
+                PersistedJobUtils.apply {
+                    if (configuration.startOnSystemBoot)
+                        addPersistedJob(
+                            activity,
+                            componentName,
+                            configuration.jobServiceId,
+                            jobInfoBundle
+                        )
+                    else {
+                        removePersistedJob(
+                            activity,
+                            componentName
+                        )
+                    }
+                }
+            })
         }
-    }
-
-    private fun checkIfJobServiceScheduled(): Boolean {
-        val scheduler = activity.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        var hasBeenScheduled = false
-        for (jobInfo in scheduler.allPendingJobs) {
-            if (jobInfo.id == stompNotificationJobId) {
-                hasBeenScheduled = true
-                break
-            }
-        }
-        return hasBeenScheduled
     }
 }

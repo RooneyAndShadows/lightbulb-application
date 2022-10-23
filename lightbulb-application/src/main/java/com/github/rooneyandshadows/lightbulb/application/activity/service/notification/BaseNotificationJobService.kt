@@ -48,10 +48,11 @@ abstract class BaseNotificationJobService : JobService() {
     @Override
     override fun onCreate() {
         super.onCreate()
-
+        println("JOB CREATED ======================================================================================")
     }
 
     override fun onStartJob(jobParameters: JobParameters): Boolean {
+        println("JOB STARTED ======================================================================================")
         this.jobParameters = jobParameters
         readParameters()
         setupNotificationChannel()
