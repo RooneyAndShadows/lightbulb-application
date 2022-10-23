@@ -1,4 +1,4 @@
-package com.github.rooneyandshadows.lightbulb.application.fragment.base
+package com.github.rooneyandshadows.lightbulb.application.fragment.base.bindable
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -6,9 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
+import com.github.rooneyandshadows.lightbulb.application.fragment.base.BaseFragment
 
 @Suppress("MemberVisibilityCanBePrivate", "UNCHECKED_CAST")
-abstract class BaseBindableFragment<VDBType : ViewDataBinding> :
+abstract class BaseFragment<VDBType : ViewDataBinding> :
     BaseFragment() {
     protected lateinit var viewBinding: VDBType
 

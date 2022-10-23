@@ -1,11 +1,12 @@
-package com.github.rooneyandshadows.lightbulb.application.fragment.base
+package com.github.rooneyandshadows.lightbulb.application.fragment.base.viewmodel
 
 import android.os.Bundle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.github.rooneyandshadows.lightbulb.application.fragment.base.BaseFragment
 
 @Suppress("MemberVisibilityCanBePrivate", "UNCHECKED_CAST")
-abstract class BaseViewModelFragment<VMType : ViewModel> :
+abstract class BaseFragment<VMType : ViewModel> :
     BaseFragment() {
     protected lateinit var viewModel: VMType
 

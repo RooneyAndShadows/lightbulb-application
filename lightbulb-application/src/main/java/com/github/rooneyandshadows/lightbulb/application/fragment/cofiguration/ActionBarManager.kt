@@ -1,4 +1,4 @@
-package com.github.rooneyandshadows.lightbulb.application.fragment
+package com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration
 
 import android.graphics.drawable.Drawable
 import androidx.appcompat.app.ActionBar

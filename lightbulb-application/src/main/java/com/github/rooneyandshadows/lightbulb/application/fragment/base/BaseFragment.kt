@@ -14,7 +14,7 @@ import androidx.fragment.app.Fragment
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import com.github.rooneyandshadows.lightbulb.application.annotations.BindLayout
 import com.github.rooneyandshadows.lightbulb.application.annotations.BindView
-import com.github.rooneyandshadows.lightbulb.application.fragment.ActionBarManager
+import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarManager
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.BaseFragmentConfiguration
 
 @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER", "unused")
