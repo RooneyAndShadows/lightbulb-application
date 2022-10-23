@@ -29,7 +29,7 @@ import com.github.rooneyandshadows.lightbulb.application.activity.service.foregr
 import com.github.rooneyandshadows.lightbulb.application.activity.service.notification.NotificationJobServiceWrapper
 import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.SliderMenu
 import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.config.SliderMenuConfiguration
-import com.github.rooneyandshadows.lightbulb.application.fragment.BaseFragment
+import com.github.rooneyandshadows.lightbulb.application.fragment.base.BaseFragment
 import com.github.rooneyandshadows.lightbulb.commons.utils.KeyboardUtils.Companion.hideKeyboard
 import com.github.rooneyandshadows.lightbulb.commons.utils.LocaleHelper
 import com.github.rooneyandshadows.lightbulb.textinputview.TextInputView

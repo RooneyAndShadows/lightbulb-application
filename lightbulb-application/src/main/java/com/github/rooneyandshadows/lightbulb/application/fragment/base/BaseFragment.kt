@@ -1,4 +1,4 @@
-package com.github.rooneyandshadows.lightbulb.application.fragment
+package com.github.rooneyandshadows.lightbulb.application.fragment.base
 
 import android.animation.Animator
 import android.animation.AnimatorInflater
@@ -12,6 +12,9 @@ import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import androidx.fragment.app.Fragment
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
+import com.github.rooneyandshadows.lightbulb.application.annotations.BindLayout
+import com.github.rooneyandshadows.lightbulb.application.annotations.BindView
+import com.github.rooneyandshadows.lightbulb.application.fragment.ActionBarManager
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.BaseFragmentConfiguration
 
 @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER", "unused")
@@ -55,7 +58,7 @@ abstract class BaseFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return null
+        return inflater.inflate(getLayoutId(), container, false)
     }
 
     protected open fun viewCreated(fragmentView: View, savedInstanceState: Bundle?) {
@@ -82,10 +85,13 @@ abstract class BaseFragment : Fragment() {
     protected open fun resume() {
     }
 
+    protected open fun getLayoutId(): Int {
+        return getLayoutIdInternally()
+    }
+
     /**
      * Method is used to handle back press on fragment.
      */
-    @Override
     open fun onBackPressed(): Boolean {
         return false
     }
@@ -112,7 +118,7 @@ abstract class BaseFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         setHasOptionsMenu(fragmentConfiguration.hasOptionsMenu)
-        return createView(inflater, container, savedInstanceState);
+        return createView(inflater, container, savedInstanceState)
     }
 
     /**
@@ -128,6 +134,7 @@ abstract class BaseFragment : Fragment() {
             contextActivity.enableLeftDrawer(fragmentConfiguration.hasLeftDrawer)
             actionBarManager = ActionBarManager(this, fragmentConfiguration.actionBarConfiguration)
         }
+        selectViewsInternally()
         selectViews()
         viewCreated(fragmentView, savedInstanceState)
     }
@@ -250,6 +257,40 @@ abstract class BaseFragment : Fragment() {
         if (isRestarted)
             return FragmentStates.RESTARTED
         return FragmentStates.REUSED
+    }
+
+    private fun selectViewsInternally() {
+        for (field in javaClass.declaredFields) {
+            val annotations = field.annotations
+            if (annotations.isEmpty()) continue
+            annotations.forEach { annotation ->
+                if (annotation is BindView) {
+                    field.isAccessible = true
+                    val id = resources.getIdentifier(
+                        annotation.name,
+                        "id",
+                        requireActivity().packageName
+                    )
+                    field.set(this, requireView().findViewById(id))
+                }
+            }
+        }
+    }
+
+    private fun getLayoutIdInternally(): Int {
+        var bindAnnotation: BindLayout? = null
+        for (annotation in javaClass.annotations)
+            if (annotation is BindLayout)
+                bindAnnotation = annotation
+        if (bindAnnotation != null) {
+            val id = resources.getIdentifier(
+                bindAnnotation.name,
+                "layout",
+                requireActivity().packageName
+            )
+            return id
+        }
+        return -1
     }
 
     private fun isFragmentVisible(): Boolean {

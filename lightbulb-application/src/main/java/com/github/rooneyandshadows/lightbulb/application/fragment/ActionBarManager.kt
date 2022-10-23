@@ -3,6 +3,7 @@ package com.github.rooneyandshadows.lightbulb.application.fragment
 import android.graphics.drawable.Drawable
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.widget.Toolbar
+import com.github.rooneyandshadows.lightbulb.application.fragment.base.BaseFragment
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.BaseFragmentConfiguration
 
 class ActionBarManager(
