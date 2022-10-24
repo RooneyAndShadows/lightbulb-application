@@ -4,11 +4,10 @@ import android.graphics.drawable.Drawable
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.widget.Toolbar
 import com.github.rooneyandshadows.lightbulb.application.fragment.base.BaseFragment
-import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.BaseFragmentConfiguration
 
 class ActionBarManager(
     private val contextFragment: BaseFragment,
-    private val configuration: BaseFragmentConfiguration.ActionBarConfiguration?
+    private val configuration: ActionBarConfiguration?
 ) {
 
     init {
@@ -16,7 +15,7 @@ class ActionBarManager(
             initializeActionBarForConfiguration(configuration)
     }
 
-    private fun initializeActionBarForConfiguration(configuration: BaseFragmentConfiguration.ActionBarConfiguration?) {
+    private fun initializeActionBarForConfiguration(configuration: ActionBarConfiguration?) {
         if (configuration == null)
             return
         val toolbar: Toolbar = contextFragment.requireView().findViewById(configuration.actionBarId)

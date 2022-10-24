@@ -14,13 +14,13 @@ import androidx.fragment.app.Fragment
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import com.github.rooneyandshadows.lightbulb.application.annotations.BindLayout
 import com.github.rooneyandshadows.lightbulb.application.annotations.BindView
+import com.github.rooneyandshadows.lightbulb.application.fragment.annotations.FragmentConfiguration
+import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarConfiguration
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarManager
-import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.BaseFragmentConfiguration
 
 @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER", "unused")
 abstract class BaseFragment : Fragment() {
-    lateinit var fragmentConfiguration: BaseFragmentConfiguration
-        private set
+    private var configuration: Configuration? = null
     lateinit var contextActivity: BaseActivity
         private set
     lateinit var actionBarManager: ActionBarManager
@@ -34,9 +34,18 @@ abstract class BaseFragment : Fragment() {
         private set
     protected var isReused: Boolean = false
         private set
+    private var layoutId: Int = -1
     private var animationCreated = false
+    private var withLeftDrawer: Boolean = false
+    private var withOptionsMenu: Boolean = false
 
-    protected abstract fun configureFragment(): BaseFragmentConfiguration
+    protected open fun configureFragment(): Configuration {
+        return Configuration()
+    }
+
+    protected open fun configureActionBar(): ActionBarConfiguration? {
+        return null
+    }
 
     /**
      * Method is used to handle fragment arguments.
@@ -58,7 +67,7 @@ abstract class BaseFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(getLayoutId(), container, false)
+        return inflater.inflate(layoutId, container, false)
     }
 
     protected open fun viewCreated(fragmentView: View, savedInstanceState: Bundle?) {
@@ -86,7 +95,7 @@ abstract class BaseFragment : Fragment() {
     }
 
     protected open fun getLayoutId(): Int {
-        return getLayoutIdInternally()
+        return -1
     }
 
     /**
@@ -108,7 +117,7 @@ abstract class BaseFragment : Fragment() {
         create(savedInstanceState)
         if (!isRestarted)
             handleArguments(arguments)
-        fragmentConfiguration = configureFragment()
+        configuration = configureFragment()
     }
 
     @Override
@@ -117,7 +126,7 @@ abstract class BaseFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        setHasOptionsMenu(fragmentConfiguration.hasOptionsMenu)
+        setHasOptionsMenu(configuration!!.hasOptionsMenu)
         return createView(inflater, container, savedInstanceState)
     }
 
@@ -130,9 +139,9 @@ abstract class BaseFragment : Fragment() {
     @Override
     final override fun onViewCreated(fragmentView: View, savedInstanceState: Bundle?) {
         super.onViewCreated(fragmentView, savedInstanceState)
-        if (fragmentConfiguration.isContentFragment) {
-            contextActivity.enableLeftDrawer(fragmentConfiguration.hasLeftDrawer)
-            actionBarManager = ActionBarManager(this, fragmentConfiguration.actionBarConfiguration)
+        if (configuration!!.isMainScreenFragment) {
+            contextActivity.enableLeftDrawer(configuration!!.hasLeftDrawer)
+            actionBarManager = ActionBarManager(this, configureActionBar())
         }
         selectViewsInternally()
         selectViews()
@@ -171,7 +180,7 @@ abstract class BaseFragment : Fragment() {
     @Override
     final override fun onResume() {
         super.onResume()
-        if (fragmentConfiguration.isContentFragment && isCreated && !animationCreated)
+        if (configuration!!.isMainScreenFragment && isCreated && !animationCreated)
             onEnterTransitionFinished()
         resume()
     }
@@ -181,7 +190,17 @@ abstract class BaseFragment : Fragment() {
         super.onAttach(context)
         if (context is BaseActivity)
             contextActivity = context
+        setupFragment()
         attach()
+    }
+
+    private fun setupFragment() {
+        handleClassAnnotations()
+        if (configuration == null)
+            configuration = configureFragment()
+        val layout = getLayoutId()
+        if (layout != -1)
+            this.layoutId = layout
     }
 
     @Override
@@ -192,7 +211,7 @@ abstract class BaseFragment : Fragment() {
     ): Animation? {
         animationCreated = true
         enableTouch(false)
-        return if (fragmentConfiguration.isContentFragment && nextAnim != 0) {
+        return if (configuration!!.isMainScreenFragment && nextAnim != 0) {
             val anim = AnimationUtils.loadAnimation(contextActivity, nextAnim)
             anim.setAnimationListener(object : Animation.AnimationListener {
                 override fun onAnimationStart(animation: Animation) {}
@@ -221,7 +240,7 @@ abstract class BaseFragment : Fragment() {
     ): Animator? {
         animationCreated = true
         enableTouch(false)
-        return if (fragmentConfiguration.isContentFragment && nextAnim != 0) {
+        return if (configuration!!.isMainScreenFragment && nextAnim != 0) {
             val animator = AnimatorInflater.loadAnimator(contextActivity, nextAnim)
             animator.addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator?) {
@@ -259,6 +278,27 @@ abstract class BaseFragment : Fragment() {
         return FragmentStates.REUSED
     }
 
+
+    private fun handleClassAnnotations() {
+        for (annotation in javaClass.annotations)
+            when (annotation) {
+                is FragmentConfiguration -> {
+                    configuration = Configuration(
+                        annotation.isMainScreenFragment,
+                        annotation.hasLeftDrawer,
+                        annotation.hasOptionsMenu
+                    )
+                }
+                is BindLayout -> {
+                    layoutId = resources.getIdentifier(
+                        annotation.name,
+                        "layout",
+                        requireActivity().packageName
+                    )
+                }
+            }
+    }
+
     private fun selectViewsInternally() {
         for (field in javaClass.declaredFields) {
             val annotations = field.annotations
@@ -275,22 +315,6 @@ abstract class BaseFragment : Fragment() {
                 }
             }
         }
-    }
-
-    private fun getLayoutIdInternally(): Int {
-        var bindAnnotation: BindLayout? = null
-        for (annotation in javaClass.annotations)
-            if (annotation is BindLayout)
-                bindAnnotation = annotation
-        if (bindAnnotation != null) {
-            val id = resources.getIdentifier(
-                bindAnnotation.name,
-                "layout",
-                requireActivity().packageName
-            )
-            return id
-        }
-        return -1
     }
 
     private fun isFragmentVisible(): Boolean {
@@ -311,4 +335,10 @@ abstract class BaseFragment : Fragment() {
         RESTARTED(1),
         REUSED(2)
     }
+
+    class Configuration(
+        val isMainScreenFragment: Boolean = true,
+        val hasLeftDrawer: Boolean = false,
+        val hasOptionsMenu: Boolean = false
+    )
 }
