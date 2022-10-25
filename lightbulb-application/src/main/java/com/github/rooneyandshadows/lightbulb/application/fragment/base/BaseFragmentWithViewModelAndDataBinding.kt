@@ -36,7 +36,7 @@ abstract class BaseFragmentWithViewModelAndDataBinding<VDBType : ViewDataBinding
     }
 
     @Override
-    final override fun create(savedInstanceState: Bundle?) {
+    final override fun doOnCreate(savedInstanceState: Bundle?) {
         val vmclass = getViewModelClass()
         viewModel = ViewModelProvider(contextActivity)[vmclass]
         initializeViewModel(viewModel)
@@ -44,7 +44,7 @@ abstract class BaseFragmentWithViewModelAndDataBinding<VDBType : ViewDataBinding
     }
 
     @Override
-    final override fun createView(
+    final override fun doOnCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?

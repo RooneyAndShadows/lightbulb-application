@@ -6,6 +6,7 @@ import android.content.*
 import android.content.res.Resources
 import android.graphics.Rect
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
@@ -77,25 +78,40 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
         return null
     }
 
-    protected open fun beforeCreate(savedInstanceState: Bundle?) {
+    protected open fun doBeforeCreate(savedInstanceState: Bundle?) {
     }
 
-    protected open fun create(savedInstanceState: Bundle?) {
+    protected open fun doOnCreate(savedInstanceState: Bundle?) {
     }
 
-    protected open fun resume() {
+    protected open fun doOnResume() {
     }
 
-    protected open fun newIntent(intent: Intent) {
+    protected open fun doOnNewIntent(intent: Intent) {
     }
 
-    protected open fun saveInstanceState(outState: Bundle) {
+    protected open fun doOnSaveInstanceState(outState: Bundle) {
     }
 
-    protected open fun pause() {
+    protected open fun doOnSaveInstanceState(
+        outState: Bundle,
+        outPersistentState: PersistableBundle
+    ) {
     }
 
-    protected open fun destroy() {
+    protected open fun doOnRestoreInstanceState(savedInstanceState: Bundle) {
+    }
+
+    protected open fun doOnRestoreInstanceState(
+        savedInstanceState: Bundle?,
+        persistentState: PersistableBundle?
+    ) {
+    }
+
+    protected open fun doOnPause() {
+    }
+
+    protected open fun doOnDestroy() {
     }
 
     protected open fun registerNotificationService(): NotificationServiceRegistry? {
@@ -133,47 +149,70 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     @Override
     final override fun onCreate(savedInstanceState: Bundle?) {
         setUnhandledGlobalExceptionHandler()
-        beforeCreate(savedInstanceState)
+        doBeforeCreate(savedInstanceState)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.base_activity_layout)
         initializeMenuChangedReceiver()
         initializeNotificationService()
         initializeInternetCheckerService()
         setupActivity(savedInstanceState)
-        create(savedInstanceState)
+        doOnCreate(savedInstanceState)
     }
 
     @Override
     final override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putParcelable(sliderBundleKey, sliderMenu.saveState())
-        saveInstanceState(outState)
+        doOnSaveInstanceState(outState)
+    }
+
+    @Override
+    final override fun onSaveInstanceState(
+        outState: Bundle,
+        outPersistentState: PersistableBundle
+    ) {
+        doOnSaveInstanceState(outState, outPersistentState)
+    }
+
+    @Override
+    final override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        doOnRestoreInstanceState(savedInstanceState)
+    }
+
+    @Override
+    final override fun onRestoreInstanceState(
+        savedInstanceState: Bundle?,
+        persistentState: PersistableBundle?
+    ) {
+        super.onRestoreInstanceState(savedInstanceState, persistentState)
+        doOnRestoreInstanceState(savedInstanceState, persistentState)
     }
 
     @Override
     final override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(menuConfigurationBroadcastReceiver)
-        destroy()
+        doOnDestroy()
     }
 
     @Override
     final override fun onPause() {
         super.onPause()
-        pause()
+        doOnPause()
     }
 
     @Override
     override fun onResume() {
         super.onResume()
-        resume()
+        doOnResume()
     }
 
     @Override
     final override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
-        newIntent(getIntent())
+        doOnNewIntent(getIntent())
     }
 
     @Override
@@ -344,6 +383,4 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
             IntentFilter(BuildConfig.menuConfigChangedAction)
         )
     }
-
-
 }

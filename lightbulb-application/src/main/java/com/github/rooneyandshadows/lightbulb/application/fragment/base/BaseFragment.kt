@@ -47,22 +47,27 @@ abstract class BaseFragment : Fragment() {
         return null
     }
 
-    /**
-     * Method is used to handle fragment arguments.
-     */
     protected open fun handleArguments(arguments: Bundle?) {
     }
 
-    protected open fun create(savedInstanceState: Bundle?) {
-    }
-
-    /**
-     * Method is used to select views from the fragment layout.
-     */
     protected open fun selectViews() {
     }
 
-    protected open fun createView(
+    protected open fun onEnterTransitionFinished() {
+    }
+
+    protected open fun getLayoutId(): Int {
+        return -1
+    }
+
+    open fun onBackPressed(): Boolean {
+        return false
+    }
+
+    protected open fun doOnCreate(savedInstanceState: Bundle?) {
+    }
+
+    protected open fun doOnCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -70,39 +75,25 @@ abstract class BaseFragment : Fragment() {
         return inflater.inflate(layoutId, container, false)
     }
 
-    protected open fun viewCreated(fragmentView: View, savedInstanceState: Bundle?) {
+    protected open fun doOnViewCreated(fragmentView: View, savedInstanceState: Bundle?) {
     }
 
-    protected open fun viewStateRestored(savedInstanceState: Bundle?) {
+    protected open fun doOnViewStateRestored(savedInstanceState: Bundle?) {
     }
 
-    protected open fun onEnterTransitionFinished() {
+    protected open fun doOnSaveInstanceState(outState: Bundle) {
     }
 
-    protected open fun saveInstanceState(outState: Bundle) {
+    protected open fun doOnAttach() {
     }
 
-    protected open fun attach() {
+    protected open fun doOnPause() {
     }
 
-    protected open fun pause() {
+    protected open fun doOnDestroy() {
     }
 
-    protected open fun destroy() {
-    }
-
-    protected open fun resume() {
-    }
-
-    protected open fun getLayoutId(): Int {
-        return -1
-    }
-
-    /**
-     * Method is used to handle back press on fragment.
-     */
-    open fun onBackPressed(): Boolean {
-        return false
+    protected open fun doOnResume() {
     }
 
     @Override
@@ -114,7 +105,7 @@ abstract class BaseFragment : Fragment() {
             isRestarted = savedInstanceState != null
             isCreated = !isRestarted
         }
-        create(savedInstanceState)
+        doOnCreate(savedInstanceState)
         if (!isRestarted)
             handleArguments(arguments)
         configuration = configureFragment()
@@ -127,7 +118,7 @@ abstract class BaseFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         setHasOptionsMenu(configuration!!.hasOptionsMenu)
-        return createView(inflater, container, savedInstanceState)
+        return doOnCreateView(inflater, container, savedInstanceState)
     }
 
     /**
@@ -145,13 +136,13 @@ abstract class BaseFragment : Fragment() {
         }
         selectViewsInternally()
         selectViews()
-        viewCreated(fragmentView, savedInstanceState)
+        doOnViewCreated(fragmentView, savedInstanceState)
     }
 
     @Override
     final override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
-        viewStateRestored(savedInstanceState)
+        doOnViewStateRestored(savedInstanceState)
     }
 
     @Override
@@ -159,13 +150,13 @@ abstract class BaseFragment : Fragment() {
         super.onSaveInstanceState(outState)
         if (!isFragmentVisible()) //previously created bundle needed only when fragment is not visible
             outState.putBoolean(isReusedKey, isReused)
-        saveInstanceState(outState)
+        doOnSaveInstanceState(outState)
     }
 
     @Override
     final override fun onDestroy() {
         super.onDestroy()
-        destroy()
+        doOnDestroy()
     }
 
     @Override
@@ -174,7 +165,7 @@ abstract class BaseFragment : Fragment() {
         isCreated = false
         isRestarted = false
         isReused = true
-        pause()
+        doOnPause()
     }
 
     @Override
@@ -182,7 +173,7 @@ abstract class BaseFragment : Fragment() {
         super.onResume()
         if (configuration!!.isMainScreenFragment && isCreated && !animationCreated)
             onEnterTransitionFinished()
-        resume()
+        doOnResume()
     }
 
     @Override
@@ -191,7 +182,7 @@ abstract class BaseFragment : Fragment() {
         if (context is BaseActivity)
             contextActivity = context
         setupFragment()
-        attach()
+        doOnAttach()
     }
 
     private fun setupFragment() {

@@ -16,7 +16,7 @@ abstract class BaseFragmentWithViewDataBinding<VDBType : ViewDataBinding> :
     }
 
     @Override
-    final override fun createView(
+    final override fun doOnCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
