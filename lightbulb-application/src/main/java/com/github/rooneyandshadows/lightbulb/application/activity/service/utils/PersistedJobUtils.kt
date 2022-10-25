@@ -1,22 +1,20 @@
 package com.github.rooneyandshadows.lightbulb.application.activity.service.utils
 
-import android.app.job.JobInfo
 import android.app.job.JobScheduler
 import android.content.Context
 import android.os.PersistableBundle
 import com.github.rooneyandshadows.java.commons.json.JsonUtils
 import com.github.rooneyandshadows.lightbulb.application.activity.service.PERSISTED_SERVICE_JOBS
 import com.github.rooneyandshadows.lightbulb.commons.utils.PreferenceUtils
-import com.google.gson.reflect.TypeToken
 
+@Suppress("MemberVisibilityCanBePrivate")
 class PersistedJobUtils {
     companion object {
-        fun getPersistedJobs(context: Context): List<PersistedJobServiceInfo> {
+        fun getPersistedJobs(context: Context): PersistedJobs {
             val persisted = PreferenceUtils.getString(context, PERSISTED_SERVICE_JOBS, "")
             if (persisted.isBlank())
-                return mutableListOf()
-            val type = object : TypeToken<MutableList<PersistedJobServiceInfo>>() {}
-            return JsonUtils.fromJson(persisted, type.type)
+                return PersistedJobs()
+            return JsonUtils.fromJson(persisted, PersistedJobs::class.java)
         }
 
         fun addPersistedJob(
@@ -25,14 +23,8 @@ class PersistedJobUtils {
             jobId: Int,
             extras: PersistableBundle
         ) {
-            val persistedJobs = getPersistedJobs(context) as MutableList<PersistedJobServiceInfo>
-            val foundJob = persistedJobs.stream()
-                .filter { return@filter it.componentName == componentName }
-                .findFirst()
-                .orElse(null)
-            if (foundJob != null)
-                return
-            persistedJobs.add(PersistedJobServiceInfo(componentName, jobId, extras))
+            val persistedJobs = getPersistedJobs(context)
+            persistedJobs.add(componentName, jobId, extras)
             save(context, persistedJobs)
         }
 
@@ -40,8 +32,8 @@ class PersistedJobUtils {
             context: Context,
             componentName: String,
         ) {
-            val persistedJobs = getPersistedJobs(context) as MutableList<PersistedJobServiceInfo>
-            persistedJobs.removeIf { it.componentName == componentName }
+            val persistedJobs = getPersistedJobs(context)
+            persistedJobs.remove(componentName)
             save(context, persistedJobs)
         }
 
@@ -57,13 +49,30 @@ class PersistedJobUtils {
             return hasBeenScheduled
         }
 
-        private fun save(context: Context, jobs: List<PersistedJobServiceInfo>) {
+        private fun save(context: Context, jobs: PersistedJobs) {
             PreferenceUtils.saveString(
                 context,
                 PERSISTED_SERVICE_JOBS,
                 JsonUtils.toJson(jobs)
             )
         }
+    }
+
+    class PersistedJobs(val jobs: MutableList<PersistedJobServiceInfo> = mutableListOf()) {
+        fun add(componentName: String, jobId: Int, extras: PersistableBundle) {
+            val foundJob = jobs.stream()
+                .filter { return@filter it.componentName == componentName }
+                .findFirst()
+                .orElse(null)
+            if (foundJob != null)
+                return
+            jobs.add(PersistedJobServiceInfo(componentName, jobId, extras))
+        }
+
+        fun remove(componentName: String) {
+            jobs.removeIf { it.componentName == componentName }
+        }
+
     }
 
     class PersistedJobServiceInfo(
