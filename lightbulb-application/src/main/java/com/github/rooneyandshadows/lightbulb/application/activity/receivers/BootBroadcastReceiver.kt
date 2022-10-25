@@ -37,24 +37,17 @@ class BootBroadcastReceiver : BroadcastReceiver() {
         val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
         PersistedJobUtils.getPersistedJobs(context).jobs.forEach {
             val name = ComponentName(context, it.componentName)
-            if (!PersistedJobUtils.checkIfJobServiceScheduled(context, it.jobId)) {
-                val jobInfoBuilder = JobInfo.Builder(it.jobId, name)
-                    .setPeriodic(900000L)
-                    .setExtras(PersistableBundle().apply {
-                        it.arguments.forEach { (key, value) ->
-                            putString(key, value)
-                        }
-                    })
-                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                    .setPersisted(true)
-                scheduler.schedule(jobInfoBuilder.build())
-                Log.i(logTag, "Scheduled job service:".plus(it.componentName))
-            } else {
-                Log.i(
-                    logTag,
-                    "Job schedule ignored, because it's already scheduled:".plus(it.componentName)
-                )
-            }
+            val jobInfoBuilder = JobInfo.Builder(it.jobId, name)
+                .setPeriodic(900000L)
+                .setExtras(PersistableBundle().apply {
+                    it.arguments.forEach { (key, value) ->
+                        putString(key, value)
+                    }
+                })
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+            //.setPersisted(true)
+            scheduler.schedule(jobInfoBuilder.build())
+            Log.i(logTag, "Scheduled job service:".plus(it.componentName))
         }
     }
 }

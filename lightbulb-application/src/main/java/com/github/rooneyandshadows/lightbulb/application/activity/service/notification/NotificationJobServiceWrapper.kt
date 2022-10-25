@@ -91,8 +91,8 @@ class NotificationJobServiceWrapper(
                 .setPeriodic(900000L)
                 .setExtras(jobInfoBundle)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-            if (configuration.startOnSystemBoot)
-                jobInfoBuilder.setPersisted(true)
+            //if (configuration.startOnSystemBoot)
+            //    jobInfoBuilder.setPersisted(true)
             scheduler.schedule(jobInfoBuilder.build().apply {
                 PersistedJobUtils.apply {
                     if (configuration.startOnSystemBoot)
