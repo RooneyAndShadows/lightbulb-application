@@ -23,6 +23,9 @@ abstract class BaseFragmentWithViewModelAndDataBinding<VDBType : ViewDataBinding
     protected open fun handleArguments(arguments: Bundle?, viewModel: VMType) {
     }
 
+    protected open fun initializeViewModel(viewModel: VMType) {
+    }
+
     protected open fun onViewBound(viewBinding: VDBType) {
     }
 
@@ -36,6 +39,7 @@ abstract class BaseFragmentWithViewModelAndDataBinding<VDBType : ViewDataBinding
     final override fun create(savedInstanceState: Bundle?) {
         val vmclass = getViewModelClass()
         viewModel = ViewModelProvider(contextActivity)[vmclass]
+        initializeViewModel(viewModel)
         create(savedInstanceState, viewModel)
     }
 

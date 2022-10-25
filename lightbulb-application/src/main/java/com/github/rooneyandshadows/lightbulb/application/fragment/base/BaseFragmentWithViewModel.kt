@@ -15,12 +15,16 @@ abstract class BaseFragmentWithViewModel<VMType : ViewModel> :
     protected open fun handleArguments(arguments: Bundle?, viewModel: VMType) {
     }
 
+    protected open fun initializeViewModel(viewModel: VMType) {
+    }
+
     abstract fun getViewModelClass(): Class<VMType>
 
     @Override
     final override fun create(savedInstanceState: Bundle?) {
         val vmclass = getViewModelClass()
         viewModel = ViewModelProvider(contextActivity)[vmclass]
+        initializeViewModel(viewModel)
         create(savedInstanceState, viewModel)
     }
 
