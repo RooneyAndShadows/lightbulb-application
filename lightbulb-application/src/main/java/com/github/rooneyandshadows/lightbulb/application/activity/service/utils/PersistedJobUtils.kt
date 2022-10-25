@@ -2,7 +2,6 @@ package com.github.rooneyandshadows.lightbulb.application.activity.service.utils
 
 import android.app.job.JobScheduler
 import android.content.Context
-import android.os.PersistableBundle
 import com.github.rooneyandshadows.java.commons.json.JsonUtils
 import com.github.rooneyandshadows.lightbulb.application.activity.service.PERSISTED_SERVICE_JOBS
 import com.github.rooneyandshadows.lightbulb.commons.utils.PreferenceUtils
@@ -21,10 +20,10 @@ class PersistedJobUtils {
             context: Context,
             componentName: String,
             jobId: Int,
-            extras: PersistableBundle
+            args: MutableMap<String, String> = mutableMapOf()
         ) {
             val persistedJobs = getPersistedJobs(context)
-            persistedJobs.add(componentName, jobId, extras)
+            persistedJobs.add(componentName, jobId, args)
             save(context, persistedJobs)
         }
 
@@ -59,7 +58,11 @@ class PersistedJobUtils {
     }
 
     class PersistedJobs(val jobs: MutableList<PersistedJobServiceInfo> = mutableListOf()) {
-        fun add(componentName: String, jobId: Int, extras: PersistableBundle) {
+        fun add(
+            componentName: String,
+            jobId: Int,
+            extras: MutableMap<String, String> = mutableMapOf()
+        ) {
             val foundJob = jobs.stream()
                 .filter { return@filter it.componentName == componentName }
                 .findFirst()
@@ -72,12 +75,11 @@ class PersistedJobUtils {
         fun remove(componentName: String) {
             jobs.removeIf { it.componentName == componentName }
         }
-
     }
 
     class PersistedJobServiceInfo(
         val componentName: String,
         val jobId: Int,
-        val extras: PersistableBundle
+        val arguments: MutableMap<String, String>
     )
 }

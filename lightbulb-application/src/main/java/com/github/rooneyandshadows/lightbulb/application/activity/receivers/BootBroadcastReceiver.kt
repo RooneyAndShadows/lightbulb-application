@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.PersistableBundle
 import android.util.Log
 import com.github.rooneyandshadows.lightbulb.application.activity.service.utils.PersistedJobUtils
 
@@ -39,7 +40,11 @@ class BootBroadcastReceiver : BroadcastReceiver() {
             if (!PersistedJobUtils.checkIfJobServiceScheduled(context, it.jobId)) {
                 val jobInfoBuilder = JobInfo.Builder(it.jobId, name)
                     .setPeriodic(900000L)
-                    .setExtras(it.extras)
+                    .setExtras(PersistableBundle().apply {
+                        it.arguments.forEach { (key, value) ->
+                            putString(key, value)
+                        }
+                    })
                     .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                     .setPersisted(true)
                 scheduler.schedule(jobInfoBuilder.build())

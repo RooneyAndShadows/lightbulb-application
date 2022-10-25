@@ -70,11 +70,22 @@ class NotificationJobServiceWrapper(
         val componentName = notificationServiceRegistry.notificationServiceClass.name
         val name = ComponentName(activity, componentName)
         val scheduler = activity.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        if (!PersistedJobUtils.checkIfJobServiceScheduled(activity, configuration.jobServiceId)) {
+        val args = mutableMapOf<String, String>().apply {
+            put(NOTIFICATION_CHANNEL_ID_KEY, notificationChannelId)
+            if (notificationChannelName != null)
+                put(NOTIFICATION_CHANNEL_NAME_KEY, notificationChannelName)
+            if (notificationChannelDescription != null)
+                put(NOTIFICATION_CHANNEL_DESCRIPTION_KEY, notificationChannelDescription)
+        }
+        if (!PersistedJobUtils.checkIfJobServiceScheduled(
+                activity,
+                configuration.jobServiceId
+            )
+        ) {
             val jobInfoBundle = PersistableBundle().apply {
-                putString(NOTIFICATION_CHANNEL_ID_KEY, notificationChannelId)
-                putString(NOTIFICATION_CHANNEL_NAME_KEY, notificationChannelName)
-                putString(NOTIFICATION_CHANNEL_DESCRIPTION_KEY, notificationChannelDescription)
+                args.forEach { (key, value) ->
+                    putString(key, value)
+                }
             }
             val jobInfoBuilder = JobInfo.Builder(configuration.jobServiceId, name)
                 .setPeriodic(900000L)
@@ -89,7 +100,7 @@ class NotificationJobServiceWrapper(
                             activity,
                             componentName,
                             configuration.jobServiceId,
-                            jobInfoBundle
+                            args
                         )
                     else {
                         removePersistedJob(
