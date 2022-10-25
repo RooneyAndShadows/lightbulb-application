@@ -1,4 +1,4 @@
-package com.github.rooneyandshadows.lightbulb.application.fragment.base.vm_bindable
+package com.github.rooneyandshadows.lightbulb.application.fragment.base
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,8 +10,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
 @Suppress("MemberVisibilityCanBePrivate", "UNCHECKED_CAST")
-abstract class BaseFragment<VDBType : ViewDataBinding, VMType : ViewModel> :
-    com.github.rooneyandshadows.lightbulb.application.fragment.base.BaseFragment() {
+abstract class BaseFragmentWithViewModelAndDataBinding<VDBType : ViewDataBinding, VMType : ViewModel> :
+    BaseFragment() {
     protected lateinit var viewModel: VMType
     protected lateinit var viewBinding: VDBType
 
