@@ -34,7 +34,7 @@ class BootBroadcastReceiver : BroadcastReceiver() {
 
     private fun schedulePersistedJobs(context: Context) {
         val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-        PersistedJobUtils.getPersistedJobs(context).forEach {
+        PersistedJobUtils.getPersistedJobs(context).jobs.forEach {
             val name = ComponentName(context, it.componentName)
             if (!PersistedJobUtils.checkIfJobServiceScheduled(context, it.jobId)) {
                 val jobInfoBuilder = JobInfo.Builder(it.jobId, name)
