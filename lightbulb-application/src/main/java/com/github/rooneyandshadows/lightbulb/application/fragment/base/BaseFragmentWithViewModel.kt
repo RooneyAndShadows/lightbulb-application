@@ -9,7 +9,7 @@ abstract class BaseFragmentWithViewModel<VMType : ViewModel> :
     BaseFragment() {
     protected lateinit var viewModel: VMType
 
-    protected open fun create(savedInstanceState: Bundle?, viewModel: VMType) {
+    protected open fun doOnCreate(savedInstanceState: Bundle?, viewModel: VMType) {
     }
 
     protected open fun handleArguments(arguments: Bundle?, viewModel: VMType) {
@@ -25,7 +25,7 @@ abstract class BaseFragmentWithViewModel<VMType : ViewModel> :
         val vmclass = getViewModelClass()
         viewModel = ViewModelProvider(contextActivity)[vmclass]
         initializeViewModel(viewModel)
-        create(savedInstanceState, viewModel)
+        doOnCreate(savedInstanceState, viewModel)
     }
 
     final override fun handleArguments(arguments: Bundle?) {

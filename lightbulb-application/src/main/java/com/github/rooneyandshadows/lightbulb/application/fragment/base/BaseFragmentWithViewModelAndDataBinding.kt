@@ -17,7 +17,7 @@ abstract class BaseFragmentWithViewModelAndDataBinding<VDBType : ViewDataBinding
 
     abstract fun getViewModelClass(): Class<VMType>
 
-    protected open fun create(savedInstanceState: Bundle?, viewModel: VMType) {
+    protected open fun doOnCreate(savedInstanceState: Bundle?, viewModel: VMType) {
     }
 
     protected open fun handleArguments(arguments: Bundle?, viewModel: VMType) {
@@ -26,7 +26,7 @@ abstract class BaseFragmentWithViewModelAndDataBinding<VDBType : ViewDataBinding
     protected open fun initializeViewModel(viewModel: VMType) {
     }
 
-    protected open fun onViewBound(viewBinding: VDBType) {
+    protected open fun doOnViewBound(viewBinding: VDBType) {
     }
 
     @Override
@@ -40,7 +40,7 @@ abstract class BaseFragmentWithViewModelAndDataBinding<VDBType : ViewDataBinding
         val vmclass = getViewModelClass()
         viewModel = ViewModelProvider(contextActivity)[vmclass]
         initializeViewModel(viewModel)
-        create(savedInstanceState, viewModel)
+        doOnCreate(savedInstanceState, viewModel)
     }
 
     @Override
@@ -56,7 +56,7 @@ abstract class BaseFragmentWithViewModelAndDataBinding<VDBType : ViewDataBinding
             false
         )
         viewBinding.lifecycleOwner = viewLifecycleOwner
-        onViewBound(viewBinding)
+        doOnViewBound(viewBinding)
         return viewBinding.root
     }
 }
