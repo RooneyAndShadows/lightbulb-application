@@ -39,8 +39,8 @@ abstract class BaseFragment : Fragment() {
     private var withLeftDrawer: Boolean = false
     private var withOptionsMenu: Boolean = false
 
-    protected open fun configureFragment(): Configuration {
-        return Configuration()
+    protected open fun configureFragment(): Configuration? {
+        return null
     }
 
     protected open fun configureActionBar(): ActionBarConfiguration? {
@@ -108,7 +108,6 @@ abstract class BaseFragment : Fragment() {
         doOnCreate(savedInstanceState)
         if (!isRestarted)
             handleArguments(arguments)
-        configuration = configureFragment()
     }
 
     @Override
@@ -187,8 +186,6 @@ abstract class BaseFragment : Fragment() {
 
     private fun setupFragment() {
         handleClassAnnotations()
-        if (configuration == null)
-            configuration = configureFragment()
         val layout = getLayoutId()
         if (layout != -1)
             this.layoutId = layout
@@ -269,11 +266,13 @@ abstract class BaseFragment : Fragment() {
         return FragmentStates.REUSED
     }
 
-
     private fun handleClassAnnotations() {
+        configuration = configureFragment()
         for (annotation in javaClass.annotations)
             when (annotation) {
                 is FragmentConfiguration -> {
+                    if (configuration != null)
+                        continue
                     configuration = Configuration(
                         annotation.isMainScreenFragment,
                         annotation.hasLeftDrawer,
@@ -288,6 +287,8 @@ abstract class BaseFragment : Fragment() {
                     )
                 }
             }
+        if (configuration == null)
+            configuration = Configuration()
     }
 
     private fun selectViewsInternally() {
