@@ -4,5 +4,5 @@ import kotlin.annotation.AnnotationRetention.RUNTIME
 import kotlin.annotation.AnnotationTarget.*
 
 @Retention(RUNTIME)
-@Target(FIELD)
+@Target(FIELD,PROPERTY)
 annotation class BindView(val name: String)

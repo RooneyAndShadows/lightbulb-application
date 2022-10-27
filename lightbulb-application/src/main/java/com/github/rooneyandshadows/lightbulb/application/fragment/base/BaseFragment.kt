@@ -296,19 +296,18 @@ abstract class BaseFragment : Fragment() {
     }
 
     private fun selectViewsInternally() {
-        for (field in javaClass.kotlin.declaredMemberProperties.filterIsInstance<KMutableProperty<*>>()) {
-            val annotations = field.annotations
+        for (prop in javaClass.kotlin.declaredMemberProperties.filterIsInstance<KMutableProperty<*>>()) {
+            val annotations = prop.annotations
             if (annotations.isEmpty()) continue
             annotations.forEach { annotation ->
                 if (annotation is BindView) {
-                    field.isAccessible = true
+                    prop.isAccessible = true
                     val id = resources.getIdentifier(
                         annotation.name,
                         "id",
                         requireActivity().packageName
                     )
-                    field.isAccessible = true
-                    field.setter.call(this, requireView().findViewById(id))
+                    prop.setter.call(this, requireView().findViewById(id))
                 }
             }
         }
