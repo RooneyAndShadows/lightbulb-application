@@ -9,8 +9,8 @@ android {
     defaultConfig {
         minSdkVersion 24
         targetSdkVersion 31
-        versionCode 1109
-        versionName "1.1.9"
+        versionCode 1110
+        versionName "1.1.10"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
     }
@@ -68,6 +68,7 @@ afterEvaluate {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "androidx.core:core-ktx:$versions.ktx.core"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:1.7.20"
     implementation "androidx.appcompat:appcompat:$versions.android.appcompat"
     implementation "androidx.annotation:annotation:$versions.android.annotation"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$versions.android.lifecycle"

@@ -17,6 +17,10 @@ import com.github.rooneyandshadows.lightbulb.application.annotations.BindView
 import com.github.rooneyandshadows.lightbulb.application.fragment.annotations.FragmentConfiguration
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarConfiguration
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarManager
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
 
 @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER", "unused")
 abstract class BaseFragment : Fragment() {
@@ -292,7 +296,7 @@ abstract class BaseFragment : Fragment() {
     }
 
     private fun selectViewsInternally() {
-        for (field in javaClass.declaredFields) {
+        for (field in javaClass.kotlin.declaredMemberProperties.filterIsInstance<KMutableProperty<*>>()) {
             val annotations = field.annotations
             if (annotations.isEmpty()) continue
             annotations.forEach { annotation ->
@@ -303,7 +307,8 @@ abstract class BaseFragment : Fragment() {
                         "id",
                         requireActivity().packageName
                     )
-                    field.set(this, requireView().findViewById(id))
+                    field.isAccessible = true
+                    field.setter.call(this, requireView().findViewById(id))
                 }
             }
         }
