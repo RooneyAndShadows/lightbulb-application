@@ -6,7 +6,7 @@ buildscript {
                         core: "1.7.0"
                 ],
                 android  : [
-                        annotation: "1.4.0",
+                        annotation: "1.5.0",
                         appcompat : "1.5.1",
                         lifecycle : "2.5.1",
                         preference: "1.2.0",
@@ -15,7 +15,7 @@ buildscript {
 
                 ],
                 lightbulb: [
-                        commons      : "1.0.10",
+                        commons      : "1.0.12",
                         textinputview: "1.0.11",
                 ],
                 java     : [
