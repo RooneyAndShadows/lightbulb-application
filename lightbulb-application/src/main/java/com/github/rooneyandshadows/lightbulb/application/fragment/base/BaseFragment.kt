@@ -19,7 +19,6 @@ import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.A
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarManager
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
 @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER", "unused")
@@ -38,7 +37,8 @@ abstract class BaseFragment : Fragment() {
         private set
     protected var isReused: Boolean = false
         private set
-    private var layoutId: Int = -1
+    protected var layoutIdentifier: Int = -1
+        private set
     private var animationCreated = false
     private var withLeftDrawer: Boolean = false
     private var withOptionsMenu: Boolean = false
@@ -76,7 +76,7 @@ abstract class BaseFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(layoutId, container, false)
+        return inflater.inflate(layoutIdentifier, container, false)
     }
 
     protected open fun doOnViewCreated(fragmentView: View, savedInstanceState: Bundle?) {
@@ -192,7 +192,7 @@ abstract class BaseFragment : Fragment() {
         handleClassAnnotations()
         val layout = getLayoutId()
         if (layout != -1)
-            this.layoutId = layout
+            this.layoutIdentifier = layout
     }
 
     @Override
@@ -284,7 +284,7 @@ abstract class BaseFragment : Fragment() {
                     )
                 }
                 is BindLayout -> {
-                    layoutId = resources.getIdentifier(
+                    layoutIdentifier = resources.getIdentifier(
                         annotation.name,
                         "layout",
                         requireActivity().packageName

@@ -23,7 +23,7 @@ abstract class BaseFragmentWithViewDataBinding<VDBType : ViewDataBinding> :
     ): View {
         viewBinding = DataBindingUtil.inflate(
             inflater,
-            getLayoutId(),
+            layoutIdentifier,
             container,
             false
         )
