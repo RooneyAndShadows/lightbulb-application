@@ -31,7 +31,6 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
     }
 
     fun forward(newScreen: FragmentScreen, transition: TransitionTypes) {
-        UUID.randomUUID().toString()
         forward(newScreen, transition, UUID.randomUUID().toString())
     }
 
@@ -40,7 +39,7 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         transition: TransitionTypes,
         backStackEntryName: String,
     ) {
-        //val currentFragment = fragmentManager.findFragmentById(fragmentContainerId)
+        val currentFragment = fragmentManager.findFragmentById(fragmentContainerId)
         val requestedFragment = newScreen.getFragment()
         //if (currentFragment != null && currentFragment.javaClass == requestedFragment.javaClass)
         //    return
@@ -60,7 +59,9 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
                 )
                 else -> {}
             }
-            replace(fragmentContainerId, requestedFragment, UUID.randomUUID().toString())
+            add(fragmentContainerId, requestedFragment, UUID.randomUUID().toString())
+            if (currentFragment != null)
+                hide(currentFragment)
             addToBackStack(backStackEntryName)
             commit()
         }
