@@ -1,5 +1,6 @@
 package com.github.rooneyandshadows.lightbulb.annotation_processors;
 
+import com.github.rooneyandshadows.lightbulb.annotation_processors.annotations.BindView;
 import com.github.rooneyandshadows.lightbulb.annotation_processors.annotations.FragmentConfiguration;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.ClassName;
@@ -10,8 +11,11 @@ import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -32,7 +36,6 @@ public class FragmentProcessor extends AbstractProcessor {
     private Filer filer;
     private Messager messager;
     private Elements elements;
-    private List<ClassName> classList;
     private List<ClassInfo> informationList;
 
     private final ClassName classContext = ClassName.get("android.content", "Context");
@@ -44,7 +47,6 @@ public class FragmentProcessor extends AbstractProcessor {
         this.filer = processingEnvironment.getFiler();
         this.messager = processingEnvironment.getMessager();
         this.elements = processingEnvironment.getElementUtils();
-        this.classList = new ArrayList<>();
         this.informationList = new ArrayList<>();
     }
 
@@ -59,15 +61,36 @@ public class FragmentProcessor extends AbstractProcessor {
                 return false;
             }
             ClassInfo classInfo = new ClassInfo();
-            classInfo.className = ClassName.get(elements.getPackageOf(element).getQualifiedName().toString(),
-                    element.getSimpleName().toString());
+            classInfo.setSimpleClassName(element.getSimpleName().toString());
+            classInfo.setFullClassName(getFullClassName(elements, element));
             classInfo.configAnnotation = element.getAnnotation(FragmentConfiguration.class);
             informationList.add(classInfo);
-
-            //classList.add(ClassName.get(elements.getPackageOf(element).getQualifiedName().toString(),
-            //        element.getSimpleName().toString()));
         }
+        for (Element element : roundEnvironment.getElementsAnnotatedWith(BindView.class)) {
+            BindView annotation = element.getAnnotation(BindView.class);
+            Element classElement = element.getEnclosingElement();
+            String fullClassName = getFullClassName(elements, classElement);
+            ClassInfo classInfo = informationList.stream().filter(info -> info.fullClassName.equals(fullClassName))
+                    .findFirst()
+                    .orElse(null);
+            if (classInfo == null) {
+                classInfo = new ClassInfo();
+                classInfo.setSimpleClassName(classElement.getSimpleName().toString());
+                informationList.add(classInfo);
+            }
+            classInfo.viewBindings.put(element.getSimpleName().toString(), annotation.name());
 
+
+            //informationList.stream().filter(new Predicate<ClassInfo>() {
+            //    @Override
+            //    public boolean test(ClassInfo classInfo) {
+            //        classInfo.className == className.
+            //    }
+            //})
+
+
+        }
+        messager.printMessage(Diagnostic.Kind.ERROR, String.valueOf(informationList.size()));
         /**
          *      2) For each annotated class, generate new static method
          */
@@ -76,7 +99,7 @@ public class FragmentProcessor extends AbstractProcessor {
 
         informationList.forEach(classInfo -> {
             boolean hasFragmentConfigAnnotation = classInfo.configAnnotation != null;
-            String simpleName = classInfo.className.simpleName();
+            String simpleName = classInfo.simpleClassName;
             ClassName fragConfigClassName = ClassName.get(FragmentConfig.class);
             if (hasFragmentConfigAnnotation) {
                 String layoutName = classInfo.configAnnotation.layoutName();
@@ -94,7 +117,7 @@ public class FragmentProcessor extends AbstractProcessor {
         });
 
 
-        for (ClassName className : classList) {
+        /*for (ClassName className : classList) {
             MethodSpec generateFragmentConfigMethod = MethodSpec
                     .methodBuilder("generateFragmentConfiguration" + className.simpleName())
                     .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
@@ -106,7 +129,7 @@ public class FragmentProcessor extends AbstractProcessor {
                     .build();
 
             methods.add(generateFragmentConfigMethod);
-        }
+        }*/
 
         /**
          *      3) Generate a class called Navigator that contains the static methods
@@ -140,8 +163,48 @@ public class FragmentProcessor extends AbstractProcessor {
         return SourceVersion.latestSupported();
     }
 
-    private static class ClassInfo {
-        public ClassName className;
-        public FragmentConfiguration configAnnotation;
+    private String getFullClassName(Elements elements, Element element) {
+        String classPackage = elements.getPackageOf(element)
+                .getQualifiedName()
+                .toString();
+        String classSimpleName = element.getSimpleName().toString();
+        return classPackage.concat(".").concat(classSimpleName);
     }
+
+    private static class ClassInfo {
+        private String simpleClassName;
+        private String fullClassName;
+        private FragmentConfiguration configAnnotation;
+        private final Map<String, String> viewBindings = new HashMap<>();
+
+        public String getSimpleClassName() {
+            return simpleClassName;
+        }
+
+        public String getFullClassName() {
+            return fullClassName;
+        }
+
+        public FragmentConfiguration getConfigAnnotation() {
+            return configAnnotation;
+        }
+
+        public Map<String, String> getViewBindings() {
+            return viewBindings;
+        }
+
+        public void setSimpleClassName(String simpleClassName) {
+            this.simpleClassName = simpleClassName;
+        }
+
+        public void setFullClassName(String fullClassName) {
+            this.fullClassName = fullClassName;
+        }
+
+        public void setConfigAnnotation(FragmentConfiguration configAnnotation) {
+            this.configAnnotation = configAnnotation;
+        }
+    }
+
+
 }

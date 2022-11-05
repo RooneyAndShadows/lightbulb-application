@@ -40,8 +40,12 @@ abstract class BaseFragment : Fragment() {
         private set
     protected var layoutIdentifier: Int = -1
         private set
+
+    @com.github.rooneyandshadows.lightbulb.annotation_processors.annotations.BindView(name = "asfasfasf")
     private var animationCreated = false
+    @com.github.rooneyandshadows.lightbulb.annotation_processors.annotations.BindView(name = "asfasfasf")
     private var withLeftDrawer: Boolean = false
+    @com.github.rooneyandshadows.lightbulb.annotation_processors.annotations.BindView(name = "asfasfasf")
     private var withOptionsMenu: Boolean = false
 
     protected open fun configureFragment(): Configuration? {
