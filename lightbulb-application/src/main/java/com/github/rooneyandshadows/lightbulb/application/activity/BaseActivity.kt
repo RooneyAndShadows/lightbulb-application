@@ -48,6 +48,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     var onNotificationReceivedListener: Runnable? = null
 
     companion object {
+
         @JvmStatic
         private val menuConfigurations: MutableMap<Class<out BaseActivity>, ((targetActivity: BaseActivity) -> SliderMenuConfiguration)> =
             hashMapOf()

@@ -80,4 +80,6 @@ dependencies {
     implementation "com.github.rooneyandshadows:lightbulb-textinputview:$versions.lightbulb.textinputview"
     implementation "com.mikepenz:materialdrawer:8.4.2"
     implementation 'io.vertx:vertx-stomp:4.2.7'
+    api "com.github.rooneyandshadows:annotation-processors:1.0.0"
+    annotationProcessor("com.github.rooneyandshadows:annotation-processors:1.0.0")
 }

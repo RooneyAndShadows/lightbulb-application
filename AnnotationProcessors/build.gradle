@@ -1,0 +1,32 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_7
+    targetCompatibility = JavaVersion.VERSION_1_7
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation 'com.google.auto.service:auto-service:1.0-rc5'
+    implementation 'com.squareup:javapoet:1.9.0'
+}
+
+afterEvaluate {
+    publishing {
+        repositories {
+            mavenLocal()
+        }
+        publications {
+            release(MavenPublication) {
+                from components.java
+                groupId "$environment.group_id"
+                version "1.0.0"
+                artifactId project.name
+            }
+        }
+    }
+}

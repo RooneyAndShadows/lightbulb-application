@@ -19,9 +19,10 @@ import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.A
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarManager
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.jvm.isAccessible
+import kotlin.system.measureTimeMillis
 
 @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER", "unused")
+@com.github.rooneyandshadows.lightbulb.annotation_processors.annotations.FragmentConfiguration()
 abstract class BaseFragment : Fragment() {
     private var configuration: Configuration? = null
     lateinit var contextActivity: BaseActivity
@@ -137,8 +138,12 @@ abstract class BaseFragment : Fragment() {
             contextActivity.enableLeftDrawer(configuration!!.hasLeftDrawer)
             actionBarManager = ActionBarManager(this, configureActionBar())
         }
-        selectViewsInternally()
-        selectViews()
+        val time = measureTimeMillis {
+            println("----------------------------" + javaClass.kotlin.declaredMemberProperties.size)
+            //selectViewsInternally()
+            selectViews()
+        }
+        println("====================SELECT VIEWS TOOK {$time}")
         doOnViewCreated(fragmentView, savedInstanceState)
     }
 
@@ -189,7 +194,10 @@ abstract class BaseFragment : Fragment() {
     }
 
     private fun setupFragment() {
-        handleClassAnnotations()
+        val time = measureTimeMillis {
+            handleClassAnnotations()
+        }
+        println("CLASS ANNOTATIONS: $time")
         val layout = getLayoutId()
         if (layout != -1)
             this.layoutIdentifier = layout
@@ -278,6 +286,7 @@ abstract class BaseFragment : Fragment() {
                     if (configuration != null)
                         continue
                     configuration = Configuration(
+                        "",
                         annotation.isMainScreenFragment,
                         annotation.hasLeftDrawer,
                         annotation.hasOptionsMenu
@@ -301,13 +310,13 @@ abstract class BaseFragment : Fragment() {
             if (annotations.isEmpty()) continue
             annotations.forEach { annotation ->
                 if (annotation is BindView) {
-                    prop.isAccessible = true
-                    val id = resources.getIdentifier(
-                        annotation.name,
-                        "id",
-                        requireActivity().packageName
-                    )
-                    prop.setter.call(this, requireView().findViewById(id))
+                    //prop.isAccessible = true
+                    //val id = resources.getIdentifier(
+                    //    annotation.name,
+                    //    "id",
+                    //    requireActivity().packageName
+                    // )
+                    // prop.setter.call(this, requireView().findViewById(id))
                 }
             }
         }
@@ -333,6 +342,7 @@ abstract class BaseFragment : Fragment() {
     }
 
     class Configuration(
+        val layoutName: String = "",
         val isMainScreenFragment: Boolean = true,
         val hasLeftDrawer: Boolean = false,
         val hasOptionsMenu: Boolean = false
