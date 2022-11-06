@@ -6,18 +6,16 @@ import com.google.auto.service.AutoService;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -39,133 +37,123 @@ public class FragmentProcessor extends AbstractProcessor {
     private Filer filer;
     private Messager messager;
     private Elements elements;
-    private List<ClassInfo> informationList;
-
-    private final ClassName classContext = ClassName.get("android.content", "Context");
-    private final ClassName classIntent = ClassName.get("android.content", "Intent");
-    private static final String generatedPackage = "me.aflak.annotations";
+    private List<ClassInfo> classInfoList;
+    private static final String generatedPackage = "com.github.rooneyandshadows.annotations";
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
         this.filer = processingEnvironment.getFiler();
         this.messager = processingEnvironment.getMessager();
         this.elements = processingEnvironment.getElementUtils();
-        this.informationList = new ArrayList<>();
+        this.classInfoList = new ArrayList<>();
     }
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
-        /**
-         *      1) Getting annotated classes
-         */
-        for (Element element : roundEnvironment.getElementsAnnotatedWith(FragmentConfiguration.class)) {
-            if (element.getKind() != ElementKind.CLASS) {
-                messager.printMessage(Diagnostic.Kind.ERROR, "@FragmentConfiguration should be on top of fragment classes");
-                return false;
-            }
-            ClassInfo classInfo = new ClassInfo();
-            classInfo.setType(element.asType());
-            classInfo.setSimpleClassName(element.getSimpleName().toString());
-            classInfo.setFullClassName(getFullClassName(elements, element));
-            classInfo.configAnnotation = element.getAnnotation(FragmentConfiguration.class);
-            informationList.add(classInfo);
-        }
-        for (Element element : roundEnvironment.getElementsAnnotatedWith(BindView.class)) {
-            BindView annotation = element.getAnnotation(BindView.class);
-            Element classElement = element.getEnclosingElement();
-            String fullClassName = getFullClassName(elements, classElement);
-            ClassInfo classInfo = informationList.stream().filter(info -> info.fullClassName.equals(fullClassName))
-                    .findFirst()
-                    .orElse(null);
-            if (classInfo == null) {
-                classInfo = new ClassInfo();
-                classInfo.setType(classElement.asType());
-                classInfo.setSimpleClassName(classElement.getSimpleName().toString());
-                informationList.add(classInfo);
-            }
-            classInfo.viewBindings.put(element.getSimpleName().toString(), annotation.name());
-        }
-
-        /**
-         *      2) For each annotated class, generate new static method
-         */
-
+        //Get annotated targets
+        boolean processResult;
+        processResult = obtainAnnotatedClassesWithFragmentConfiguration(roundEnvironment);
+        processResult &= obtainAnnotatedFieldsWithBindView(roundEnvironment);
+        if (!processResult) return false;
+        //Generate methods
         List<MethodSpec> methods = new ArrayList<>();
-        informationList.forEach(classInfo -> {
-            boolean hasFragmentConfigAnnotation = classInfo.configAnnotation != null;
-            String simpleName = classInfo.simpleClassName;
-            ClassName fragConfigClassName = ClassName.get(FragmentConfig.class);
-            if (hasFragmentConfigAnnotation) {
-                String layoutName = classInfo.configAnnotation.layoutName();
-                String isMainScreenFragment = String.valueOf(classInfo.configAnnotation.isMainScreenFragment());
-                String hasLeftDrawer = String.valueOf(classInfo.configAnnotation.hasLeftDrawer());
-                String hasOptionsMenu = String.valueOf(classInfo.configAnnotation.hasOptionsMenu());
-                MethodSpec fragConfigMethod = MethodSpec
-                        .methodBuilder("generate" + simpleName + "Configuration")
-                        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                        .returns(FragmentConfig.class)
-                        .addStatement("return new $T($S,$L,$L,$L)", fragConfigClassName, layoutName, isMainScreenFragment, hasLeftDrawer, hasOptionsMenu)
-                        .build();
-                methods.add(fragConfigMethod);
-            }
-            //messager.printMessage(Diagnostic.Kind.ERROR, classInfo.fullClassName);
-            MethodSpec.Builder fragViewBindingMethod = MethodSpec
-                    .methodBuilder("generate" + simpleName + "ViewBindings")
-                    .addParameter(TypeName.get(classInfo.type), "fragment")
-                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                    .returns(void.class);
-            classInfo.viewBindings.forEach((fieldName, identifierName) -> {
-                fragViewBindingMethod.addStatement("fragment.$L = fragment.getView().findViewById(fragment.getResources().getIdentifier($S, \"id\", fragment.getActivity().getPackageName()))", fieldName, identifierName);
-            });
-            methods.add(fragViewBindingMethod.build());
-
+        classInfoList.forEach(classInfo -> {
+            methods.add(generateFragmentConfigurationMethod(classInfo));
+            methods.add(generateFragmentViewBindingsMethod(classInfo));
         });
-
-
-        /*for (ClassName className : classList) {
-            MethodSpec generateFragmentConfigMethod = MethodSpec
-                    .methodBuilder("generateFragmentConfiguration" + className.simpleName())
-                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                    .returns(FragmentConfig.class)
-                    .addStatement("$T fragConfiguration = new $T()")
-                    .addParameter(classContext, "context")
-                    .addStatement("$T intent = new $T(context, $T.class)", classIntent, classIntent, className)
-                    .addStatement("context.startActivity(intent)")
-                    .build();
-
-            methods.add(generateFragmentConfigMethod);
-        }*/
-
-        /**
-         *      3) Generate a class called Navigator that contains the static methods
-         */
-
+        //Generate class
         TypeSpec.Builder generatedClass = TypeSpec
-                .classBuilder("Navigator")
+                .classBuilder("FragmentBindings")
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addMethods(methods);
-
-        /**
-         *      4) Write Navigator class into file
-         */
-
+        //Create generated class file
         try {
             JavaFile.builder(generatedPackage, generatedClass.build()).build().writeTo(filer);
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
-
         return true;
     }
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Collections.singleton(FragmentConfiguration.class.getCanonicalName());
+        return new HashSet<String>() {{
+            add(BindView.class.getCanonicalName());
+            add(FragmentConfiguration.class.getCanonicalName());
+        }};
     }
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
         return SourceVersion.latestSupported();
+    }
+
+    private boolean obtainAnnotatedClassesWithFragmentConfiguration(RoundEnvironment roundEnvironment) {
+        for (Element element : roundEnvironment.getElementsAnnotatedWith(FragmentConfiguration.class)) {
+            if (element.getKind() != ElementKind.CLASS) {
+                messager.printMessage(Diagnostic.Kind.ERROR, "@FragmentConfiguration should be on top of fragment classes.");
+                return false;
+            }
+            ClassInfo classInfo = new ClassInfo();
+            classInfo.type = element.asType();
+            classInfo.simpleClassName = element.getSimpleName().toString();
+            classInfo.fullClassName = getFullClassName(elements, element);
+            classInfo.configAnnotation = element.getAnnotation(FragmentConfiguration.class);
+            classInfoList.add(classInfo);
+        }
+        return true;
+    }
+
+    private boolean obtainAnnotatedFieldsWithBindView(RoundEnvironment roundEnvironment) {
+        for (Element element : roundEnvironment.getElementsAnnotatedWith(BindView.class)) {
+            if (element.getKind() != ElementKind.FIELD) {
+                messager.printMessage(Diagnostic.Kind.ERROR, "@BindView should be on top of fragment field.");
+                return false;
+            }
+            BindView annotation = element.getAnnotation(BindView.class);
+            Element classElement = element.getEnclosingElement();
+            String fullClassName = getFullClassName(elements, classElement);
+            ClassInfo classInfo = classInfoList.stream().filter(info -> info.fullClassName.equals(fullClassName))
+                    .findFirst()
+                    .orElse(null);
+            if (classInfo == null) {
+                classInfo = new ClassInfo();
+                classInfo.type = classElement.asType();
+                classInfo.simpleClassName = classElement.getSimpleName().toString();
+                classInfoList.add(classInfo);
+            }
+            classInfo.viewBindings.put(element.getSimpleName().toString(), annotation.name());
+        }
+        return true;
+    }
+
+    private MethodSpec generateFragmentConfigurationMethod(ClassInfo classInfo) {
+        boolean hasFragmentConfigAnnotation = classInfo.configAnnotation != null;
+        if (!hasFragmentConfigAnnotation)
+            return null;
+        String layoutName = classInfo.configAnnotation.layoutName();
+        String isMainScreenFragment = String.valueOf(classInfo.configAnnotation.isMainScreenFragment());
+        String hasLeftDrawer = String.valueOf(classInfo.configAnnotation.hasLeftDrawer());
+        String hasOptionsMenu = String.valueOf(classInfo.configAnnotation.hasOptionsMenu());
+        return MethodSpec
+                .methodBuilder("generate" + classInfo.simpleClassName + "Configuration")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .returns(FragmentConfig.class)
+                .addStatement("return new $T($S,$L,$L,$L)", ClassName.get(FragmentConfig.class), layoutName, isMainScreenFragment, hasLeftDrawer, hasOptionsMenu)
+                .build();
+    }
+
+    private MethodSpec generateFragmentViewBindingsMethod(ClassInfo classInfo) {
+        MethodSpec.Builder fragViewBindingMethod = MethodSpec
+                .methodBuilder("generate" + classInfo.simpleClassName + "ViewBindings")
+                .addParameter(TypeName.get(classInfo.type), "fragment")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .returns(void.class);
+        classInfo.viewBindings.forEach((fieldName, identifierName) -> {
+            fragViewBindingMethod.addStatement("fragment.$L = fragment.getView().findViewById(fragment.getResources().getIdentifier($S, \"id\", fragment.getActivity().getPackageName()))", fieldName, identifierName);
+        });
+        return fragViewBindingMethod.build();
     }
 
     private String getFullClassName(Elements elements, Element element) {
@@ -182,43 +170,5 @@ public class FragmentProcessor extends AbstractProcessor {
         private String fullClassName;
         private FragmentConfiguration configAnnotation;
         private final Map<String, String> viewBindings = new HashMap<>();
-
-        public TypeMirror getType() {
-            return type;
-        }
-
-        public String getSimpleClassName() {
-            return simpleClassName;
-        }
-
-        public String getFullClassName() {
-            return fullClassName;
-        }
-
-        public FragmentConfiguration getConfigAnnotation() {
-            return configAnnotation;
-        }
-
-        public Map<String, String> getViewBindings() {
-            return viewBindings;
-        }
-
-        public void setType(TypeMirror type) {
-            this.type = type;
-        }
-
-        public void setSimpleClassName(String simpleClassName) {
-            this.simpleClassName = simpleClassName;
-        }
-
-        public void setFullClassName(String fullClassName) {
-            this.fullClassName = fullClassName;
-        }
-
-        public void setConfigAnnotation(FragmentConfiguration configAnnotation) {
-            this.configAnnotation = configAnnotation;
-        }
     }
-
-
 }

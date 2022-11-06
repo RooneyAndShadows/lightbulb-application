@@ -22,7 +22,6 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.system.measureTimeMillis
 
 @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER", "unused")
-@com.github.rooneyandshadows.lightbulb.annotation_processors.annotations.FragmentConfiguration()
 abstract class BaseFragment : Fragment() {
     private var configuration: Configuration? = null
     lateinit var contextActivity: BaseActivity
@@ -40,12 +39,8 @@ abstract class BaseFragment : Fragment() {
         private set
     protected var layoutIdentifier: Int = -1
         private set
-
-    @com.github.rooneyandshadows.lightbulb.annotation_processors.annotations.BindView(name = "asfasfasf")
     private var animationCreated = false
-    @com.github.rooneyandshadows.lightbulb.annotation_processors.annotations.BindView(name = "asfasfasf")
     private var withLeftDrawer: Boolean = false
-    @com.github.rooneyandshadows.lightbulb.annotation_processors.annotations.BindView(name = "asfasfasf")
     private var withOptionsMenu: Boolean = false
 
     protected open fun configureFragment(): Configuration? {
