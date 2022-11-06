@@ -38,7 +38,7 @@ public class FragmentProcessor extends AbstractProcessor {
     private Messager messager;
     private Elements elements;
     private List<ClassInfo> classInfoList;
-    private static final String generatedPackage = "com.github.rooneyandshadows.annotations";
+    private static final String generatedPackage = "com.github.rooneyandshadows.lightbulb.annotations";
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnvironment) {
@@ -54,7 +54,9 @@ public class FragmentProcessor extends AbstractProcessor {
         boolean processResult;
         processResult = obtainAnnotatedClassesWithFragmentConfiguration(roundEnvironment);
         processResult &= obtainAnnotatedFieldsWithBindView(roundEnvironment);
-        if (!processResult) return false;
+        if (!processResult) {
+            return false;
+        }
         //Generate methods
         List<MethodSpec> methods = new ArrayList<>();
         classInfoList.forEach(classInfo -> {
@@ -67,6 +69,7 @@ public class FragmentProcessor extends AbstractProcessor {
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addMethods(methods);
         //Create generated class file
+
         try {
             JavaFile.builder(generatedPackage, generatedClass.build()).build().writeTo(filer);
         } catch (IOException e) {

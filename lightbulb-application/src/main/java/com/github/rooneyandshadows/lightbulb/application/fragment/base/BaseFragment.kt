@@ -11,17 +11,17 @@ import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import androidx.fragment.app.Fragment
+import com.github.rooneyandshadows.lightbulb.annotation_processors.annotations.FragmentConfiguration
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
-import com.github.rooneyandshadows.lightbulb.application.annotations.BindLayout
-import com.github.rooneyandshadows.lightbulb.application.annotations.BindView
-import com.github.rooneyandshadows.lightbulb.application.fragment.annotations.FragmentConfiguration
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarConfiguration
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarManager
-import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KClass
+import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.system.measureTimeMillis
 
 @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER", "unused")
+@FragmentConfiguration
 abstract class BaseFragment : Fragment() {
     private var configuration: Configuration? = null
     lateinit var contextActivity: BaseActivity
@@ -42,6 +42,20 @@ abstract class BaseFragment : Fragment() {
     private var animationCreated = false
     private var withLeftDrawer: Boolean = false
     private var withOptionsMenu: Boolean = false
+
+    init {
+        val kClass =
+            Class.forName("com.github.rooneyandshadows.lightbulb.annotations.FragmentBindings").kotlin
+        companionMembersFromClass(kClass)
+        val simpleName = javaClass.simpleName
+    }
+
+    fun companionMembersFromClass(clazz: KClass<*>) {
+        val members = clazz.companionObject?.members ?: emptyList()
+        members.forEach {
+            println(it.name)
+        }
+    }
 
     protected open fun configureFragment(): Configuration? {
         return null
@@ -139,7 +153,7 @@ abstract class BaseFragment : Fragment() {
         }
         val time = measureTimeMillis {
             println("----------------------------" + javaClass.kotlin.declaredMemberProperties.size)
-            //selectViewsInternally()
+            // selectViewsInternally()
             selectViews()
         }
         println("====================SELECT VIEWS TOOK {$time}")
@@ -194,7 +208,7 @@ abstract class BaseFragment : Fragment() {
 
     private fun setupFragment() {
         val time = measureTimeMillis {
-            handleClassAnnotations()
+            //handleClassAnnotations()
         }
         println("CLASS ANNOTATIONS: $time")
         val layout = getLayoutId()
@@ -275,50 +289,6 @@ abstract class BaseFragment : Fragment() {
         if (isRestarted)
             return FragmentStates.RESTARTED
         return FragmentStates.REUSED
-    }
-
-    private fun handleClassAnnotations() {
-        configuration = configureFragment()
-        for (annotation in javaClass.annotations)
-            when (annotation) {
-                is FragmentConfiguration -> {
-                    if (configuration != null)
-                        continue
-                    configuration = Configuration(
-                        "",
-                        annotation.isMainScreenFragment,
-                        annotation.hasLeftDrawer,
-                        annotation.hasOptionsMenu
-                    )
-                }
-                is BindLayout -> {
-                    layoutIdentifier = resources.getIdentifier(
-                        annotation.name,
-                        "layout",
-                        requireActivity().packageName
-                    )
-                }
-            }
-        if (configuration == null)
-            configuration = Configuration()
-    }
-
-    private fun selectViewsInternally() {
-        for (prop in javaClass.kotlin.declaredMemberProperties.filterIsInstance<KMutableProperty<*>>()) {
-            val annotations = prop.annotations
-            if (annotations.isEmpty()) continue
-            annotations.forEach { annotation ->
-                if (annotation is BindView) {
-                    //prop.isAccessible = true
-                    //val id = resources.getIdentifier(
-                    //    annotation.name,
-                    //    "id",
-                    //    requireActivity().packageName
-                    // )
-                    // prop.setter.call(this, requireView().findViewById(id))
-                }
-            }
-        }
     }
 
     private fun isFragmentVisible(): Boolean {
