@@ -1,4 +1,3 @@
 rootProject.name = "Application"
 include ':app'
 include ':lightbulb-application'
-include ':annotation-processors'

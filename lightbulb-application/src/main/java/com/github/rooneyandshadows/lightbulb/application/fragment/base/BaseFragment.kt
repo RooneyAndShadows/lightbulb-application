@@ -16,8 +16,6 @@ import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarConfiguration
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarManager
 import java.lang.reflect.Method
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.system.measureTimeMillis
 
 @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER", "unused")
 abstract class BaseFragment : Fragment() {
@@ -43,17 +41,14 @@ abstract class BaseFragment : Fragment() {
     private var bindingClass: Class<*>? = null
 
     init {
-        val time = measureTimeMillis {
-            try {
-                bindingClass = Class.forName(
-                    javaClass.`package`?.name.plus(".")
-                        .plus(javaClass.simpleName).plus("Bindings")
-                )
-            } catch (e: Throwable) {
-                //ignored
-            }
+        try {
+            bindingClass = Class.forName(
+                javaClass.`package`?.name.plus(".")
+                    .plus(javaClass.simpleName).plus("Bindings")
+            )
+        } catch (e: Throwable) {
+            //ignored
         }
-        println("BINDING CLASS REFLECTION INIT TOOK:$time ms")
     }
 
     protected open fun configureFragment(): Configuration? {
@@ -203,11 +198,8 @@ abstract class BaseFragment : Fragment() {
 
     private fun setupFragment() {
         configuration = configureFragment()
-        val time = measureTimeMillis {
-            if (configuration == null)
-                configuration = getConfigFromGeneratedBinding() ?: Configuration()
-        }
-        println("BUILDING CONFIGURATION TOOK: $time ms")
+        if (configuration == null)
+            configuration = getConfigFromGeneratedBinding() ?: Configuration()
         val layout = getLayoutId()
         val hasDefinedLayout = layout != -1
         if (hasDefinedLayout) this.layoutIdentifier = layout
@@ -303,15 +295,12 @@ abstract class BaseFragment : Fragment() {
     }
 
     fun selectViewsFromGeneratedBindings() {
-        val time = measureTimeMillis {
-            if (bindingClass == null)
-                return
-            val viewSelectionMethodName = "generate" + javaClass.simpleName + "ViewBindings"
-            val viewSelectionMethod: Method =
-                bindingClass!!.getMethod(viewSelectionMethodName, javaClass)
-            viewSelectionMethod.invoke(null, this)
-        }
-        println("VIEW SELECTION TOOK:$time ms")
+        if (bindingClass == null)
+            return
+        val viewSelectionMethodName = "generate" + javaClass.simpleName + "ViewBindings"
+        val viewSelectionMethod: Method =
+            bindingClass!!.getMethod(viewSelectionMethodName, javaClass)
+        viewSelectionMethod.invoke(null, this)
     }
 
     fun getConfigFromGeneratedBinding(): Configuration? {
