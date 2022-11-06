@@ -72,7 +72,10 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         replace(newScreen, TransitionTypes.ENTER)
     }
 
-    fun replace(newScreen: FragmentScreen, transition: TransitionTypes) {
+    fun replace(
+        newScreen: FragmentScreen,
+        transition: TransitionTypes
+    ) {
         //val currentFragment = fragmentManager.findFragmentById(fragmentContainerId)
         val requestedFragment = newScreen.getFragment()
         //if (currentFragment != null && currentFragment.javaClass == requestedFragment.javaClass)

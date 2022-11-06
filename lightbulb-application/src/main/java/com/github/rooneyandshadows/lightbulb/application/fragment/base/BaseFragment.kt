@@ -108,6 +108,9 @@ abstract class BaseFragment : Fragment() {
     protected open fun doOnResume() {
     }
 
+    protected open fun doOnHiddenChanged(hidden: Boolean) {
+    }
+
     @Override
     final override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -141,10 +144,7 @@ abstract class BaseFragment : Fragment() {
     @Override
     final override fun onViewCreated(fragmentView: View, savedInstanceState: Bundle?) {
         super.onViewCreated(fragmentView, savedInstanceState)
-        if (configuration!!.isMainScreenFragment) {
-            contextActivity.enableLeftDrawer(configuration!!.hasLeftDrawer)
-            actionBarManager = ActionBarManager(this, configureActionBar())
-        }
+        setupLeftDrawerAndActionBar()
         selectViewsFromGeneratedBindings()
         selectViews()
         doOnViewCreated(fragmentView, savedInstanceState)
@@ -185,6 +185,13 @@ abstract class BaseFragment : Fragment() {
         if (configuration!!.isMainScreenFragment && isCreated && !animationCreated)
             onEnterTransitionFinished()
         doOnResume()
+    }
+
+    @Override
+    final override fun onHiddenChanged(hidden: Boolean) {
+        if (!hidden) setupLeftDrawerAndActionBar()
+        else isReused = true
+        doOnHiddenChanged(hidden)
     }
 
     @Override
@@ -274,15 +281,20 @@ abstract class BaseFragment : Fragment() {
     }
 
     fun getFragmentState(): FragmentStates {
-        if (isCreated)
-            return FragmentStates.CREATED
-        if (isRestarted)
-            return FragmentStates.RESTARTED
-        return FragmentStates.REUSED
+        if (isReused) return FragmentStates.REUSED
+        if (isRestarted) return FragmentStates.RESTARTED
+        return FragmentStates.CREATED
     }
 
     private fun isFragmentVisible(): Boolean {
         return this.view != null
+    }
+
+    private fun setupLeftDrawerAndActionBar() {
+        if (configuration!!.isMainScreenFragment) {
+            contextActivity.enableLeftDrawer(configuration!!.hasLeftDrawer)
+            actionBarManager = ActionBarManager(this, configureActionBar())
+        }
     }
 
     private fun enableTouch(enabled: Boolean) {

@@ -23,7 +23,7 @@ abstract class BaseFragmentWithViewModel<VMType : ViewModel> :
     @Override
     final override fun doOnCreate(savedInstanceState: Bundle?) {
         val vmclass = getViewModelClass()
-        viewModel = ViewModelProvider(contextActivity)[vmclass]
+        viewModel = ViewModelProvider(this)[vmclass]
         initializeViewModel(viewModel)
         doOnCreate(savedInstanceState, viewModel)
     }
