@@ -11,12 +11,11 @@ import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import androidx.fragment.app.Fragment
+import com.github.rooneyandshadows.lightbulb.annotation_processors.FragmentConfig
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarConfiguration
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarManager
 import java.lang.reflect.Method
-import kotlin.reflect.KClass
-import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.system.measureTimeMillis
 
@@ -41,23 +40,20 @@ abstract class BaseFragment : Fragment() {
     private var animationCreated = false
     private var withLeftDrawer: Boolean = false
     private var withOptionsMenu: Boolean = false
+    private var bindingClass: Class<*>? = null
 
     init {
-        val bindingClass = Class.forName(
-            javaClass.`package`?.name.plus(".").plus(javaClass.simpleName).plus("Bindings")
-        )
-        companionMembersFromClass(bindingClass)
-        val simpleName = javaClass.simpleName
-    }
-
-    fun companionMembersFromClass(bindingClass: Class<*>) {
-        val viewSelectionMethodName = "generate" + javaClass.simpleName + "ViewBindings"
-        val generateConfigurationMethodName = "generate" + javaClass.simpleName + "Configuration"
-        val viewSelectionMethod: Method = bindingClass.getMethod(viewSelectionMethodName, javaClass)
-        val generateConfigurationMethod: Method =
-            bindingClass.getMethod(generateConfigurationMethodName)
-        generateConfigurationMethod.invoke(null)
-        viewSelectionMethod.invoke(null, this)
+        val time = measureTimeMillis {
+            try {
+                bindingClass = Class.forName(
+                    javaClass.`package`?.name.plus(".")
+                        .plus(javaClass.simpleName).plus("Bindings")
+                )
+            } catch (e: Throwable) {
+                //ignored
+            }
+        }
+        println("BINDING CLASS REFLECTION INIT TOOK:$time ms")
     }
 
     protected open fun configureFragment(): Configuration? {
@@ -154,12 +150,8 @@ abstract class BaseFragment : Fragment() {
             contextActivity.enableLeftDrawer(configuration!!.hasLeftDrawer)
             actionBarManager = ActionBarManager(this, configureActionBar())
         }
-        val time = measureTimeMillis {
-            println("----------------------------" + javaClass.kotlin.declaredMemberProperties.size)
-            // selectViewsInternally()
-            selectViews()
-        }
-        println("====================SELECT VIEWS TOOK {$time}")
+        selectViewsFromGeneratedBindings()
+        selectViews()
         doOnViewCreated(fragmentView, savedInstanceState)
     }
 
@@ -210,13 +202,16 @@ abstract class BaseFragment : Fragment() {
     }
 
     private fun setupFragment() {
+        configuration = configureFragment()
         val time = measureTimeMillis {
-            //handleClassAnnotations()
+            if (configuration == null)
+                configuration = getConfigFromGeneratedBinding() ?: Configuration()
         }
-        println("CLASS ANNOTATIONS: $time")
+        println("BUILDING CONFIGURATION TOOK: $time ms")
         val layout = getLayoutId()
-        if (layout != -1)
-            this.layoutIdentifier = layout
+        val hasDefinedLayout = layout != -1
+        if (hasDefinedLayout) this.layoutIdentifier = layout
+        else this.layoutIdentifier = configuration!!.layoutId
     }
 
     @Override
@@ -307,6 +302,38 @@ abstract class BaseFragment : Fragment() {
         )
     }
 
+    fun selectViewsFromGeneratedBindings() {
+        val time = measureTimeMillis {
+            if (bindingClass == null)
+                return
+            val viewSelectionMethodName = "generate" + javaClass.simpleName + "ViewBindings"
+            val viewSelectionMethod: Method =
+                bindingClass!!.getMethod(viewSelectionMethodName, javaClass)
+            viewSelectionMethod.invoke(null, this)
+        }
+        println("VIEW SELECTION TOOK:$time ms")
+    }
+
+    fun getConfigFromGeneratedBinding(): Configuration? {
+        if (bindingClass == null)
+            return null
+        val generateConfigurationMethodName = "generate" + javaClass.simpleName + "Configuration"
+        val generateConfigurationMethod: Method =
+            bindingClass!!.getMethod(generateConfigurationMethodName)
+        val conf: FragmentConfig = generateConfigurationMethod.invoke(null) as FragmentConfig
+        val layoutId = resources.getIdentifier(
+            conf.layoutName,
+            "layout",
+            requireActivity().packageName
+        )
+        return Configuration(
+            layoutId,
+            conf.isMainScreenFragment,
+            conf.isHasLeftDrawer,
+            conf.isHasOptionsMenu
+        )
+    }
+
     enum class FragmentStates(val value: Int) {
         CREATED(0),
         RESTARTED(1),
@@ -314,7 +341,7 @@ abstract class BaseFragment : Fragment() {
     }
 
     class Configuration(
-        val layoutName: String = "",
+        val layoutId: Int = -1,
         val isMainScreenFragment: Boolean = true,
         val hasLeftDrawer: Boolean = false,
         val hasOptionsMenu: Boolean = false
