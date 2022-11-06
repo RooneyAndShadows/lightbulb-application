@@ -11,17 +11,16 @@ import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import androidx.fragment.app.Fragment
-import com.github.rooneyandshadows.lightbulb.annotation_processors.annotations.FragmentConfiguration
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarConfiguration
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarManager
+import java.lang.reflect.Method
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.system.measureTimeMillis
 
 @Suppress("MemberVisibilityCanBePrivate", "UNUSED_PARAMETER", "unused")
-@FragmentConfiguration
 abstract class BaseFragment : Fragment() {
     private var configuration: Configuration? = null
     lateinit var contextActivity: BaseActivity
@@ -44,17 +43,21 @@ abstract class BaseFragment : Fragment() {
     private var withOptionsMenu: Boolean = false
 
     init {
-        val kClass =
-            Class.forName("com.github.rooneyandshadows.lightbulb.annotations.FragmentBindings").kotlin
-        companionMembersFromClass(kClass)
+        val bindingClass = Class.forName(
+            javaClass.`package`?.name.plus(".").plus(javaClass.simpleName).plus("Bindings")
+        )
+        companionMembersFromClass(bindingClass)
         val simpleName = javaClass.simpleName
     }
 
-    fun companionMembersFromClass(clazz: KClass<*>) {
-        val members = clazz.companionObject?.members ?: emptyList()
-        members.forEach {
-            println(it.name)
-        }
+    fun companionMembersFromClass(bindingClass: Class<*>) {
+        val viewSelectionMethodName = "generate" + javaClass.simpleName + "ViewBindings"
+        val generateConfigurationMethodName = "generate" + javaClass.simpleName + "Configuration"
+        val viewSelectionMethod: Method = bindingClass.getMethod(viewSelectionMethodName, javaClass)
+        val generateConfigurationMethod: Method =
+            bindingClass.getMethod(generateConfigurationMethodName)
+        generateConfigurationMethod.invoke(null)
+        viewSelectionMethod.invoke(null, this)
     }
 
     protected open fun configureFragment(): Configuration? {

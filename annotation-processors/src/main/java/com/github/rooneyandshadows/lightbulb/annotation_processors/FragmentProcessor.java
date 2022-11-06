@@ -60,22 +60,19 @@ public class FragmentProcessor extends AbstractProcessor {
         //Generate methods
         List<MethodSpec> methods = new ArrayList<>();
         classInfoList.forEach(classInfo -> {
+            methods.clear();
             methods.add(generateFragmentConfigurationMethod(classInfo));
             methods.add(generateFragmentViewBindingsMethod(classInfo));
+            TypeSpec.Builder generatedClass = TypeSpec
+                    .classBuilder(classInfo.simpleClassName.concat("Bindings"))
+                    .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
+                    .addMethods(methods);
+            try {
+                JavaFile.builder(classInfo.classPackage, generatedClass.build()).build().writeTo(filer);
+            } catch (IOException e) {
+                //e.printStackTrace();
+            }
         });
-        //Generate class
-        TypeSpec.Builder generatedClass = TypeSpec
-                .classBuilder("FragmentBindings")
-                .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                .addMethods(methods);
-        //Create generated class file
-
-        try {
-            JavaFile.builder(generatedPackage, generatedClass.build()).build().writeTo(filer);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
         return true;
     }
 
@@ -101,6 +98,7 @@ public class FragmentProcessor extends AbstractProcessor {
             ClassInfo classInfo = new ClassInfo();
             classInfo.type = element.asType();
             classInfo.simpleClassName = element.getSimpleName().toString();
+            classInfo.classPackage = getPackage(elements, element);
             classInfo.fullClassName = getFullClassName(elements, element);
             classInfo.configAnnotation = element.getAnnotation(FragmentConfiguration.class);
             classInfoList.add(classInfo);
@@ -116,12 +114,14 @@ public class FragmentProcessor extends AbstractProcessor {
             }
             BindView annotation = element.getAnnotation(BindView.class);
             Element classElement = element.getEnclosingElement();
+            String classPackage = getPackage(elements, element);
             String fullClassName = getFullClassName(elements, classElement);
             ClassInfo classInfo = classInfoList.stream().filter(info -> info.fullClassName.equals(fullClassName))
                     .findFirst()
                     .orElse(null);
             if (classInfo == null) {
                 classInfo = new ClassInfo();
+                classInfo.classPackage = classPackage;
                 classInfo.type = classElement.asType();
                 classInfo.simpleClassName = classElement.getSimpleName().toString();
                 classInfoList.add(classInfo);
@@ -159,16 +159,21 @@ public class FragmentProcessor extends AbstractProcessor {
         return fragViewBindingMethod.build();
     }
 
-    private String getFullClassName(Elements elements, Element element) {
-        String classPackage = elements.getPackageOf(element)
+    private String getPackage(Elements elements, Element element) {
+        return elements.getPackageOf(element)
                 .getQualifiedName()
                 .toString();
+    }
+
+    private String getFullClassName(Elements elements, Element element) {
+        String classPackage = getPackage(elements, element);
         String classSimpleName = element.getSimpleName().toString();
         return classPackage.concat(".").concat(classSimpleName);
     }
 
     private static class ClassInfo {
         private TypeMirror type;
+        private String classPackage;
         private String simpleClassName;
         private String fullClassName;
         private FragmentConfiguration configAnnotation;
