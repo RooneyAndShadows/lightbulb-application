@@ -1,6 +1,5 @@
 package com.github.rooneyandshadows.lightbulb.application.activity.routing
 
-import android.content.ContentValues
 import android.util.Log
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -9,7 +8,7 @@ import com.github.rooneyandshadows.lightbulb.application.R
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import java.util.*
 
-@Suppress("CanBePrimaryConstructorProperty")
+@Suppress("CanBePrimaryConstructorProperty", "unused", "MemberVisibilityCanBePrivate")
 open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId: Int) {
     protected val contextActivity: BaseActivity = contextActivity
     private val fragmentContainerId: Int = fragmentContainerId
@@ -20,7 +19,6 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         fragmentManager = contextActivity.supportFragmentManager
         logTag = "[".plus(javaClass.simpleName).plus("]")
     }
-
 
     fun forward(newScreen: FragmentScreen) {
         forward(newScreen, TransitionTypes.ENTER, UUID.randomUUID().toString())
@@ -43,7 +41,8 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         val requestedFragment = newScreen.getFragment()
         //if (currentFragment != null && currentFragment.javaClass == requestedFragment.javaClass)
         //    return
-        startTransaction().apply {
+        //fragmentManager.popBackStack(backStackEntryName,FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        startTransaction(transition).apply {
             when (transition) {
                 TransitionTypes.ENTER -> setCustomAnimations(
                     R.anim.enter_from_right,
@@ -68,11 +67,44 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         fragmentManager.executePendingTransactions()
     }
 
-    fun replace(newScreen: FragmentScreen) {
+    fun replaceTop(
+        newScreen: FragmentScreen,
+        animate: Boolean
+    ) {
+        val currentFragment = fragmentManager.findFragmentById(fragmentContainerId)
+        val requestedFragment = newScreen.getFragment()
+        startTransaction(null).apply {
+            val backStackEntryName = UUID.randomUUID().toString()
+            fragmentManager.popBackStackImmediate()
+            //fragmentManager.popBackStack("BACKSTACKENTRYNAME",FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            if (animate)
+                setCustomAnimations(
+                    R.anim.enter_from_right,
+                    R.anim.exit_to_left,
+                    0,
+                    0
+                )
+            hide(currentFragment!!)
+            if (animate)
+                setCustomAnimations(
+                    0,
+                    0,
+                    R.anim.enter_from_left,
+                    R.anim.exit_to_right
+                )
+            add(R.id.fragmentContainer, requestedFragment, backStackEntryName)
+            addToBackStack(backStackEntryName)
+            commit()
+        }
+        fragmentManager.executePendingTransactions()
+    }
+
+
+    private fun replace(newScreen: FragmentScreen) {
         replace(newScreen, TransitionTypes.ENTER)
     }
 
-    fun replace(
+    private fun replace(
         newScreen: FragmentScreen,
         transition: TransitionTypes
     ) {
@@ -80,22 +112,7 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         val requestedFragment = newScreen.getFragment()
         //if (currentFragment != null && currentFragment.javaClass == requestedFragment.javaClass)
         //    return
-        startTransaction().apply {
-            when (transition) {
-                TransitionTypes.ENTER -> setCustomAnimations(
-                    R.anim.enter_from_right,
-                    R.anim.exit_to_left,
-                    R.anim.enter_from_left,
-                    R.anim.exit_to_right
-                )
-                TransitionTypes.EXIT -> setCustomAnimations(
-                    R.anim.enter_from_left,
-                    R.anim.exit_to_right,
-                    R.anim.enter_from_right,
-                    R.anim.exit_to_left
-                )
-                else -> {}
-            }
+        startTransaction(transition).apply {
             replace(fragmentContainerId, requestedFragment, UUID.randomUUID().toString())
             commit()
         }
@@ -134,13 +151,29 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
     }
 
     fun customAction(action: CustomRouterAction) {
-        action.execute(fragmentManager)
+        action.execute(fragmentContainerId, fragmentManager)
         fragmentManager.executePendingTransactions()
     }
 
-    private fun startTransaction(): FragmentTransaction {
-        val transaction = fragmentManager.beginTransaction()
-        transaction.setReorderingAllowed(true)
+    private fun startTransaction(transition: TransitionTypes?): FragmentTransaction {
+        val transaction = fragmentManager.beginTransaction().apply {
+            setReorderingAllowed(true)
+            when (transition) {
+                TransitionTypes.ENTER -> setCustomAnimations(
+                    R.anim.enter_from_right,
+                    R.anim.exit_to_left,
+                    R.anim.enter_from_left,
+                    R.anim.exit_to_right
+                )
+                TransitionTypes.EXIT -> setCustomAnimations(
+                    R.anim.enter_from_left,
+                    R.anim.exit_to_right,
+                    R.anim.enter_from_right,
+                    R.anim.exit_to_left
+                )
+                else -> {}
+            }
+        }
         return transaction
     }
 
@@ -164,7 +197,7 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
     }
 
     interface CustomRouterAction {
-        fun execute(fragmentManager: FragmentManager)
+        fun execute(fragmentContainerId: Int, fragmentManager: FragmentManager)
     }
 
     abstract class FragmentScreen {
