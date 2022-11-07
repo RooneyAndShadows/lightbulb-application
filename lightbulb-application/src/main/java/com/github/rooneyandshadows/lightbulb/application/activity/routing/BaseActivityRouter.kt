@@ -69,31 +69,27 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
 
     fun replaceTop(
         newScreen: FragmentScreen,
-        animate: Boolean
+        animate: Boolean = true
     ) {
-        val currentFragment = fragmentManager.findFragmentById(fragmentContainerId)
+        if (fragmentManager.backStackEntryCount <= 0) {
+            replace(newScreen)
+            return
+        }
         val requestedFragment = newScreen.getFragment()
         startTransaction(null).apply {
-            val backStackEntryName = UUID.randomUUID().toString()
+            setReorderingAllowed(true)
+            val backStackId = UUID.randomUUID().toString()
             fragmentManager.popBackStackImmediate()
-            //fragmentManager.popBackStack("BACKSTACKENTRYNAME",FragmentManager.POP_BACK_STACK_INCLUSIVE)
-            if (animate)
-                setCustomAnimations(
-                    R.anim.enter_from_right,
-                    R.anim.exit_to_left,
-                    0,
-                    0
-                )
+            val currentFragment = fragmentManager.findFragmentById(R.id.fragmentContainer)
+            setCustomAnimations(
+                0,
+                0,
+                R.anim.enter_from_left,
+                R.anim.exit_to_right
+            )
             hide(currentFragment!!)
-            if (animate)
-                setCustomAnimations(
-                    0,
-                    0,
-                    R.anim.enter_from_left,
-                    R.anim.exit_to_right
-                )
-            add(R.id.fragmentContainer, requestedFragment, backStackEntryName)
-            addToBackStack(backStackEntryName)
+            add(R.id.fragmentContainer, requestedFragment, UUID.randomUUID().toString())
+            addToBackStack(UUID.randomUUID().toString())
             commit()
         }
         fragmentManager.executePendingTransactions()
