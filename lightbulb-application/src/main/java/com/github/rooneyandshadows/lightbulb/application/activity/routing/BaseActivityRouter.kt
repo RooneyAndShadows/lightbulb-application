@@ -22,10 +22,8 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         logTag = "[".plus(javaClass.simpleName).plus("]")
     }
 
-    fun saveState(): Bundle {
-        return Bundle().apply {
-            putParcelable("ACTIVITY_ROUTER_BACKSTACK", backStack)
-        }
+    fun saveState(activityBundle: Bundle) {
+        activityBundle.putParcelable("ACTIVITY_ROUTER_BACKSTACK", backStack)
     }
 
     fun restoreState(activitySavedState: Bundle) {
@@ -44,43 +42,13 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         forward(newScreen, transition, UUID.randomUUID().toString())
     }
 
-    private fun getCurrentFragment(): Fragment? {
-        val currentTag = backStack.getCurrent() ?: return null
-        return fragmentManager.fragments.find { return@find it.tag == currentTag }
-    }
-
-    private fun popCurrentFragment(): Fragment? {
-        val currentTag = backStack.pop() ?: return null
-        return fragmentManager.fragments.find { return@find it.tag == currentTag }
-    }
-
-    fun back() {
-        if (backStack.getEntriesCount() <= 1)
-            contextActivity.moveTaskToBack(true)
-        else
-            startTransaction(TransitionTypes.EXIT).apply {
-                val currentFrag = popCurrentFragment()
-                val nextFragment = getCurrentFragment()
-                if (currentFrag != null)
-                    remove(currentFrag)
-                show(nextFragment!!)
-                commit()
-                fragmentManager.executePendingTransactions()
-            }
-    }
-
     fun forward(
         newScreen: FragmentScreen,
         transition: TransitionTypes,
         backStackEntryName: String,
     ) {
-        fragmentManager.fragments
-
         //val currentFragment = fragmentManager.findFragmentById(fragmentContainerId)
         val requestedFragment = newScreen.getFragment()
-        //if (currentFragment != null && currentFragment.javaClass == requestedFragment.javaClass)
-        //    return
-        //fragmentManager.popBackStack(backStackEntryName,FragmentManager.POP_BACK_STACK_INCLUSIVE)
         val currentFragment = getCurrentFragment()
         startTransaction(transition).apply {
             runOnCommit {
@@ -94,6 +62,19 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         fragmentManager.executePendingTransactions()
     }
 
+    fun back() {
+        if (backStack.getEntriesCount() <= 1) contextActivity.moveTaskToBack(true)
+        else startTransaction(TransitionTypes.EXIT).apply {
+            val currentFrag = popCurrentFragment()
+            val nextFragment = getCurrentFragment()
+            if (currentFrag != null)
+                remove(currentFrag)
+            show(nextFragment!!)
+            commit()
+            fragmentManager.executePendingTransactions()
+        }
+    }
+
     fun replaceTop(
         newScreen: FragmentScreen,
         animate: Boolean = true
@@ -105,12 +86,13 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
             runOnCommit {
                 backStack.add(backStackName)
             }
-            setCustomAnimations(
-                0,
-                0,
-                R.anim.enter_from_left,
-                R.anim.exit_to_right
-            )
+            if (animate)
+                setCustomAnimations(
+                    0,
+                    0,
+                    R.anim.enter_from_left,
+                    R.anim.exit_to_right
+                )
             remove(currentFrag!!)
             add(R.id.fragmentContainer, requestedFragment, backStackName)
             commit()
@@ -153,8 +135,18 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
     }
 
     fun customAction(action: CustomRouterAction) {
-        action.execute(fragmentContainerId, fragmentManager)
+        action.execute(fragmentContainerId, fragmentManager, backStack)
         fragmentManager.executePendingTransactions()
+    }
+
+    private fun getCurrentFragment(): Fragment? {
+        val currentTag = backStack.getCurrent() ?: return null
+        return fragmentManager.fragments.find { return@find it.tag == currentTag }
+    }
+
+    private fun popCurrentFragment(): Fragment? {
+        val currentTag = backStack.pop() ?: return null
+        return fragmentManager.fragments.find { return@find it.tag == currentTag }
     }
 
     private fun startTransaction(transition: TransitionTypes?): FragmentTransaction {
@@ -199,7 +191,11 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
     }
 
     interface CustomRouterAction {
-        fun execute(fragmentContainerId: Int, fragmentManager: FragmentManager)
+        fun execute(
+            fragmentContainerId: Int,
+            fragmentManager: FragmentManager,
+            backStack: ActivityRouterBackStack
+        )
     }
 
     abstract class FragmentScreen {

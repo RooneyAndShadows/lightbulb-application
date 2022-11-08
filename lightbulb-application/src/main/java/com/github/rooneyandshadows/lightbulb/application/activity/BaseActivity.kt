@@ -164,6 +164,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     final override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putParcelable(sliderBundleKey, sliderMenu.saveState())
+        router?.saveState(outState)
         doOnSaveInstanceState(outState)
     }
 
@@ -336,6 +337,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
             menuConfiguration
         )
         router = initializeRouter(fragmentContainerIdentifier)
+        if (activityState != null) router?.restoreState(activityState)
         fragmentContainerWrapper = findViewById(R.id.fragmentContainerWrapper)
     }
 
