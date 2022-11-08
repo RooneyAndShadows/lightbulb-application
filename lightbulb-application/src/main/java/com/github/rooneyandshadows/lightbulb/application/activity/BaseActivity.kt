@@ -226,8 +226,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
                 if (handled) break
             }
         if (!handled)
-            if (supportFragmentManager.backStackEntryCount == 0) moveTaskToBack(true)
-            else router?.back()
+            router?.back()
     }
 
     @Override

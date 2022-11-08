@@ -1,5 +1,6 @@
 package com.github.rooneyandshadows.lightbulb.application.activity.routing
 
+import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -14,10 +15,21 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
     private val fragmentContainerId: Int = fragmentContainerId
     private val fragmentManager: FragmentManager
     private val logTag: String
+    private var backStack = ActivityRouterBackStack()
 
     init {
         fragmentManager = contextActivity.supportFragmentManager
         logTag = "[".plus(javaClass.simpleName).plus("]")
+    }
+
+    fun saveState(): Bundle {
+        return Bundle().apply {
+            putParcelable("ACTIVITY_ROUTER_BACKSTACK", backStack)
+        }
+    }
+
+    fun restoreState(activitySavedState: Bundle) {
+        backStack = activitySavedState.getParcelable("ACTIVITY_ROUTER_BACKSTACK")!!
     }
 
     fun forward(newScreen: FragmentScreen) {
@@ -32,36 +44,51 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         forward(newScreen, transition, UUID.randomUUID().toString())
     }
 
+    private fun getCurrentFragment(): Fragment? {
+        val currentTag = backStack.getCurrent() ?: return null
+        return fragmentManager.fragments.find { return@find it.tag == currentTag }
+    }
+
+    private fun popCurrentFragment(): Fragment? {
+        val currentTag = backStack.pop() ?: return null
+        return fragmentManager.fragments.find { return@find it.tag == currentTag }
+    }
+
+    fun back() {
+        if (backStack.getEntriesCount() <= 1)
+            contextActivity.moveTaskToBack(true)
+        else
+            startTransaction(TransitionTypes.EXIT).apply {
+                val currentFrag = popCurrentFragment()
+                val nextFragment = getCurrentFragment()
+                if (currentFrag != null)
+                    remove(currentFrag)
+                show(nextFragment!!)
+                commit()
+                fragmentManager.executePendingTransactions()
+            }
+    }
+
     fun forward(
         newScreen: FragmentScreen,
         transition: TransitionTypes,
         backStackEntryName: String,
     ) {
-        val currentFragment = fragmentManager.findFragmentById(fragmentContainerId)
+        fragmentManager.fragments
+
+        //val currentFragment = fragmentManager.findFragmentById(fragmentContainerId)
         val requestedFragment = newScreen.getFragment()
         //if (currentFragment != null && currentFragment.javaClass == requestedFragment.javaClass)
         //    return
         //fragmentManager.popBackStack(backStackEntryName,FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        val currentFragment = getCurrentFragment()
         startTransaction(transition).apply {
-            when (transition) {
-                TransitionTypes.ENTER -> setCustomAnimations(
-                    R.anim.enter_from_right,
-                    R.anim.exit_to_left,
-                    R.anim.enter_from_left,
-                    R.anim.exit_to_right
-                )
-                TransitionTypes.EXIT -> setCustomAnimations(
-                    R.anim.enter_from_left,
-                    R.anim.exit_to_right,
-                    R.anim.enter_from_right,
-                    R.anim.exit_to_left
-                )
-                else -> {}
+            runOnCommit {
+                backStack.add(backStackEntryName)
             }
-            add(fragmentContainerId, requestedFragment, UUID.randomUUID().toString())
+            add(fragmentContainerId, requestedFragment, backStackEntryName)
             if (currentFragment != null)
                 hide(currentFragment)
-            addToBackStack(backStackEntryName)
             commit()
         }
         fragmentManager.executePendingTransactions()
@@ -71,79 +98,58 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         newScreen: FragmentScreen,
         animate: Boolean = true
     ) {
-        if (fragmentManager.backStackEntryCount <= 0) {
-            replace(newScreen)
-            return
-        }
         val requestedFragment = newScreen.getFragment()
         startTransaction(null).apply {
-            setReorderingAllowed(true)
-            val backStackId = UUID.randomUUID().toString()
-            fragmentManager.popBackStackImmediate()
-            val currentFragment = fragmentManager.findFragmentById(R.id.fragmentContainer)
+            val backStackName = UUID.randomUUID().toString()
+            val currentFrag = popCurrentFragment()
+            runOnCommit {
+                backStack.add(backStackName)
+            }
             setCustomAnimations(
                 0,
                 0,
                 R.anim.enter_from_left,
                 R.anim.exit_to_right
             )
-            hide(currentFragment!!)
-            add(R.id.fragmentContainer, requestedFragment, UUID.randomUUID().toString())
-            addToBackStack(UUID.randomUUID().toString())
+            remove(currentFrag!!)
+            add(R.id.fragmentContainer, requestedFragment, backStackName)
             commit()
         }
         fragmentManager.executePendingTransactions()
-    }
-
-
-    private fun replace(newScreen: FragmentScreen) {
-        replace(newScreen, TransitionTypes.ENTER)
-    }
-
-    private fun replace(
-        newScreen: FragmentScreen,
-        transition: TransitionTypes
-    ) {
-        //val currentFragment = fragmentManager.findFragmentById(fragmentContainerId)
-        val requestedFragment = newScreen.getFragment()
-        //if (currentFragment != null && currentFragment.javaClass == requestedFragment.javaClass)
-        //    return
-        startTransaction(transition).apply {
-            replace(fragmentContainerId, requestedFragment, UUID.randomUUID().toString())
-            commit()
-        }
-        fragmentManager.executePendingTransactions()
-    }
-
-    fun back() {
-        fragmentManager.popBackStack()
-    }
-
-    fun back(steps: Int) {
-        val entriesCount = fragmentManager.backStackEntryCount
-        if (steps <= 0 || entriesCount < steps)
-            return
-        val entryName = fragmentManager.getBackStackEntryAt(entriesCount - steps).name
-        fragmentManager.popBackStack(entryName, FragmentManager.POP_BACK_STACK_INCLUSIVE)
     }
 
     fun backToRoot() {
-        fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        startTransaction(null).apply {
+            while (backStack.getEntriesCount() > 1) {
+                val fragToRemove = popCurrentFragment()
+                remove(fragToRemove!!)
+            }
+            show(getCurrentFragment()!!)
+            commit()
+        }
     }
 
     fun newRootChain(vararg screens: FragmentScreen) {
-        backToRoot()
-        screens.forEachIndexed { index, fragmentScreen ->
-            if (index == 0)
-                replace(fragmentScreen)
-            else
-                forward(fragmentScreen)
+        startTransaction(null).apply {
+            while (backStack.getEntriesCount() > 0) {
+                val fragToRemove = popCurrentFragment()
+                remove(fragToRemove!!)
+            }
+            screens.forEachIndexed { index, fragmentScreen ->
+                val isLast = index == screens.size - 1
+                val backStackName = UUID.randomUUID().toString()
+                val fragmentToAdd = fragmentScreen.getFragment()
+                add(R.id.fragmentContainer, fragmentToAdd, backStackName)
+                if (!isLast)
+                    hide(fragmentToAdd)
+                backStack.add(backStackName)
+                commit()
+            }
         }
     }
 
     fun newRootScreen(newRootScreen: FragmentScreen) {
-        backToRoot()
-        replace(newRootScreen)
+        newRootChain(newRootScreen)
     }
 
     fun customAction(action: CustomRouterAction) {
