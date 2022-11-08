@@ -75,17 +75,15 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         }
     }
 
-    fun replaceTop(
-        newScreen: FragmentScreen,
-        animate: Boolean = true
-    ) {
-        val requestedFragment = newScreen.getFragment()
+    fun backNTimesAndReplace(n: Int, newScreen: FragmentScreen, animate: Boolean = true) {
         startTransaction(null).apply {
-            val backStackName = UUID.randomUUID().toString()
-            val currentFrag = popCurrentFragment()
-            runOnCommit {
-                backStack.add(backStackName)
+            val initialSize = backStack.getEntriesCount()
+            while (backStack.getEntriesCount() > initialSize - n) {
+                val fragToRemove = popCurrentFragment()
+                remove(fragToRemove!!)
             }
+            val backStackName = UUID.randomUUID().toString()
+            val fragmentToAdd = newScreen.getFragment()
             if (animate)
                 setCustomAnimations(
                     0,
@@ -93,11 +91,18 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
                     R.anim.enter_from_left,
                     R.anim.exit_to_right
                 )
-            remove(currentFrag!!)
-            add(R.id.fragmentContainer, requestedFragment, backStackName)
+            add(R.id.fragmentContainer, fragmentToAdd, backStackName)
+            backStack.add(backStackName)
             commit()
         }
         fragmentManager.executePendingTransactions()
+    }
+
+    fun replaceTop(
+        newScreen: FragmentScreen,
+        animate: Boolean = true
+    ) {
+        backNTimesAndReplace(1, newScreen, animate)
     }
 
     fun backToRoot() {
@@ -109,6 +114,7 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
             show(getCurrentFragment()!!)
             commit()
         }
+        fragmentManager.executePendingTransactions()
     }
 
     fun newRootChain(vararg screens: FragmentScreen) {
@@ -128,6 +134,7 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
                 commit()
             }
         }
+        fragmentManager.executePendingTransactions()
     }
 
     fun newRootScreen(newRootScreen: FragmentScreen) {
