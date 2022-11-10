@@ -59,7 +59,6 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
                 hide(currentFragment)
             commit()
         }
-        fragmentManager.executePendingTransactions()
     }
 
     fun back() {
@@ -71,7 +70,6 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
                 remove(currentFrag)
             show(nextFragment!!)
             commit()
-            fragmentManager.executePendingTransactions()
         }
     }
 
@@ -92,10 +90,10 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
                     R.anim.exit_to_right
                 )
             add(R.id.fragmentContainer, fragmentToAdd, backStackName)
-            backStack.add(backStackName)
+                .runOnCommit { backStack.add(backStackName) }
+
             commit()
         }
-        fragmentManager.executePendingTransactions()
     }
 
     fun replaceTop(
@@ -114,7 +112,6 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
             show(getCurrentFragment()!!)
             commit()
         }
-        fragmentManager.executePendingTransactions()
     }
 
     fun newRootChain(vararg screens: FragmentScreen) {
@@ -134,7 +131,6 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
                 commit()
             }
         }
-        fragmentManager.executePendingTransactions()
     }
 
     fun newRootScreen(newRootScreen: FragmentScreen) {
@@ -143,7 +139,6 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
 
     fun customAction(action: CustomRouterAction) {
         action.execute(fragmentContainerId, fragmentManager, backStack)
-        fragmentManager.executePendingTransactions()
     }
 
     private fun getCurrentFragment(): Fragment? {
