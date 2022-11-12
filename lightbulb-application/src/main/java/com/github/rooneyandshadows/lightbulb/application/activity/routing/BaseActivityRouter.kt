@@ -90,8 +90,9 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
                     R.anim.exit_to_right
                 )
             add(R.id.fragmentContainer, fragmentToAdd, backStackName)
-                .runOnCommit { backStack.add(backStackName) }
-
+            runOnCommit {
+                backStack.add(backStackName)
+            }
             commit()
         }
     }
@@ -127,7 +128,9 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
                 add(R.id.fragmentContainer, fragmentToAdd, backStackName)
                 if (!isLast)
                     hide(fragmentToAdd)
-                backStack.add(backStackName)
+                runOnCommit {
+                    backStack.add(backStackName)
+                }
                 commit()
             }
         }
