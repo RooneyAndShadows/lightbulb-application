@@ -349,15 +349,7 @@ abstract class BaseFragment : Fragment() {
         val methodName = "generate" + javaClass.simpleName + "Configuration"
         val method: Method =
             bindingClass!!.getMethod(methodName)
-        return method.invoke(null) as Configuration
-    }
-
-    private fun resolveLayoutIdByName(layoutName: String): Int {
-        return resources.getIdentifier(
-            layoutName,
-            "layout",
-            requireActivity().packageName
-        )
+        return method.invoke(null, this) as Configuration
     }
 
     enum class FragmentStates(val value: Int) {
