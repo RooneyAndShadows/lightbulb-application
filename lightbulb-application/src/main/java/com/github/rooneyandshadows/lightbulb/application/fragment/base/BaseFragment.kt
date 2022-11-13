@@ -11,7 +11,6 @@ import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import androidx.fragment.app.Fragment
-import com.github.rooneyandshadows.lightbulb.annotation_processors.FragmentConfig
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarConfiguration
 import com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration.ActionBarManager
@@ -121,8 +120,12 @@ abstract class BaseFragment : Fragment() {
             isCreated = !isRestarted
         }
         doOnCreate(savedInstanceState)
-        if (!isRestarted)
+        if (!isRestarted) {
+            handleInputParameters()
             handleArguments(arguments)
+        }
+        if (savedInstanceState != null)
+            handleRestoreVariables(savedInstanceState)
     }
 
     @Override
@@ -161,6 +164,7 @@ abstract class BaseFragment : Fragment() {
         super.onSaveInstanceState(outState)
         if (!isFragmentVisible()) //previously created bundle needed only when fragment is not visible
             outState.putBoolean(isReusedKey, isReused)
+        handleSaveVariables(outState)
         doOnSaveInstanceState(outState)
     }
 
@@ -306,32 +310,53 @@ abstract class BaseFragment : Fragment() {
         )
     }
 
-    fun selectViewsFromGeneratedBindings() {
+    private fun handleRestoreVariables(savedInstanceState: Bundle) {
         if (bindingClass == null)
             return
-        val viewSelectionMethodName = "generate" + javaClass.simpleName + "ViewBindings"
-        val viewSelectionMethod: Method =
-            bindingClass!!.getMethod(viewSelectionMethodName, javaClass)
-        viewSelectionMethod.invoke(null, this)
+        val methodName = "restoreVariablesState"
+        val method: Method = bindingClass!!.getMethod(methodName, javaClass)
+        method.invoke(this, savedInstanceState, this)
     }
 
-    fun getConfigFromGeneratedBinding(): Configuration? {
+    private fun handleSaveVariables(outState: Bundle) {
+        if (bindingClass == null)
+            return
+        val methodName = "saveVariablesState"
+        val method: Method = bindingClass!!.getMethod(methodName, javaClass)
+        method.invoke(this, outState, this)
+    }
+
+    private fun handleInputParameters() {
+        if (bindingClass == null)
+            return
+        val methodName = "generate" + javaClass.simpleName + "Parameters"
+        val method: Method = bindingClass!!.getMethod(methodName, javaClass)
+        method.invoke(null, this)
+    }
+
+    private fun selectViewsFromGeneratedBindings() {
+        if (bindingClass == null)
+            return
+        val methodName = "generate" + javaClass.simpleName + "ViewBindings"
+        val method: Method =
+            bindingClass!!.getMethod(methodName, javaClass)
+        method.invoke(null, this)
+    }
+
+    private fun getConfigFromGeneratedBinding(): Configuration? {
         if (bindingClass == null)
             return null
-        val generateConfigurationMethodName = "generate" + javaClass.simpleName + "Configuration"
-        val generateConfigurationMethod: Method =
-            bindingClass!!.getMethod(generateConfigurationMethodName)
-        val conf: FragmentConfig = generateConfigurationMethod.invoke(null) as FragmentConfig
-        val layoutId = resources.getIdentifier(
-            conf.layoutName,
+        val methodName = "generate" + javaClass.simpleName + "Configuration"
+        val method: Method =
+            bindingClass!!.getMethod(methodName)
+        return method.invoke(null) as Configuration
+    }
+
+    private fun resolveLayoutIdByName(layoutName: String): Int {
+        return resources.getIdentifier(
+            layoutName,
             "layout",
             requireActivity().packageName
-        )
-        return Configuration(
-            layoutId,
-            conf.isMainScreenFragment,
-            conf.isHasLeftDrawer,
-            conf.isHasOptionsMenu
         )
     }
 
