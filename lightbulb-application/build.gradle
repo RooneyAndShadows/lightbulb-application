@@ -75,7 +75,7 @@ dependencies {
     implementation "androidx.work:work-runtime:$versions.android.work"
     implementation "androidx.preference:preference-ktx:$versions.android.preference"
     implementation "com.google.android.material:material:$versions.android.material"
-    implementation "com.github.rooneyandshadows:java-commons:$versions.java.commons"
+    api "com.github.rooneyandshadows:java-commons:$versions.java.commons"
     api "com.github.rooneyandshadows:lightbulb-commons:$versions.lightbulb.commons"
     implementation "com.github.rooneyandshadows:lightbulb-textinputview:$versions.lightbulb.textinputview"
     implementation "com.mikepenz:materialdrawer:8.4.2"
