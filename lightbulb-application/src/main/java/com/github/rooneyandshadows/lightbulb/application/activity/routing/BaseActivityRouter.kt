@@ -73,7 +73,11 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         }
     }
 
-    fun backNTimesAndReplace(n: Int, newScreen: FragmentScreen, animate: Boolean = true) {
+    fun backNTimesAndReplace(n: Int, newScreen: FragmentScreen) {
+        backNTimesAndReplace(n, newScreen, true)
+    }
+
+    fun backNTimesAndReplace(n: Int, newScreen: FragmentScreen, animate: Boolean) {
         startTransaction(null).apply {
             val initialSize = backStack.getEntriesCount()
             while (backStack.getEntriesCount() > initialSize - n) {
@@ -97,10 +101,11 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         }
     }
 
-    fun replaceTop(
-        newScreen: FragmentScreen,
-        animate: Boolean = true
-    ) {
+    fun replaceTop(newScreen: FragmentScreen) {
+        replaceTop(newScreen, true)
+    }
+
+    fun replaceTop(newScreen: FragmentScreen, animate: Boolean) {
         backNTimesAndReplace(1, newScreen, animate)
     }
 
