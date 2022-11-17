@@ -46,9 +46,20 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     private lateinit var menuConfigurationBroadcastReceiver: MenuChangedBroadcastReceiver
     private val lifecycleObservers = mutableListOf<LifecycleObserver>()
     var onNotificationReceivedListener: Runnable? = null
+    private var routerClass: Class<*>? = null
+
+    init {
+        try {
+            routerClass = Class.forName(
+                javaClass.`package`?.name.plus(".")
+                    .plus(javaClass.simpleName).plus("Router")
+            )
+        } catch (e: Throwable) {
+            //ignored
+        }
+    }
 
     companion object {
-
         @JvmStatic
         private val menuConfigurations: MutableMap<Class<out BaseActivity>, ((targetActivity: BaseActivity) -> SliderMenuConfiguration)> =
             hashMapOf()
