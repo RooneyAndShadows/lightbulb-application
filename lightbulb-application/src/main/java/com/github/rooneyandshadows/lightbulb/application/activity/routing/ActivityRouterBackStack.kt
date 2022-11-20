@@ -30,7 +30,12 @@ class ActivityRouterBackStack() : Parcelable {
     }
 
     fun getCurrent(): String? {
-        return stack.getOrNull(stack.size - 1)
+        val last = stack.size - 1
+        return getAt(last)
+    }
+
+    fun getAt(position: Int): String? {
+        return stack.getOrNull(position)
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {

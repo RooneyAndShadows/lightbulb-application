@@ -30,6 +30,14 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         backStack = activitySavedState.getParcelable("ACTIVITY_ROUTER_BACKSTACK")!!
     }
 
+    fun getBackStackEntriesCount(): Int {
+        return backStack.getEntriesCount()
+    }
+
+    fun hasEntriesInBackstack(): Boolean {
+        return backStack.getEntriesCount() > 0
+    }
+
     fun forward(newScreen: FragmentScreen) {
         forward(newScreen, TransitionTypes.ENTER, UUID.randomUUID().toString())
     }
@@ -184,13 +192,13 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
     fun printBackStack() {
         Log.i(logTag, "CURRENT BACKSTACK")
         Log.i(logTag, "----------------------------")
-        val entriesCount = fragmentManager.backStackEntryCount
+        val entriesCount = backStack.getEntriesCount()
         if (entriesCount == 0)
             Log.i(logTag, "Backstack is empty")
-        for (entry in 0 until entriesCount)
+        for (entryPosition in 0 until entriesCount)
             Log.i(
                 logTag,
-                entry.toString().plus(" " + fragmentManager.getBackStackEntryAt(entry).name)
+                entryPosition.toString().plus(" " + backStack.getAt(entryPosition))
             )
     }
 

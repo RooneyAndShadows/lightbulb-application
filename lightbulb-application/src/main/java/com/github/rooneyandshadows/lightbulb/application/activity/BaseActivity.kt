@@ -46,13 +46,13 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     private lateinit var menuConfigurationBroadcastReceiver: MenuChangedBroadcastReceiver
     private val lifecycleObservers = mutableListOf<LifecycleObserver>()
     var onNotificationReceivedListener: Runnable? = null
-    private var routerClass: Class<*>? = null
+    private var navigatorClass: Class<*>? = null
 
     init {
         try {
-            routerClass = Class.forName(
+            navigatorClass = Class.forName(
                 javaClass.`package`?.name.plus(".")
-                    .plus(javaClass.simpleName).plus("Router")
+                    .plus(javaClass.simpleName).plus("Navigator")
             )
         } catch (e: Throwable) {
             //ignored
@@ -87,7 +87,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     }
 
     protected open fun initializeRouter(fragmentContainerId: Int): BaseActivityRouter? {
-        return null
+        return null;
     }
 
     protected open fun doBeforeCreate(savedInstanceState: Bundle?) {
@@ -206,6 +206,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     final override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(menuConfigurationBroadcastReceiver)
+        unBindGeneratedRouterForActivity()
         doOnDestroy()
     }
 
@@ -348,6 +349,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
             menuConfiguration
         )
         router = initializeRouter(fragmentContainerIdentifier)
+        if (router == null) router = bindGeneratedRouterForActivity()
         if (activityState != null) router?.restoreState(activityState)
         fragmentContainerWrapper = findViewById(R.id.fragmentContainerWrapper)
     }
@@ -395,5 +397,25 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
             menuConfigurationBroadcastReceiver,
             IntentFilter(BuildConfig.menuConfigChangedAction)
         )
+    }
+
+    private fun bindGeneratedRouterForActivity(): BaseActivityRouter? {
+        if (navigatorClass == null) return null
+        val getInstanceMethod = navigatorClass!!.getMethod("getInstance")
+        getInstanceMethod.invoke(null, this)
+        val initRouterMethod = navigatorClass!!.getMethod("initializeRouter")
+        return initRouterMethod.invoke(
+            this,
+            fragmentContainerIdentifier,
+            this
+        ) as BaseActivityRouter
+    }
+
+    private fun unBindGeneratedRouterForActivity() {
+        if (navigatorClass == null) return
+        val getInstanceMethod = navigatorClass!!.getMethod("getInstance")
+        getInstanceMethod.invoke(null, this)
+        val unBindRouterMethod = navigatorClass!!.getMethod("unBind")
+        unBindRouterMethod.invoke(null, this)
     }
 }
