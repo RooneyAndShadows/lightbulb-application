@@ -87,7 +87,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     }
 
     protected open fun initializeRouter(fragmentContainerId: Int): BaseActivityRouter? {
-        return null;
+        return null
     }
 
     protected open fun doBeforeCreate(savedInstanceState: Bundle?) {
@@ -402,20 +402,31 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     private fun bindGeneratedRouterForActivity(): BaseActivityRouter? {
         if (navigatorClass == null) return null
         val getInstanceMethod = navigatorClass!!.getMethod("getInstance")
-        getInstanceMethod.invoke(null, this)
-        val initRouterMethod = navigatorClass!!.getMethod("initializeRouter")
-        return initRouterMethod.invoke(
+        val instance = getInstanceMethod.invoke(null)
+        val initRouterMethod = instance.javaClass.getDeclaredMethod(
+            "initializeRouter",
+            javaClass.superclass,
+            Int::class.java
+        )
+        initRouterMethod.isAccessible = true
+        val router = initRouterMethod.invoke(
+            instance,
             this,
-            fragmentContainerIdentifier,
-            this
+            fragmentContainerIdentifier
         ) as BaseActivityRouter
+        initRouterMethod.isAccessible = false
+        return router
     }
 
     private fun unBindGeneratedRouterForActivity() {
         if (navigatorClass == null) return
         val getInstanceMethod = navigatorClass!!.getMethod("getInstance")
-        getInstanceMethod.invoke(null, this)
-        val unBindRouterMethod = navigatorClass!!.getMethod("unBind")
-        unBindRouterMethod.invoke(null, this)
+        val instance = getInstanceMethod.invoke(null)
+        val unBindRouterMethod = instance.javaClass.getDeclaredMethod("unBind")
+        unBindRouterMethod.apply {
+            isAccessible = true
+            invoke(instance)
+            isAccessible = false
+        }
     }
 }

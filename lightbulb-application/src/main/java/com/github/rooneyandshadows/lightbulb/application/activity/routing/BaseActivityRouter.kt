@@ -34,8 +34,8 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
         return backStack.getEntriesCount()
     }
 
-    fun hasEntriesInBackstack(): Boolean {
-        return backStack.getEntriesCount() > 0
+    fun isCurrentScreenRoot(): Boolean {
+        return backStack.getEntriesCount() == 1
     }
 
     fun forward(newScreen: FragmentScreen) {

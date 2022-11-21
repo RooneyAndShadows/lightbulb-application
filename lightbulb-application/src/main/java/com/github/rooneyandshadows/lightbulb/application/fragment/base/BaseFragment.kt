@@ -314,7 +314,7 @@ abstract class BaseFragment : Fragment() {
         if (bindingClass == null)
             return
         val methodName = "restoreVariablesState"
-        val method: Method = bindingClass!!.getMethod(methodName, javaClass)
+        val method: Method = bindingClass!!.getMethod(methodName, Bundle::class.java, javaClass)
         method.invoke(this, savedInstanceState, this)
     }
 
@@ -322,14 +322,14 @@ abstract class BaseFragment : Fragment() {
         if (bindingClass == null)
             return
         val methodName = "saveVariablesState"
-        val method: Method = bindingClass!!.getMethod(methodName, javaClass)
+        val method: Method = bindingClass!!.getMethod(methodName, Bundle::class.java, javaClass)
         method.invoke(this, outState, this)
     }
 
     private fun handleInputParameters() {
         if (bindingClass == null)
             return
-        val methodName = "generate" + javaClass.simpleName + "Parameters"
+        val methodName = "generateParameters"
         val method: Method = bindingClass!!.getMethod(methodName, javaClass)
         method.invoke(null, this)
     }
@@ -337,7 +337,7 @@ abstract class BaseFragment : Fragment() {
     private fun selectViewsFromGeneratedBindings() {
         if (bindingClass == null)
             return
-        val methodName = "generate" + javaClass.simpleName + "ViewBindings"
+        val methodName = "generateViewBindings"
         val method: Method =
             bindingClass!!.getMethod(methodName, javaClass)
         method.invoke(null, this)
@@ -346,9 +346,9 @@ abstract class BaseFragment : Fragment() {
     private fun getConfigFromGeneratedBinding(): Configuration? {
         if (bindingClass == null)
             return null
-        val methodName = "generate" + javaClass.simpleName + "Configuration"
+        val methodName = "generateConfiguration"
         val method: Method =
-            bindingClass!!.getMethod(methodName)
+            bindingClass!!.getMethod(methodName, javaClass)
         return method.invoke(null, this) as Configuration
     }
 
