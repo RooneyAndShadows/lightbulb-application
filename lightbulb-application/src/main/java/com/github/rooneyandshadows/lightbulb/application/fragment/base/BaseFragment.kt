@@ -290,6 +290,7 @@ abstract class BaseFragment : Fragment() {
         return FragmentStates.CREATED
     }
 
+
     private fun isFragmentVisible(): Boolean {
         return this.view != null
     }
