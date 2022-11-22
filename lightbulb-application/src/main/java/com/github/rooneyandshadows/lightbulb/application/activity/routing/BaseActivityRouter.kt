@@ -144,8 +144,8 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
                 runOnCommit {
                     backStack.add(backStackName)
                 }
-                commit()
             }
+            commit()
         }
     }
 
