@@ -186,8 +186,6 @@ abstract class BaseFragment : Fragment() {
     @Override
     final override fun onResume() {
         super.onResume()
-        if (configuration!!.isMainScreenFragment && isCreated && !animationCreated)
-            onEnterTransitionFinished()
         doOnResume()
     }
 
