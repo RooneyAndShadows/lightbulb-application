@@ -9,8 +9,8 @@ android {
     defaultConfig {
         minSdkVersion 24
         targetSdkVersion 31
-        versionCode 1206
-        versionName "1.2.6"
+        versionCode 1207
+        versionName "1.2.7"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
     }
@@ -77,7 +77,6 @@ dependencies {
     implementation "com.google.android.material:material:$versions.android.material"
     api "com.github.rooneyandshadows:java-commons:$versions.java.commons"
     api "com.github.rooneyandshadows:lightbulb-commons:$versions.lightbulb.commons"
-    api "com.github.rooneyandshadows:lightbulb-annotation-processors:1.0.3"
     implementation "com.github.rooneyandshadows:lightbulb-textinputview:$versions.lightbulb.textinputview"
     implementation "com.mikepenz:materialdrawer:8.4.2"
     implementation 'io.vertx:vertx-stomp:4.2.7'
