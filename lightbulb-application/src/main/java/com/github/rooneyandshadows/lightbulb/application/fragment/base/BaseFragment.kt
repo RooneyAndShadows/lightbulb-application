@@ -257,24 +257,25 @@ abstract class BaseFragment : Fragment() {
         return if (configuration!!.isMainScreenFragment && nextAnim != 0) {
             val animator = AnimatorInflater.loadAnimator(contextActivity, nextAnim)
             animator.addListener(object : Animator.AnimatorListener {
-                override fun onAnimationStart(animation: Animator?) {
+                override fun onAnimationStart(animator: Animator) {
                 }
 
-                override fun onAnimationEnd(animation: Animator?) {
+                override fun onAnimationEnd(animator: Animator) {
                     if (isEnterTransition && isSafe) {
                         enableTouch(true)
                         onEnterTransitionFinished()
                     }
                 }
 
-                override fun onAnimationCancel(animation: Animator?) {
+                override fun onAnimationCancel(animator: Animator) {
                     if (isEnterTransition && isSafe) {
                         enableTouch(true)
                         onEnterTransitionFinished()
                     }
                 }
 
-                override fun onAnimationRepeat(animation: Animator?) {}
+                override fun onAnimationRepeat(animator: Animator) {
+                }
             })
             animator
         } else {

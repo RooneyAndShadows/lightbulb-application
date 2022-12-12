@@ -2,7 +2,7 @@ package com.github.rooneyandshadows.lightbulb.application.activity.routing
 
 import android.os.Parcel
 import android.os.Parcelable
-import com.github.rooneyandshadows.lightbulb.commons.utils.ParcelableUtils
+import com.github.rooneyandshadows.lightbulb.commons.utils.ParcelUtils
 
 class ActivityRouterBackStack() : Parcelable {
     private var stack: MutableList<String>
@@ -12,7 +12,7 @@ class ActivityRouterBackStack() : Parcelable {
     }
 
     constructor(parcel: Parcel) : this() {
-        stack = ParcelableUtils.readStringList(parcel)!! as MutableList<String>
+        stack = ParcelUtils.readStringList(parcel)!! as MutableList<String>
     }
 
     fun getEntriesCount(): Int {
@@ -39,7 +39,7 @@ class ActivityRouterBackStack() : Parcelable {
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        ParcelableUtils.writeStringList(parcel, stack)
+        ParcelUtils.writeStringList(parcel, stack)
     }
 
     override fun describeContents(): Int {

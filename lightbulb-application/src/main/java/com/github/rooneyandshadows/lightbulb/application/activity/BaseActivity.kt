@@ -45,7 +45,6 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     private lateinit var fragmentContainerWrapper: RelativeLayout
     private lateinit var menuConfigurationBroadcastReceiver: MenuChangedBroadcastReceiver
     private val lifecycleObservers = mutableListOf<LifecycleObserver>()
-    var onNotificationReceivedListener: Runnable? = null
     private var navigatorClass: Class<*>? = null
 
     init {

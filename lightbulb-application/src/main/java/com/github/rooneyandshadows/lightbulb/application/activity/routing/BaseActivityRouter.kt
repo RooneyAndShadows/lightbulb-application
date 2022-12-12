@@ -7,6 +7,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import com.github.rooneyandshadows.lightbulb.application.R
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
+import com.github.rooneyandshadows.lightbulb.commons.utils.BundleUtils
 import java.util.*
 
 @Suppress("CanBePrimaryConstructorProperty", "unused", "MemberVisibilityCanBePrivate")
@@ -23,11 +24,19 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
     }
 
     fun saveState(activityBundle: Bundle) {
-        activityBundle.putParcelable("ACTIVITY_ROUTER_BACKSTACK", backStack)
+        BundleUtils.putParcelable(
+            "ACTIVITY_ROUTER_BACKSTACK",
+            activityBundle,
+            backStack
+        )
     }
 
     fun restoreState(activitySavedState: Bundle) {
-        backStack = activitySavedState.getParcelable("ACTIVITY_ROUTER_BACKSTACK")!!
+        backStack = BundleUtils.getParcelable(
+            "ACTIVITY_ROUTER_BACKSTACK",
+            activitySavedState,
+            ActivityRouterBackStack::class.java
+        )!!
     }
 
     fun getBackStackEntriesCount(): Int {
