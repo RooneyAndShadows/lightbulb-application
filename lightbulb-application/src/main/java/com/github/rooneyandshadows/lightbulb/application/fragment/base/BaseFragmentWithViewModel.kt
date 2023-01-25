@@ -15,19 +15,19 @@ abstract class BaseFragmentWithViewModel<VMType : ViewModel> :
     protected open fun handleArguments(arguments: Bundle?, viewModel: VMType) {
     }
 
-    protected open fun initializeViewModel(viewModel: VMType) {
+    protected open fun initializeViewModel(viewModel: VMType, savedInstanceState: Bundle?) {
     }
-
-    abstract fun getViewModelClass(): Class<VMType>
 
     @Override
     final override fun doOnCreate(savedInstanceState: Bundle?) {
-        val vmclass = getViewModelClass()
-        viewModel = ViewModelProvider(this)[vmclass]
-        initializeViewModel(viewModel)
+        val obj = Object()
+        val clz = obj::class.java as Class<VMType>
+        viewModel = ViewModelProvider(this)[clz]
+        initializeViewModel(viewModel, savedInstanceState)
         doOnCreate(savedInstanceState, viewModel)
     }
 
+    @Override
     final override fun handleArguments(arguments: Bundle?) {
         super.handleArguments(arguments)
         handleArguments(arguments, viewModel)

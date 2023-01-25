@@ -12,7 +12,7 @@ abstract class BaseFragmentWithViewDataBinding<VDBType : ViewDataBinding> :
     BaseFragment() {
     protected lateinit var viewBinding: VDBType
 
-    protected open fun onViewBound(viewBinding: VDBType) {
+    protected open fun doOnViewBound(viewBinding: VDBType, savedInstanceState: Bundle?) {
     }
 
     @Override
@@ -28,7 +28,7 @@ abstract class BaseFragmentWithViewDataBinding<VDBType : ViewDataBinding> :
             false
         )
         viewBinding.lifecycleOwner = viewLifecycleOwner
-        onViewBound(viewBinding)
+        doOnViewBound(viewBinding, savedInstanceState)
         return viewBinding.root
     }
 }
