@@ -5,9 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
 @Suppress("MemberVisibilityCanBePrivate", "UNCHECKED_CAST")
-abstract class BaseFragmentWithViewModel<VMType : ViewModel> :
-    BaseFragment() {
+abstract class BaseFragmentWithViewModel<VMType : ViewModel> : BaseFragment() {
     protected lateinit var viewModel: VMType
+    protected abstract val viewModelClass: Class<VMType>
 
     protected open fun doOnCreate(savedInstanceState: Bundle?, viewModel: VMType) {
     }
@@ -20,9 +20,7 @@ abstract class BaseFragmentWithViewModel<VMType : ViewModel> :
 
     @Override
     final override fun doOnCreate(savedInstanceState: Bundle?) {
-        val obj = Object()
-        val clz = obj::class.java as Class<VMType>
-        viewModel = ViewModelProvider(this)[clz]
+        viewModel = ViewModelProvider(this)[viewModelClass]
         initializeViewModel(viewModel, savedInstanceState)
         doOnCreate(savedInstanceState, viewModel)
     }
