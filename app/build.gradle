@@ -7,7 +7,7 @@ android {
     compileSdk 31
 
     defaultConfig {
-        applicationId "com.github.rooneyandshadows.lightbulb.application"
+        applicationId "com.github.rooneyandshadows.lightbulb.applicationdemo"
         minSdk 24
         targetSdk 31
         versionCode 1
@@ -28,6 +28,7 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    namespace 'com.github.rooneyandshadows.lightbulb.applicationdemo'
 }
 
 dependencies {
