@@ -2,7 +2,6 @@ package com.github.rooneyandshadows.lightbulb.applicationdemo
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.github.rooneyandshadows.lightbulb.application.R
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
