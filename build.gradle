@@ -7,7 +7,7 @@ buildscript {
                 ],
                 android  : [
                         annotation: "1.6.0",
-                        appcompat : "1.6.0",
+                        appcompat : "1.6.1",
                         lifecycle : "2.6.1",
                         preference: "1.2.0",
                         work      : "2.8.1",

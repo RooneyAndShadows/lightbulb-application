@@ -2,21 +2,13 @@ package com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.co
 
 import android.graphics.Color
 import android.view.View
+import androidx.annotation.LayoutRes
 import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.items.MenuItem
 
-class SliderMenuConfiguration {
-    var headerView: View? = null
+class SliderMenuConfiguration @JvmOverloads constructor(
+    val headerView: Int? = null,
+    val itemsList: MutableList<MenuItem> = mutableListOf()
+) {
     var badgeTextColor = Color.WHITE
     var badgeCircleColor = Color.RED
-    val itemsList: ArrayList<MenuItem> = ArrayList()
-
-    fun addMenuItem(item: MenuItem): SliderMenuConfiguration {
-        itemsList.add(item)
-        return this
-    }
-
-    fun withHeaderView(headerView: View?): SliderMenuConfiguration {
-        this.headerView = headerView
-        return this
-    }
 }

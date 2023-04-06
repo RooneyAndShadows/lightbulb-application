@@ -17,13 +17,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.LifecycleOwner
-import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.R
-import com.github.rooneyandshadows.lightbulb.application.activity.service.configuration.NotificationServiceRegistry
-import com.github.rooneyandshadows.lightbulb.application.activity.receivers.MenuChangedBroadcastReceiver
 import com.github.rooneyandshadows.lightbulb.application.activity.routing.BaseActivityRouter
 import com.github.rooneyandshadows.lightbulb.application.activity.service.configuration.ForegroundServiceRegistry
+import com.github.rooneyandshadows.lightbulb.application.activity.service.configuration.NotificationServiceRegistry
 import com.github.rooneyandshadows.lightbulb.application.activity.service.connection.ConnectionCheckerServiceWrapper
 import com.github.rooneyandshadows.lightbulb.application.activity.service.connection.ConnectionCheckerServiceWrapper.InternetConnectionStateListeners
 import com.github.rooneyandshadows.lightbulb.application.activity.service.foreground.ForegroundServiceWrapper
@@ -36,94 +33,55 @@ import com.github.rooneyandshadows.lightbulb.commons.utils.LocaleHelper
 import com.github.rooneyandshadows.lightbulb.textinputview.TextInputView
 import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
 
-abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
+abstract class BaseActivity : AppCompatActivity() {
     private val sliderBundleKey = "DRAWER_STATE"
     private val fragmentContainerIdentifier = R.id.fragmentContainer
     private var dragged = false
     private var router: BaseActivityRouter? = null
     private lateinit var sliderMenu: SliderMenu
     private lateinit var fragmentContainerWrapper: RelativeLayout
-    private lateinit var menuConfigurationBroadcastReceiver: MenuChangedBroadcastReceiver
     private val lifecycleObservers = mutableListOf<LifecycleObserver>()
     private var navigatorClass: Class<*>? = null
 
     init {
         try {
-            navigatorClass = Class.forName(
-                javaClass.`package`?.name.plus(".")
-                    .plus(javaClass.simpleName).plus("Navigator")
-            )
+            val packageName = javaClass.`package`?.name
+            val className = javaClass.simpleName
+            val classLoader = javaClass.classLoader
+            val navigatorClassName = "%s.%sNavigator".format(packageName, className)
+            navigatorClass = Class.forName(navigatorClassName, false, classLoader)
         } catch (e: Throwable) {
             //ignored
         }
     }
 
-    companion object {
-        @JvmStatic
-        private val menuConfigurations: MutableMap<Class<out BaseActivity>, ((targetActivity: BaseActivity) -> SliderMenuConfiguration)> =
-            hashMapOf()
-
-        @JvmStatic
-        fun updateMenuConfiguration(
-            context: Context,
-            target: Class<out BaseActivity>,
-            configuration: ((targetActivity: BaseActivity) -> SliderMenuConfiguration)
-        ) {
-            menuConfigurations[target] = configuration
-            val intent = Intent(BuildConfig.menuConfigChangedAction)
-            val extras = Bundle()
-            extras.putString("TARGET_ACTIVITY", target.name)
-            intent.putExtras(extras)
-            context.sendBroadcast(intent)
-        }
-
-        @JvmStatic
-        fun getMenuConfiguration(
-            targetActivity: Class<out BaseActivity>
-        ): ((targetActivity: BaseActivity) -> SliderMenuConfiguration)? {
-            return menuConfigurations[targetActivity]
-        }
+    protected open fun getMenuConfiguration(): SliderMenuConfiguration {
+        return SliderMenuConfiguration()
     }
 
     protected open fun initializeRouter(fragmentContainerId: Int): BaseActivityRouter? {
         return null
     }
 
-    protected open fun doBeforeCreate(savedInstanceState: Bundle?) {
-    }
+    protected open fun doBeforeCreate(savedInstanceState: Bundle?) {}
 
-    protected open fun doOnCreate(savedInstanceState: Bundle?) {
-    }
+    protected open fun doOnCreate(savedInstanceState: Bundle?) {}
 
-    protected open fun doOnResume() {
-    }
+    protected open fun doOnResume() {}
 
-    protected open fun doOnNewIntent(intent: Intent) {
-    }
+    protected open fun doOnNewIntent(intent: Intent) {}
 
-    protected open fun doOnSaveInstanceState(outState: Bundle) {
-    }
+    protected open fun doOnSaveInstanceState(outState: Bundle) {}
 
-    protected open fun doOnSaveInstanceState(
-        outState: Bundle,
-        outPersistentState: PersistableBundle
-    ) {
-    }
+    protected open fun doOnSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {}
 
-    protected open fun doOnRestoreInstanceState(savedInstanceState: Bundle) {
-    }
+    protected open fun doOnRestoreInstanceState(savedInstanceState: Bundle) {}
 
-    protected open fun doOnRestoreInstanceState(
-        savedInstanceState: Bundle?,
-        persistentState: PersistableBundle?
-    ) {
-    }
+    protected open fun doOnRestoreInstanceState(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {}
 
-    protected open fun doOnPause() {
-    }
+    protected open fun doOnPause() {}
 
-    protected open fun doOnDestroy() {
-    }
+    protected open fun doOnDestroy() {}
 
     protected open fun registerNotificationService(): NotificationServiceRegistry? {
         return null
@@ -163,7 +121,6 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
         doBeforeCreate(savedInstanceState)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.base_activity_layout)
-        initializeMenuChangedReceiver()
         initializeNotificationService()
         initializeInternetCheckerService()
         setupActivity(savedInstanceState)
@@ -179,10 +136,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     }
 
     @Override
-    final override fun onSaveInstanceState(
-        outState: Bundle,
-        outPersistentState: PersistableBundle
-    ) {
+    final override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
         doOnSaveInstanceState(outState, outPersistentState)
     }
 
@@ -193,10 +147,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     }
 
     @Override
-    final override fun onRestoreInstanceState(
-        savedInstanceState: Bundle?,
-        persistentState: PersistableBundle?
-    ) {
+    final override fun onRestoreInstanceState(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
         super.onRestoreInstanceState(savedInstanceState, persistentState)
         doOnRestoreInstanceState(savedInstanceState, persistentState)
     }
@@ -204,7 +155,6 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
     @Override
     final override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(menuConfigurationBroadcastReceiver)
         unBindGeneratedRouterForActivity()
         doOnDestroy()
     }
@@ -237,8 +187,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
                 handled = f.onBackPressed()
                 if (handled) break
             }
-        if (!handled)
-            router?.back()
+        if (!handled) router?.back()
     }
 
     @Override
@@ -306,27 +255,28 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
         )
     }
 
+    private fun selectViews() {
+
+    }
+
     private fun initializeNotificationService() {
         val serviceRegistry = registerNotificationService()
-        if (serviceRegistry != null) {
-            lifecycle.addObserver(
-                NotificationJobServiceWrapper(
-                    this,
-                    serviceRegistry
-                )
+        if (serviceRegistry != null) lifecycle.addObserver(
+            NotificationJobServiceWrapper(
+                this,
+                serviceRegistry
             )
-        }
+        )
     }
 
     private fun initializeInternetCheckerService() {
         val internetConnectionListeners = registerInternetConnectionStateListeners()
-        if (internetConnectionListeners != null)
-            lifecycle.addObserver(
-                ConnectionCheckerServiceWrapper(
-                    this,
-                    internetConnectionListeners
-                )
+        if (internetConnectionListeners != null) lifecycle.addObserver(
+            ConnectionCheckerServiceWrapper(
+                this,
+                internetConnectionListeners
             )
+        )
     }
 
     /**
@@ -338,8 +288,7 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
         val drawerState = activityState?.getBundle(sliderBundleKey)
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
         val sliderView = findViewById<MaterialDrawerSliderView>(R.id.sliderView)
-        val menuConfiguration =
-            getMenuConfiguration(this.javaClass)?.invoke(this) ?: SliderMenuConfiguration()
+        val menuConfiguration = getMenuConfiguration()
         sliderMenu = SliderMenu(
             this,
             drawerLayout,
@@ -381,21 +330,6 @@ abstract class BaseActivity : AppCompatActivity(), LifecycleOwner {
                 null
             }
         }
-    }
-
-    private fun initializeMenuChangedReceiver() {
-        menuConfigurationBroadcastReceiver = MenuChangedBroadcastReceiver()
-        menuConfigurationBroadcastReceiver.onMenuConfigurationChanged = { targetActivity ->
-            val currentActivity = javaClass.name
-            if (targetActivity == currentActivity) {
-                val newMenuConfiguration = getMenuConfiguration(javaClass)?.invoke(this)
-                sliderMenu.setConfiguration(newMenuConfiguration ?: SliderMenuConfiguration())
-            }
-        }
-        registerReceiver(
-            menuConfigurationBroadcastReceiver,
-            IntentFilter(BuildConfig.menuConfigChangedAction)
-        )
     }
 
     private fun bindGeneratedRouterForActivity(): BaseActivityRouter? {

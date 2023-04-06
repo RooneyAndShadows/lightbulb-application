@@ -34,13 +34,6 @@
             </intent-filter>
         </receiver>
         <receiver
-            android:name=".activity.receivers.MenuChangedBroadcastReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="MenuChangedBroadcastReceiver" />
-            </intent-filter>
-        </receiver>
-        <receiver
             android:name=".activity.receivers.InternetConnectionStatusBroadcastReceiver"
             android:exported="false">
             <intent-filter>

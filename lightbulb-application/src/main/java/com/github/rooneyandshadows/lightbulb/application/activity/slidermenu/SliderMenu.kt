@@ -2,6 +2,7 @@ package com.github.rooneyandshadows.lightbulb.application.activity.slidermenu
 
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -21,7 +22,7 @@ import com.mikepenz.materialdrawer.holder.BadgeStyle
 import com.mikepenz.materialdrawer.holder.ColorHolder
 import com.mikepenz.materialdrawer.util.*
 
-@Suppress("UNUSED_ANONYMOUS_PARAMETER")
+@Suppress("UNUSED_ANONYMOUS_PARAMETER", "unused")
 class SliderMenu(
     private val contextActivity: BaseActivity,
     private val drawerLayout: DrawerLayout,
@@ -29,11 +30,14 @@ class SliderMenu(
     private val sliderSavedState: Bundle?,
     private var sliderConfiguration: SliderMenuConfiguration
 ) {
-    private val sliderStateKey = "SLIDER_STATE_KEY"
-    private val drawerEnabledKey = "DRAWER_ENABLED_KEY"
     private var onSliderClosed: (() -> Unit)? = null
     var isSliderEnabled: Boolean = true
         private set
+
+    companion object {
+        private const val SLIDER_STATE_KEY = "SLIDER_STATE_KEY"
+        private const val DRAWER_ENABLED_KEY = "DRAWER_ENABLED_KEY"
+    }
 
     init {
         initializeDrawer()
@@ -103,18 +107,22 @@ class SliderMenu(
     }
 
     private fun initializeSlider() {
-        val mappedItems = ArrayList<IDrawerItem<*>>(mapItems(sliderConfiguration.itemsList))
-        sliderLayout.removeAllItems()
-        sliderLayout.addItems(*mappedItems.toTypedArray())
-        sliderLayout.headerView = sliderConfiguration.headerView
-        if (sliderSavedState != null) {
-            sliderLayout.setSavedInstance(sliderSavedState.getBundle(sliderStateKey))
-            isSliderEnabled = sliderSavedState.getBoolean(drawerEnabledKey)
+        val mappedItems = mapItems(sliderConfiguration.itemsList)
+        sliderLayout.apply {
+            removeAllItems()
+            addItems(*mappedItems.toTypedArray())
+            headerView = sliderConfiguration.headerView?.let {
+                return@let LayoutInflater.from(contextActivity).inflate(it, null)
+            }
+            sliderSavedState?.apply {
+                setSavedInstance(sliderSavedState.getBundle(SLIDER_STATE_KEY))
+                isSliderEnabled = sliderSavedState.getBoolean(DRAWER_ENABLED_KEY)
+            }
         }
     }
 
-    private fun mapItems(items: ArrayList<MenuItem>?): MutableList<IDrawerItem<*>> {
-        val result = ArrayList<IDrawerItem<*>>()
+    private fun mapItems(items: List<MenuItem>?): List<IDrawerItem<*>> {
+        val result = mutableListOf<IDrawerItem<*>>()
         if (items == null)
             return result
         for (itemToAdd in items) {
@@ -205,9 +213,10 @@ class SliderMenu(
     }
 
     fun saveState(): Bundle {
-        val stateBundle = Bundle()
-        stateBundle.putBundle(sliderStateKey, Bundle())
-        stateBundle.putBoolean(drawerEnabledKey, isSliderEnabled)
-        return stateBundle
+        return Bundle().apply {
+            val sliderState = sliderLayout.saveInstanceState(Bundle())
+            putBundle(SLIDER_STATE_KEY, sliderState)
+            putBoolean(DRAWER_ENABLED_KEY, isSliderEnabled)
+        }
     }
 }
