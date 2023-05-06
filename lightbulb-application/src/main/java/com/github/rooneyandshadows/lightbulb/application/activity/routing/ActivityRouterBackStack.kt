@@ -12,7 +12,7 @@ class ActivityRouterBackStack() : Parcelable {
     }
 
     constructor(parcel: Parcel) : this() {
-        stack = ParcelUtils.readStringList(parcel)!! as MutableList<String>
+        stack = ParcelUtils.readStringList(parcel)!!
     }
 
     fun getEntriesCount(): Int {
@@ -39,7 +39,7 @@ class ActivityRouterBackStack() : Parcelable {
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        ParcelUtils.writeStringList(parcel, stack)
+        ParcelUtils.writeStringArrayList(parcel, ArrayList(stack))
     }
 
     override fun describeContents(): Int {

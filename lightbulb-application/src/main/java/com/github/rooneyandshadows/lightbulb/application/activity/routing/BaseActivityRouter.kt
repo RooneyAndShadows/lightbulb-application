@@ -18,6 +18,10 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
     private val logTag: String
     private var backStack = ActivityRouterBackStack()
 
+    companion object {
+        private const val ACTIVITY_ROUTER_BACKSTACK = "ACTIVITY_ROUTER_BACKSTACK"
+    }
+
     init {
         fragmentManager = contextActivity.supportFragmentManager
         logTag = "[".plus(javaClass.simpleName).plus("]")
@@ -25,7 +29,7 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
 
     fun saveState(activityBundle: Bundle) {
         BundleUtils.putParcelable(
-            "ACTIVITY_ROUTER_BACKSTACK",
+            ACTIVITY_ROUTER_BACKSTACK,
             activityBundle,
             backStack
         )
@@ -33,7 +37,7 @@ open class BaseActivityRouter(contextActivity: BaseActivity, fragmentContainerId
 
     fun restoreState(activitySavedState: Bundle) {
         backStack = BundleUtils.getParcelable(
-            "ACTIVITY_ROUTER_BACKSTACK",
+            ACTIVITY_ROUTER_BACKSTACK,
             activitySavedState,
             ActivityRouterBackStack::class.java
         )!!
