@@ -111,8 +111,10 @@ class SliderMenu(
         sliderLayout.apply {
             removeAllItems()
             addItems(*mappedItems.toTypedArray())
-            headerView = sliderConfiguration.headerView?.let {
-                return@let LayoutInflater.from(contextActivity).inflate(it, null)
+            headerView = sliderConfiguration.headerConfiguration?.let {
+                return@let LayoutInflater.from(contextActivity).inflate(it.headerView, null).apply {
+                    it.headerInflateListener?.onInflated(this)
+                }
             }
             sliderSavedState?.apply {
                 setSavedInstance(sliderSavedState.getBundle(SLIDER_STATE_KEY))
