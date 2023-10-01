@@ -10,7 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
 
-@Suppress("MemberVisibilityCanBePrivate", "UNCHECKED_CAST")
+@Suppress("MemberVisibilityCanBePrivate")
 abstract class BaseFragmentWithViewModelAndViewBinding<VDBType : ViewDataBinding, VMType : ViewModel> : BaseFragment() {
     protected lateinit var viewModel: VMType
     protected lateinit var viewBinding: VDBType

@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
-@Suppress("MemberVisibilityCanBePrivate", "UNCHECKED_CAST")
+@Suppress("MemberVisibilityCanBePrivate")
 abstract class BaseFragmentWithViewModel<VMType : ViewModel> : BaseFragment() {
     protected lateinit var viewModel: VMType
     protected abstract val viewModelClass: Class<VMType>

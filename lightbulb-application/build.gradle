@@ -6,11 +6,11 @@ plugins {
 }
 android {
     namespace 'com.github.rooneyandshadows.lightbulb.application'
-    compileSdkVersion 33
+    compileSdkVersion 34
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 33
-        versionName "1.4.2"
+        targetSdkVersion 34
+        versionName "1.5.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
     }
@@ -32,36 +32,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-}
-
-tasks.withType(JavaCompile) {
-    options.compilerArgs << "-Xlint:unchecked"
-    options.deprecation = true
-}
-
-afterEvaluate {
-    task sourceJar(type: Jar) {
-        from android.sourceSets.main.java.srcDirs
-        classifier "sources"
-    }
-    publishing {
-        repositories {
-            mavenLocal()
-        }
-        publications {
-            release(MavenPublication) {
-                from components.release
-                groupId "$environment.group_id"
-                version android.defaultConfig.versionName
-                artifactId project.name
-                artifact sourceJar {
-                    classifier "sources"
-                }
-            }
-        }
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 
@@ -81,6 +53,33 @@ dependencies {
     implementation "com.github.rooneyandshadows:java-commons:$versions.java.commons"
     implementation "com.github.rooneyandshadows:lightbulb-commons:$versions.lightbulb.commons"
     implementation "com.github.rooneyandshadows:lightbulb-textinputview:$versions.lightbulb.textinputview"
-    implementation "com.mikepenz:materialdrawer:8.4.2"
-    implementation 'io.vertx:vertx-stomp:4.2.7'
+    implementation "com.mikepenz:materialdrawer:$versions.common.mp_materialdrawer"
+    implementation "io.vertx:vertx-stomp:$versions.common.vx_stomp"
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked"
+    options.deprecation = true
+}
+
+task androidSourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from android.sourceSets.main.java.srcDirs
+}
+
+afterEvaluate {
+    publishing {
+        repositories {
+            mavenLocal()
+        }
+        publications {
+            release(MavenPublication) {
+                from components.release
+                groupId "$environment.group_id"
+                version android.defaultConfig.versionName
+                artifactId project.name
+                artifact androidSourcesJar
+            }
+        }
+    }
 }
