@@ -23,6 +23,7 @@ class ActionBarManager(
         contextFragment.contextActivity.setSupportActionBar(toolbar)
         contextFragment.contextActivity.supportActionBar!!.title = configuration.title
         contextFragment.contextActivity.supportActionBar!!.subtitle = configuration.subtitle
+        contextFragment.contextActivity.enableLeftDrawer(configuration.isAttachToDrawer)
         if (configuration.isEnableActions)
             setHomeIcon(configuration.homeIcon)
     }
