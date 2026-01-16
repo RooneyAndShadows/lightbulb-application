@@ -1,47 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="icon_outer_color">#31bafd</color>
-    <color name="colorTransparent">@android:color/transparent</color>
-    <!-- dark theme colors -->
-    <color name="dark_color_on_primary">#ffffff</color>
-    <color name="dark_color_on_surface">#ffffff</color>
-    <color name="dark_color_on_error">#ffffff</color>
-    <color name="dark_color_on_background">#ffffff</color>
-    <color name="dark_color_on_secondary">#ffffff</color>
-    <color name="dark_surface">#41474e</color>
-    <color name="dark_background">#353941</color>
-    <color name="dark_background_selected">#585d64</color>
-    <color name="dark_primary">#6e87df</color>
-    <color name="dark_primary_dark">#202225</color>
-    <color name="dark_primary_alpha">#666e87df</color>
-    <color name="dark_secondary">#fff</color>
-    <color name="dark_secondary_variant">#ffffff</color>
-    <color name="dark_accent">#6e87df</color>
-    <color name="dark_success">#6db33f</color>
-    <color name="dark_error">#cf6679</color>
-    <color name="dark_warning">#e67e22</color>
-    <color name="dark_tab_selected">#41474e</color>
-    <color name="dark_tab_background">#303136</color>
-    <color name="dark_action_bar_background">#303136</color>
-    <!-- light theme colors -->
-    <color name="light_color_on_primary">#ffffff</color>
-    <color name="light_color_on_surface">#060607</color>
-    <color name="light_color_on_error">#060607</color>
-    <color name="light_color_on_background">#060607</color>
-    <color name="light_color_on_secondary">#060607</color>
-    <color name="light_surface">#ebedef</color>
-    <color name="light_background">#ffffff</color>
-    <color name="light_background_selected">#d4d7dc</color>
-    <color name="light_primary">#6e87df</color>
-    <color name="light_primary_alpha">#666e87df</color>
-    <color name="light_primary_dark">#e3e5e8</color>
-    <color name="light_secondary">#060607</color>
-    <color name="light_secondary_variant">#060607</color>
-    <color name="light_accent">#6e87df</color>
-    <color name="light_success">#6db33f</color>
-    <color name="light_error">#cf6679</color>
-    <color name="light_warning">#e67e22</color>
-    <color name="light_tab_selected">#e3e5e8</color>
-    <color name="light_tab_background">#f2f3f5</color>
-    <color name="light_action_bar_background">#ffffff</color>
+    <!-- =================== Light Palette =================== -->
+    <!-- Primary (Blue) -->
+    <color name="light_colorPrimary">#1E88E5</color>
+    <color name="light_colorOnPrimary">#FFFFFF</color>
+    <color name="light_colorPrimaryContainer">#BBDEFB</color>
+    <color name="light_colorOnPrimaryContainer">#0D47A1</color>
+
+    <!-- Secondary (Green) -->
+    <color name="light_colorSecondary">#43A047</color>
+    <color name="light_colorOnSecondary">#FFFFFF</color>
+    <color name="light_colorSecondaryContainer">#C8E6C9</color>
+    <color name="light_colorOnSecondaryContainer">#1B5E20</color>
+
+    <!-- Tertiary (Teal Accent) -->
+    <color name="light_colorTertiary">#009688</color>
+    <color name="light_colorOnTertiary">#FFFFFF</color>
+    <color name="light_colorTertiaryContainer">#B2DFDB</color>
+    <color name="light_colorOnTertiaryContainer">#004D40</color>
+
+    <!-- Error -->
+    <color name="light_colorError">#D32F2F</color>
+    <color name="light_colorOnError">#FFFFFF</color>
+    <color name="light_colorErrorContainer">#FFCDD2</color>
+    <color name="light_colorOnErrorContainer">#B71C1C</color>
+
+    <!-- Background / Surface -->
+    <color name="light_colorBackground">#FFFFFF</color>
+    <color name="light_colorOnBackground">#1C1B1F</color>
+    <color name="light_colorSurface">#FFFFFF</color>
+    <color name="light_colorOnSurface">#1C1B1F</color>
+    <color name="light_colorSurfaceVariant">#E3F2FD</color>
+    <color name="light_colorOnSurfaceVariant">#0D47A1</color>
+    <color name="light_colorOutline">#90A4AE</color>
+
+    <!-- Optional feedback -->
+    <color name="light_colorSuccess">#4CAF50</color>
+    <color name="light_colorOnSuccess">#FFFFFF</color>
+    <color name="light_colorWarning">#FFB300</color>
+    <color name="light_colorOnWarning">#000000</color>
+
+    <!-- =================== Dark Palette =================== -->
+    <!-- Primary (Blue) -->
+    <color name="dark_colorPrimary">#90CAF9</color>
+    <color name="dark_colorOnPrimary">#0D47A1</color>
+    <color name="dark_colorPrimaryContainer">#1565C0</color>
+    <color name="dark_colorOnPrimaryContainer">#BBDEFB</color>
+
+    <!-- Secondary (Green) -->
+    <color name="dark_colorSecondary">#A5D6A7</color>
+    <color name="dark_colorOnSecondary">#1B5E20</color>
+    <color name="dark_colorSecondaryContainer">#2E7D32</color>
+    <color name="dark_colorOnSecondaryContainer">#C8E6C9</color>
+
+    <!-- Tertiary (Teal Accent) -->
+    <color name="dark_colorTertiary">#4DB6AC</color>
+    <color name="dark_colorOnTertiary">#004D40</color>
+    <color name="dark_colorTertiaryContainer">#00796B</color>
+    <color name="dark_colorOnTertiaryContainer">#B2DFDB</color>
+
+    <!-- Error -->
+    <color name="dark_colorError">#EF9A9A</color>
+    <color name="dark_colorOnError">#B71C1C</color>
+    <color name="dark_colorErrorContainer">#D32F2F</color>
+    <color name="dark_colorOnErrorContainer">#FFCDD2</color>
+
+    <!-- Background / Surface -->
+    <color name="dark_colorBackground">#121212</color>
+    <color name="dark_colorOnBackground">#E6E1E5</color>
+    <color name="dark_colorSurface">#121212</color>
+    <color name="dark_colorOnSurface">#E6E1E5</color>
+    <color name="dark_colorSurfaceVariant">#263238</color>
+    <color name="dark_colorOnSurfaceVariant">#B0BEC5</color>
+    <color name="dark_colorOutline">#90A4AE</color>
+
+    <!-- Optional feedback -->
+    <color name="dark_colorSuccess">#81C784</color>
+    <color name="dark_colorOnSuccess">#000000</color>
+    <color name="dark_colorWarning">#FFD54F</color>
+    <color name="dark_colorOnWarning">#000000</color>
 </resources>

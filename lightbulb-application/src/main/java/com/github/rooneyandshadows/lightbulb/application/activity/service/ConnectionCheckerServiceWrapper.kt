@@ -1,13 +1,14 @@
-package com.github.rooneyandshadows.lightbulb.application.activity.service.connection
+package com.github.rooneyandshadows.lightbulb.application.activity.service
 
 import android.content.*
 import android.os.IBinder
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.github.rooneyandshadows.lightbulb.application.BuildConfig
 import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
 import com.github.rooneyandshadows.lightbulb.application.activity.receivers.InternetConnectionStatusBroadcastReceiver
-import com.github.rooneyandshadows.lightbulb.application.activity.service.connection.ConnectionCheckerService.ConnectionCheckerServiceBinder
+import com.github.rooneyandshadows.lightbulb.application.activity.service.ConnectionCheckerService.ConnectionCheckerServiceBinder
 
 class ConnectionCheckerServiceWrapper(
     private val activity: BaseActivity,
@@ -53,9 +54,13 @@ class ConnectionCheckerServiceWrapper(
         broadcastReceiver!!.onInternetConnectionStatusReceived = { internetAvailable ->
             internetConnectionStateListener.onStateReceived(internetAvailable)
         }
-        activity.registerReceiver(
+
+        val filter = IntentFilter(BuildConfig.internetConnectionStatusAction)
+        ContextCompat.registerReceiver(
+            activity,
             broadcastReceiver,
-            IntentFilter(BuildConfig.internetConnectionStatusAction)
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
         )
         val intent = Intent(activity, ConnectionCheckerService::class.java)
         activity.startService(intent)

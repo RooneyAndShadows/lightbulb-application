@@ -1,0 +1,29 @@
+[versions]
+agp = "8.13.2"
+kotlin = "2.3.0"
+androidx-core-ktx = "1.17.0"
+androidx-annotation = "1.9.1"
+androidx-appcompat = "1.7.1"
+material = "1.13.0"
+lightbulb-commons = "[1.3.0,1.4.0["
+lightbulb-textinputview = "[1.0.0,2.0.0["
+
+lbApt = "2.0.0-RC7"
+
+[libraries]
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core-ktx" }
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidx-annotation" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx-appcompat" }
+google-material = { module = "com.google.android.material:material", version.ref = "material" }
+lightbulb-commons = { module = "com.github.rooneyandshadows:lightbulb-commons", version.ref = "lightbulb-commons" }
+lightbulb-textinputview = { module = "com.github.rooneyandshadows:lightbulb-textinputview", version.ref = "lightbulb-textinputview" }
+
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+maven-publish = { id = "maven-publish" }
+lightbulb-apt = { id = "com.github.rooneyandshadows.lightbulb-apt", version.ref = "lbApt" }
+

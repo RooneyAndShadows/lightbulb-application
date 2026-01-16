@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.Context
 import android.content.res.Resources
 import androidx.appcompat.view.ContextThemeWrapper
-import com.github.rooneyandshadows.lightbulb.application.activity.BaseActivity
-import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.config.SliderMenuConfiguration
 import com.github.rooneyandshadows.lightbulb.commons.utils.LocaleHelper
 
 abstract class BaseApplication : Application() {

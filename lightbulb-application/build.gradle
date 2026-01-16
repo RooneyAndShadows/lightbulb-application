@@ -1,30 +1,36 @@
 plugins {
-    id 'com.android.library'
-    id 'kotlin-android'
-    id 'kotlin-kapt'
-    id 'maven-publish'
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    id("org.jetbrains.kotlin.kapt")
+    id("maven-publish")
 }
+
 android {
     namespace 'com.github.rooneyandshadows.lightbulb.application'
-    compileSdkVersion 34
+    compileSdkVersion 36
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 34
-        versionName "1.6.0"
+        versionName "1.7.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
     }
     buildFeatures {
+        buildConfig true
         dataBinding true
+
     }
     buildTypes {
         debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             //Notification configuration
             buildConfigField "String", "notificationReceivedAction", "\"NOTIFICATION_RECEIVED_ACTION\""
             buildConfigField "String", "menuConfigChangedAction", "\"MENU_CONFIGURATION_CHANGED_ACTION\""
             buildConfigField "String", "internetConnectionStatusAction", "\"INTERNET_CONNECTION_STATUS_ACTION\""
         }
         release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             //Notification configuration
             buildConfigField "String", "notificationReceivedAction", "\"NOTIFICATION_RECEIVED_ACTION\""
             buildConfigField "String", "menuConfigChangedAction", "\"MENU_CONFIGURATION_CHANGED_ACTION\""
@@ -35,36 +41,21 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "androidx.core:core-ktx:$versions.ktx.core"
-    implementation "org.jetbrains.kotlin:kotlin-reflect:1.7.21"
-    implementation "androidx.appcompat:appcompat:$versions.android.appcompat"
-    implementation "androidx.annotation:annotation:$versions.android.annotation"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$versions.android.lifecycle"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$versions.android.lifecycle"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$versions.android.lifecycle"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$versions.android.lifecycle"
-    implementation "androidx.work:work-runtime:$versions.android.work"
-    implementation "androidx.preference:preference-ktx:$versions.android.preference"
-    implementation "com.google.android.material:material:$versions.android.material"
-    implementation "com.github.rooneyandshadows:java-commons:$versions.java.commons"
-    implementation "com.github.rooneyandshadows:lightbulb-commons:$versions.lightbulb.commons"
-    implementation "com.github.rooneyandshadows:lightbulb-textinputview:$versions.lightbulb.textinputview"
-    implementation "com.mikepenz:materialdrawer:$versions.common.mp_materialdrawer"
-    implementation "io.vertx:vertx-stomp:$versions.common.vx_stomp"
-}
-
-tasks.withType(JavaCompile) {
-    options.compilerArgs << "-Xlint:unchecked"
-    options.deprecation = true
-}
-
-task androidSourcesJar(type: Jar) {
-    archiveClassifier.set('sources')
-    from android.sourceSets.main.java.srcDirs
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.appcompat
+    implementation libs.google.material
+    implementation libs.lightbulb.commons
+    implementation libs.lightbulb.textinputview
+    implementation libs.androidx.annotation
 }
 
 afterEvaluate {
@@ -78,7 +69,6 @@ afterEvaluate {
                 groupId "$environment.group_id"
                 version android.defaultConfig.versionName
                 artifactId project.name
-                artifact androidSourcesJar
             }
         }
     }

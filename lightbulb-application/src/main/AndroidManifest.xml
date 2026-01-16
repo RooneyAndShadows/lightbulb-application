@@ -8,7 +8,7 @@
         android:fullBackupContent="false">
 
         <service
-            android:name=".activity.service.connection.ConnectionCheckerService"
+            android:name=".activity.service.ConnectionCheckerService"
             android:exported="false"
             android:label="ConnectionCheckerService" />
 

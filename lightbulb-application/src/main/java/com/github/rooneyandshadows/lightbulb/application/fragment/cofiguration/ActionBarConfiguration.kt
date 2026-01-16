@@ -3,9 +3,6 @@ package com.github.rooneyandshadows.lightbulb.application.fragment.cofiguration
 import android.graphics.drawable.Drawable
 
 class ActionBarConfiguration(val actionBarId: Int) {
-    var isEnableActions: Boolean = true
-        private set
-    var isAttachToDrawer: Boolean = true
     var title: String = "Application title"
         private set
     var subtitle: String = "subtitle"
@@ -19,14 +16,6 @@ class ActionBarConfiguration(val actionBarId: Int) {
 
     fun withSubTitle(subTitle: String): ActionBarConfiguration {
         return apply { subtitle = subTitle }
-    }
-
-    fun withActionButtons(state: Boolean): ActionBarConfiguration {
-        return apply { isEnableActions = state }
-    }
-
-    fun attachToDrawer(state: Boolean): ActionBarConfiguration {
-        return apply { isAttachToDrawer = state }
     }
 
     fun withHomeIcon(icon: Drawable?): ActionBarConfiguration {

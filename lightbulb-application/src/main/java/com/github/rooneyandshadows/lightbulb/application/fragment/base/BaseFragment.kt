@@ -118,7 +118,6 @@ abstract class BaseFragment : Fragment() {
 
     private fun setupLeftDrawerAndActionBar() {
         if (configuration!!.isMainScreenFragment) {
-            contextActivity.enableLeftDrawer(configuration!!.hasLeftDrawer)
             actionBarManager = ActionBarManager(this, configureActionBar())
         }
     }
@@ -140,7 +139,6 @@ abstract class BaseFragment : Fragment() {
 
     class Configuration(
         val isMainScreenFragment: Boolean = true,
-        val hasLeftDrawer: Boolean = true,
         val hasOptionsMenu: Boolean = true
     )
 }

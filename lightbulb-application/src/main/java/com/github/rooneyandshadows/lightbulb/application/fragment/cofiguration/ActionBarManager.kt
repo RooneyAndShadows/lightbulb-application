@@ -23,14 +23,11 @@ class ActionBarManager(
         contextFragment.contextActivity.setSupportActionBar(toolbar)
         contextFragment.contextActivity.supportActionBar!!.title = configuration.title
         contextFragment.contextActivity.supportActionBar!!.subtitle = configuration.subtitle
-        contextFragment.contextActivity.enableLeftDrawer(configuration.isAttachToDrawer)
-        if (configuration.isEnableActions)
+        if (configuration.homeIcon != null)
             setHomeIcon(configuration.homeIcon)
     }
 
     fun setHomeIcon(icon: Drawable?) {
-        if (!configuration!!.isEnableActions)
-            return
         val actionBar = getActionBar()!!
         actionBar.setDisplayHomeAsUpEnabled(true)
         actionBar.setHomeButtonEnabled(false)

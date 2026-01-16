@@ -1,35 +1,25 @@
 package com.github.rooneyandshadows.lightbulb.application.activity
 
-import android.content.*
+import android.content.Context
+import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Rect
 import android.os.Bundle
-import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ContextThemeWrapper
-import androidx.drawerlayout.widget.DrawerLayout
 import com.github.rooneyandshadows.lightbulb.application.R
-import com.github.rooneyandshadows.lightbulb.application.activity.service.connection.ConnectionCheckerServiceWrapper
-import com.github.rooneyandshadows.lightbulb.application.activity.service.connection.ConnectionCheckerServiceWrapper.InternetConnectionStateListeners
-import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.SliderMenu
-import com.github.rooneyandshadows.lightbulb.application.activity.slidermenu.config.SliderMenuConfiguration
+import com.github.rooneyandshadows.lightbulb.application.activity.service.ConnectionCheckerServiceWrapper
+import com.github.rooneyandshadows.lightbulb.application.activity.service.ConnectionCheckerServiceWrapper.InternetConnectionStateListeners
 import com.github.rooneyandshadows.lightbulb.commons.utils.KeyboardUtils.Companion.hideKeyboard
 import com.github.rooneyandshadows.lightbulb.commons.utils.LocaleHelper
 import com.github.rooneyandshadows.lightbulb.textinputview.TextInputView
-import com.mikepenz.materialdrawer.widget.MaterialDrawerSliderView
 
 abstract class BaseActivity : AppCompatActivity() {
-    private val sliderBundleKey = "DRAWER_STATE"
     private var dragged = false
-    private lateinit var sliderMenu: SliderMenu
-
-    protected open fun getMenuConfiguration(): SliderMenuConfiguration {
-        return SliderMenuConfiguration()
-    }
 
     protected open fun doBeforeCreate(savedInstanceState: Bundle?) {}
 
@@ -69,13 +59,6 @@ abstract class BaseActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.base_activity_layout)
         initializeInternetCheckerService()
-        setupActivity(savedInstanceState)
-    }
-
-    @Override
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putParcelable(sliderBundleKey, sliderMenu.saveState())
     }
 
     @Override
@@ -96,34 +79,6 @@ abstract class BaseActivity : AppCompatActivity() {
         return super.dispatchTouchEvent(event)
     }
 
-    @Override
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            android.R.id.home -> {
-                if (!sliderMenu.isSliderEnabled) {
-                    onBackPressed()
-                } else {
-                    if (sliderMenu.isDrawerOpen()) sliderMenu.closeSlider()
-                    else sliderMenu.openSlider()
-                }
-            }
-        }
-        return false
-    }
-
-    fun enableLeftDrawer(enabled: Boolean) {
-        if (enabled) sliderMenu.enableSlider()
-        else sliderMenu.disableSlider()
-    }
-
-    fun getSliderMenu(): SliderMenu {
-        return sliderMenu
-    }
-
-    fun isDrawerEnabled(): Boolean {
-        return sliderMenu.isSliderEnabled
-    }
-
     private fun initializeInternetCheckerService() {
         val internetConnectionListeners = registerInternetConnectionStateListeners()
         if (internetConnectionListeners != null) lifecycle.addObserver(
@@ -131,25 +86,6 @@ abstract class BaseActivity : AppCompatActivity() {
                 this,
                 internetConnectionListeners
             )
-        )
-    }
-
-    /**
-     * Method setup up the activity view and main components.
-     *
-     * @param activityState saved state for the activity.
-     */
-    private fun setupActivity(activityState: Bundle?) {
-        val drawerState = activityState?.getBundle(sliderBundleKey)
-        val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
-        val sliderView = findViewById<MaterialDrawerSliderView>(R.id.sliderView)
-        val menuConfiguration = getMenuConfiguration()
-        sliderMenu = SliderMenu(
-            this,
-            drawerLayout,
-            sliderView,
-            drawerState,
-            menuConfiguration
         )
     }
 

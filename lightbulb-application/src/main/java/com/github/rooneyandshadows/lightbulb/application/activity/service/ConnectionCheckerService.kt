@@ -1,7 +1,6 @@
-package com.github.rooneyandshadows.lightbulb.application.activity.service.connection
+package com.github.rooneyandshadows.lightbulb.application.activity.service
 
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -53,6 +52,7 @@ class ConnectionCheckerService : Service() {
                 while (!interrupt) {
                     sleep(2000)
                     val intent = Intent(BuildConfig.internetConnectionStatusAction)
+                    intent.setPackage(packageName)
                     val extras = Bundle()
                     extras.putBoolean("IS_INTERNET_AVAILABLE", isInternetAvailable())
                     intent.putExtras(extras)
@@ -69,7 +69,7 @@ class ConnectionCheckerService : Service() {
     private fun isInternetAvailable(): Boolean {
         val result: Boolean
         val connectivityManager =
-            getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         val networkCapabilities = connectivityManager.activeNetwork ?: return false
         val actNw = connectivityManager.getNetworkCapabilities(networkCapabilities) ?: return false
         result = when {
