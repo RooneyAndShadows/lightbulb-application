@@ -16,6 +16,13 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [
+                        "lightbulb.generate.root.package": android.namespace
+                ]
+            }
+        }
     }
 
     buildTypes {
@@ -40,7 +47,7 @@ android {
 }
 
 lightbulb {
-    debug=true
+    debug = true
 }
 
 dependencies {
