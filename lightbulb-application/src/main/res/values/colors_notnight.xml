@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PRIMARY -->
+    <color name="light_colorPrimary">#1E88E5</color>
+    <color name="light_colorOnPrimary">#FFFFFF</color>
+    <color name="light_colorPrimaryContainer">#BBDEFB</color>
+    <color name="light_colorOnPrimaryContainer">#0D47A1</color>
+
+    <!-- SECONDARY -->
+    <color name="light_colorSecondary">#43A047</color>
+    <color name="light_colorOnSecondary">#FFFFFF</color>
+    <color name="light_colorSecondaryContainer">#C8E6C9</color>
+    <color name="light_colorOnSecondaryContainer">#1B5E20</color>
+
+    <!-- TERTIARY  -->
+    <color name="light_colorTertiary">#009688</color>
+    <color name="light_colorOnTertiary">#FFFFFF</color>
+    <color name="light_colorTertiaryContainer">#B2DFDB</color>
+    <color name="light_colorOnTertiaryContainer">#004D40</color>
+
+    <!-- ERROR -->
+    <color name="light_colorError">#D32F2F</color>
+    <color name="light_colorOnError">#FFFFFF</color>
+    <color name="light_colorErrorContainer">#FFCDD2</color>
+    <color name="light_colorOnErrorContainer">#B71C1C</color>
+
+    <!-- SURFACE -->
+    <color name="light_colorBackground">#FFFFFF</color>
+    <color name="light_colorOnBackground">#1C1B1F</color>
+    <color name="light_colorSurface">#FFFFFF</color>
+    <color name="light_colorOnSurface">#1C1B1F</color>
+    <color name="light_colorSurfaceVariant">#E3F2FD</color>
+    <color name="light_colorOnSurfaceVariant">#0D47A1</color>
+    <color name="light_colorOutline">#90A4AE</color>
+
+    <!-- SURFACE CONTAINERS (IMPORTANT FOR CARDS ETC) -->
+    <color name="light_colorSurfaceContainerLowest">#FFFFFF</color>
+    <color name="light_colorSurfaceContainerLow">#F7F2FA</color>
+    <color name="light_colorSurfaceContainer">#F1ECF4</color>
+    <color name="light_colorSurfaceContainerHigh">#ECE6F0</color>
+    <color name="light_colorSurfaceContainerHighest">#E6E0E9</color>
+    <color name="light_colorSurfaceDim">#E2E2E6</color>
+    <color name="light_colorSurfaceBright">#FFFFFF</color>
+
+    <!-- CUSTOM -->
+    <color name="light_colorSuccess">#4CAF50</color>
+    <color name="light_colorOnSuccess">#FFFFFF</color>
+    <color name="light_colorWarning">#FFB300</color>
+    <color name="light_colorOnWarning">#000000</color>
+</resources>

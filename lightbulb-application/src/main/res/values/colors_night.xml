@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PRIMARY -->
+    <color name="dark_colorPrimary">#90CAF9</color>
+    <color name="dark_colorOnPrimary">#0D47A1</color>
+    <color name="dark_colorPrimaryContainer">#1565C0</color>
+    <color name="dark_colorOnPrimaryContainer">#BBDEFB</color>
+
+    <!-- SECONDARY -->
+    <color name="dark_colorSecondary">#A5D6A7</color>
+    <color name="dark_colorOnSecondary">#1B5E20</color>
+    <color name="dark_colorSecondaryContainer">#2E7D32</color>
+    <color name="dark_colorOnSecondaryContainer">#C8E6C9</color>
+
+    <!-- TERTIARY -->
+    <color name="dark_colorTertiary">#4DB6AC</color>
+    <color name="dark_colorOnTertiary">#004D40</color>
+    <color name="dark_colorTertiaryContainer">#00796B</color>
+    <color name="dark_colorOnTertiaryContainer">#B2DFDB</color>
+
+    <!-- ERROR -->
+    <color name="dark_colorError">#EF9A9A</color>
+    <color name="dark_colorOnError">#B71C1C</color>
+    <color name="dark_colorErrorContainer">#D32F2F</color>
+    <color name="dark_colorOnErrorContainer">#FFCDD2</color>
+
+    <!-- SURFACE -->
+    <color name="dark_colorBackground">#121212</color>
+    <color name="dark_colorOnBackground">#E6E1E5</color>
+    <color name="dark_colorSurface">#121316</color>
+    <color name="dark_colorOnSurface">#E6E1E5</color>
+    <color name="dark_colorSurfaceVariant">#263238</color>
+    <color name="dark_colorOnSurfaceVariant">#B0BEC5</color>
+    <color name="dark_colorOutline">#90A4AE</color>
+
+    <!-- SURFACE CONTAINERS (IMPORTANT FOR CARDS ETC) -->
+    <color name="dark_colorSurfaceContainerLowest">#0E0E10</color>
+    <color name="dark_colorSurfaceContainerLow">#1B1B1F</color>
+    <color name="dark_colorSurfaceContainer">#1F1F24</color>
+    <color name="dark_colorSurfaceContainerHigh">#2A2A31</color>
+    <color name="dark_colorSurfaceContainerHighest">#2F3036</color>
+    <color name="dark_colorSurfaceDim">#0F0F10</color>
+    <color name="dark_colorSurfaceBright">#2C2C30</color>
+
+    <!-- CUSTOM -->
+    <color name="dark_colorSuccess">#81C784</color>
+    <color name="dark_colorOnSuccess">#000000</color>
+    <color name="dark_colorWarning">#FFD54F</color>
+    <color name="dark_colorOnWarning">#000000</color>
+</resources>
