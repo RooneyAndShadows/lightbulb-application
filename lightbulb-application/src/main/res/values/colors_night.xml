@@ -29,8 +29,10 @@
     <color name="dark_colorOnBackground">#E6E1E5</color>
     <color name="dark_colorSurface">#272B30</color>
     <color name="dark_colorOnSurface">#E6E1E5</color>
-    <color name="dark_colorSurfaceVariant">#263238</color>
-    <color name="dark_colorOnSurfaceVariant">#B0BEC5</color>
+
+    <color name="dark_colorSurfaceVariant">#1E2226</color> <!-- Slightly lighter neutral gray -->
+    <color name="dark_colorOnSurfaceVariant">#B0BEC5</color> <!-- Light neutral gray for readability -->
+
     <color name="dark_colorOutline">#90A4AE</color>
 
     <!-- SURFACE CONTAINERS (IMPORTANT FOR CARDS ETC) -->
