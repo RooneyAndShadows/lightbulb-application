@@ -27,7 +27,7 @@
     <!-- SURFACE -->
     <color name="dark_colorBackground">#121212</color>
     <color name="dark_colorOnBackground">#E6E1E5</color>
-    <color name="dark_colorSurface">#121316</color>
+    <color name="dark_colorSurface">#272B30</color>
     <color name="dark_colorOnSurface">#E6E1E5</color>
     <color name="dark_colorSurfaceVariant">#263238</color>
     <color name="dark_colorOnSurfaceVariant">#B0BEC5</color>
